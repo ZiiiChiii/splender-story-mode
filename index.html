@@ -43,12 +43,11 @@
     </div>
   </div>
 
-  <div class="achievement-banner" id="ach-banner-btn" onclick="playUniformSfx(); openAchievementHistory()">
-    <div class="ach-latest-container">
-      <span class="ach-badge-title">Latest Achievement</span>
-      <div class="ach-latest-display" id="ach-latest-field">🏆 暫無新成就，繼續努力收購！</div>
+  <div class="achievement-banner" id="story-mission-banner" style="cursor: default;">
+    <div class="ach-latest-container" style="width: 100%;">
+      <span class="ach-badge-title" id="story-mission-badge">當前目標</span>
+      <div class="ach-latest-display" id="story-mission-field" style="color: #fff; font-size: 0.8rem; line-height: 1.3;">🏆 載入戰役中...</div>
     </div>
-    <div class="ach-stats-summary" id="ach-stats-field" style="display:none;">0 / 30</div>
   </div>
 
   <section class="nobles-section" id="guide-nobles">
@@ -141,7 +140,7 @@
     <div style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 6px; margin: 4px 0 10px 0;">
       <button class="diff-opt-btn" id="mode-btn-single" onclick="playUniformSfx(); ActionDispatcher.dispatch('SWITCH_MODE', { mode: 'singlePlayer' })">🏆 成就大師</button>
       <button class="diff-opt-btn" id="mode-btn-ai" onclick="playUniformSfx(); ActionDispatcher.dispatch('SWITCH_MODE', { mode: 'vsAI' })">🤖 帝國爭霸</button>
-      <button class="diff-opt-btn" id="mode-btn-story" style="border-color:#2ecc71;" onclick="playUniformSfx(); import('./core/storyMode.js').then(m => m.StoryMode.openStoryMapModal())">📜 故事戰役</button>
+      <button class="diff-opt-btn" id="mode-btn-story" onclick="playUniformSfx(); ActionDispatcher.dispatch('SWITCH_MODE', { mode: 'storyMode' })">📜 故事戰役</button>
     </div>
 
     <div class="menu-grid-layout" style="margin-top: 12px;">
@@ -210,16 +209,12 @@
 
 <div class="modal-overlay" id="ach-history-modal-container" onclick="if(event.target===this){ playUniformSfx(); closeAchievementHistory(); }">
   <div class="modal ach-modal">
-
     <div class="ach-modal-header">
       <h2 class="modal-title">⚜️ 皇家榮譽堂</h2>
       <div class="ach-stats-summary" id="ach-stats-field" style="display:none;"></div>
       <button class="music-btn" onclick="playUniformSfx(); closeAchievementHistory();">✕ 關閉</button>
     </div>
-
-    <div class="ach-scroll-body" id="ach-matrix-injector">
-      </div>
-
+    <div class="ach-scroll-body" id="ach-matrix-injector"></div>
   </div>
 </div>
 
