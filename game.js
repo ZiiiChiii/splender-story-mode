@@ -273,7 +273,6 @@ window.render = function() {
   document.getElementById('ai-dashboard-box').style.display = isvsAI ? 'block' : 'none';
   document.getElementById('player-dashboard-title').style.display = isvsAI ? 'block' : 'none';
   
-  // ─── 【全新三模式成就欄狀態變更核心】 ───
   const bannerZone = document.getElementById('dynamic-banner-zone');
   const bannerBadge = document.getElementById('dynamic-banner-badge');
   const bannerText = document.getElementById('dynamic-banner-text');
@@ -324,33 +323,35 @@ window.render = function() {
     }
   }
 
-  const indicator = document.getElementById('turn-owner-indicator');
-  indicator.style.display = isvsAI ? 'block' : 'none';
-  indicator.textContent = fullState.currentTurnOwner === 'player' ? '👤 玩家回合' : '🤖 電腦回合';
-  indicator.style.borderColor = fullState.currentTurnOwner === 'player' ? '#ffcc00' : '#e74c3c';
-
-  // ─── 【修復與新增：背包籌碼上限與字體變色限制】 ───
   let totalTokens = 0;
-  // 包含所有 5 色普通寶石以及 o (黃金)
   for (let k in player.tokens) totalTokens += player.tokens[k];
+
+  let diffs = { tokens: {}, bonus: {} };
+  if (lastPlayerState) {
+    for (let k in player.tokens) diffs.tokens[k] = player.tokens[k] - lastPlayerState.tokens[k];
+    for (let k in player.bonus) diffs.bonus[k] = player.bonus[k] - lastPlayerState.bonus[k];
+  }
+
+  lastPlayerState = deepClone(player);
+
+  renderDashboardGems('res-layer', player, diffs);
+  if (isvsAI) {
+    document.getElementById('ai-score-txt').textContent = fullState.ai.score;
+    renderDashboardGems('ai-res-layer', fullState.ai, null);
+  }
 
   const isAst6Active = (fullState.settings.selectedAssistant === 'ast6');
   const currentBagCap = isAst6Active ? 12 : 10;
   const capTxtEl = document.getElementById('cap-txt');
   capTxtEl.textContent = `背包: ${totalTokens} / ${currentBagCap}`;
   
-  // 先清空原本可能帶有的顏色樣式 class
+  // 【更新背包籌碼限制與顏色字體動態判定】
   capTxtEl.classList.remove('bag-warning-yellow', 'bag-danger-red');
-  
-  // 依條件動態著色
-  if (totalTokens === currentBagCap) {
-    capTxtEl.classList.add('bag-danger-red');   // 等於 10 變為紅色
+  if (totalTokens === 10) {
+    capTxtEl.classList.add('bag-danger-red');
   } else if (totalTokens > 7) {
-    capTxtEl.classList.add('bag-warning-yellow'); // 大於 7 變為黃色
+    capTxtEl.classList.add('bag-warning-yellow');
   }
-
-  // 判斷是否因達到 10 顆上限而需要完全封鎖拿取普通籌碼的能力
-  const isBagFullLock = (totalTokens >= currentBagCap);
 
   ['lv1', 'lv2', 'lv3'].forEach(level => {
     document.getElementById(`deck-${level}-txt`).textContent = `剩餘: ${fullState.decks[level].length}`;
@@ -455,7 +456,6 @@ window.render = function() {
         `).join('');
   }
 
-  // ── 渲染銀行寶石 Token 選取區 ──
   const gemColors = ['w', 'u', 'g', 'r', 'k'];
   const diffLayer = document.getElementById('diff-selectors'); 
   const sameLayer = document.getElementById('same-selectors'); 
@@ -464,11 +464,10 @@ window.render = function() {
     diffLayer.innerHTML = gemColors.map(k => {
       const inBank = fullState.bank[k] > 0;
       const alreadySelected = fullState.selectedDiff?.includes(k);
-      // 【修復核心】：若背包滿了 (isBagFullLock)，強制將按鈕 disabled 且極低透明度，無法再拿取寶石
       return `
         <div class="token-container-cell">
           <button class="token-btn ${GEM_BTN_CLASSES[k]} ${alreadySelected ? 'selected' : ''}"
-            ${!inBank || !isPlayerTurn || isBagFullLock ? 'disabled style="opacity:0.08; pointer-events:none;"' : ''}
+            ${!inBank || !isPlayerTurn ? 'disabled style="opacity:0.08;"' : ''}
             onclick="toggleSelectDiff('${k}')">
           </button>
           <span class="token-count-label">庫存:${fullState.bank[k]}</span>
@@ -479,14 +478,13 @@ window.render = function() {
 
   if (sameLayer) {
     sameLayer.innerHTML = gemColors.map(k => {
-      const needBankCount = (fullState.settings.selectedAssistant === 'ast9') ? 1 : 2;
+      const needBankCount = (fullState.settings.selectedAssistant === 'ast24') ? 1 : 2; 
       const canTake2 = fullState.bank[k] >= needBankCount;
       const alreadySelected = fullState.selectedSame === k;
-      // 【修復核心】：若背包滿了 (isBagFullLock)，強制將按鈕 disabled 且極低透明度，無法再拿取寶石
       return `
         <div class="token-container-cell">
           <button class="token-btn ${GEM_BTN_CLASSES[k]} ${alreadySelected ? 'selected' : ''}"
-            ${!canTake2 || !isPlayerTurn || isBagFullLock ? 'disabled style="opacity:0.08; pointer-events:none;"' : ''}
+            ${!canTake2 || !isPlayerTurn ? 'disabled style="opacity:0.08;"' : ''}
             onclick="toggleSelectSame('${k}')">
           </button>
           <span class="token-count-label">庫存:${fullState.bank[k]}</span>
@@ -562,13 +560,16 @@ window.handleBannerZoneClick = function() {
   }
 };
 
-// ==========================================
-// 5. 其餘事件分發代理
-// ==========================================
 window.toggleSelectDiff = function(color) {
   if(CoreState.get().currentTurnOwner !== 'player') return;
   document.getElementById('error-msg').textContent = '';
   const state = CoreState.get();
+  
+  // 【核心修改】：限制背包只能拿10個寶石，等於10時無法再選取拿取 Token
+  let currentTotalTokens = 0;
+  for (let k in state.player.tokens) currentTotalTokens += state.player.tokens[k];
+  if (currentTotalTokens >= 10) return;
+
   state.selectedSame = null;
   
   const idx = state.selectedDiff.indexOf(color);
@@ -588,6 +589,12 @@ window.toggleSelectSame = function(color) {
   if(CoreState.get().currentTurnOwner !== 'player') return;
   document.getElementById('error-msg').textContent = '';
   const state = CoreState.get();
+  
+  // 【核心修改】：限制背包只能拿10個寶石，等於10時無法再選取拿取 Token
+  let currentTotalTokens = 0;
+  for (let k in state.player.tokens) currentTotalTokens += state.player.tokens[k];
+  if (currentTotalTokens >= 10) return;
+
   state.selectedDiff = [];
   
   if (state.selectedSame === color) {
