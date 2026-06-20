@@ -1,5 +1,4 @@
 // core/storyMode.js
-//
 import { CoreState } from './state.js';
 import { ASSISTANTS_DATABASE } from './assistantData.js';
 import { STORY_MISSIONS } from './missions/levelsData.js';
@@ -26,12 +25,10 @@ export const StoryMode = {
   saveStoryProgress(completedLvlId) {
     const s = CoreState.get().storyProgress;
     
-    // 【核心同步修復】：依據被攻克的唯一關卡 ID 推進最大解鎖進度
     if (completedLvlId >= s.maxUnlockedLevel && s.maxUnlockedLevel < 25) {
       s.maxUnlockedLevel = completedLvlId + 1;
     }
     
-    // 同步解鎖下一關的輔助官能力
     const nextAstId = `ast${completedLvlId + 1}`;
     if (completedLvlId < 25 && !s.unlockedAssistantIds.includes(nextAstId)) {
       s.unlockedAssistantIds.push(nextAstId);
@@ -42,7 +39,6 @@ export const StoryMode = {
       unlockedAssistantIds: s.unlockedAssistantIds
     }));
 
-    // 【即時刷新機制】：如果解鎖地圖當前已開著，通關時即時重新渲染地圖上的按鈕樣式
     if (document.getElementById('story-map-modal')?.classList.contains('show')) {
       this.openStoryMapModal();
     }
@@ -100,8 +96,8 @@ export const StoryMode = {
         </div>
 
         <div style="display:flex; gap:6px; flex-shrink:0;">
-          <button class="btn-primary" style="flex:1; padding:8px;" onclick="window.startSelectedStoryLevel()">開啟此章節戰役</button>
-          <button class="btn-replay" style="flex:1; margin:0; padding:8px; background:#3a2e22; border:1px solid #d4af37;" onclick="document.getElementById('story-map-modal').classList.remove('show')">返回</button>
+          <button class="btn-primary" style="flex:1; padding:8px;" onclick="window.startSelectedStoryLevel()">開啟選定章節戰役</button>
+          <button class="btn-replay" style="flex:1; margin:0; padding:8px; background:#3a2e22; border:1px solid #d4af37;" onclick="document.getElementById('story-map-modal').classList.remove('show')">關閉</button>
         </div>
       </div>
     `;
@@ -119,5 +115,7 @@ window.startSelectedStoryLevel = function() {
   document.getElementById('story-map-modal').classList.remove('show');
   const modal = document.getElementById('game-options-modal');
   if (modal) modal.classList.remove('show');
+  
+  // 核心邏輯：重開局並載入關卡自定義資料與追蹤器
   window.ActionDispatcher.dispatch('SWITCH_MODE', { mode: 'storyMode' });
 };
