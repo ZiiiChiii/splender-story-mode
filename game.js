@@ -47,7 +47,7 @@ async function loadCoreModules() {
   const actionMod = await import('./core/action.js');
   const storyMod = await import('./core/storyMode.js');
   const assistantMod = await import('./core/assistantData.js');
-  const levelsMod = await import('./core/missions/levelsData.js'); // 修改為新的資料路徑
+  const levelsMod = await import('./core/missions/levelsData.js'); 
 
   CoreState = stateMod.CoreState;
   GameEngine = engineMod.GameEngine;
@@ -57,7 +57,7 @@ async function loadCoreModules() {
 
   window.ActionDispatcher = ActionDispatcher;
   window.SingleMode = SingleMode;
-  window.STORY_MISSIONS = levelsMod.STORY_MISSIONS; // 註冊到 window 讓各模組能全域唯讀
+  window.STORY_MISSIONS = levelsMod.STORY_MISSIONS; 
   
   storyMod.StoryMode.loadStoryProgress();
   assistantMod.AssistantManager.renderActiveAssistantUI();
@@ -265,13 +265,45 @@ window.render = function() {
   document.getElementById('score-txt').textContent = player.score;
 
   const isvsAI = fullState.mode === 'vsAI';
+  const isStoryMode = fullState.mode === 'storyMode';
   const isPlayerTurn = fullState.currentTurnOwner === 'player';
 
   document.getElementById('ai-dashboard-box').style.display = isvsAI ? 'block' : 'none';
   document.getElementById('player-dashboard-title').style.display = isvsAI ? 'block' : 'none';
   
-  const achBanner = document.getElementById('ach-banner-btn');
-  if (achBanner) achBanner.style.display = isvsAI ? 'none' : '';
+  // 【已修改】：動態更新頂部橫幅為「當前關卡選擇即過關條件顯示欄」
+  const missionField = document.getElementById('story-mission-field');
+  const missionBadge = document.getElementById('story-mission-badge');
+  if (missionField && missionBadge) {
+    if (isStoryMode) {
+      const currentLvl = fullState.storyProgress?.currentLevel || 1;
+      const mission = window.STORY_MISSIONS ? window.STORY_MISSIONS[currentLvl - 1] : null;
+      if (mission) {
+        missionBadge.textContent = `第 ${currentLvl} 關 任務目標`;
+        missionBadge.style.backgroundColor = 'rgba(212, 175, 55, 0.2)';
+        missionBadge.style.borderColor = '#d4af37';
+        
+        let conditionText = mission.dialogue || '';
+        // 補充計數狀態提示
+        if (state.storyTracker && mission.winCondition.type === 'score_and_reserve_buy') {
+          conditionText += ` (當前已從保留區收購: ${state.storyTracker.reservedBuys}/${mission.winCondition.minReservedBuys} 次)`;
+        } else if (state.storyTracker && mission.winCondition.type === 'score_and_free_buys') {
+          conditionText += ` (當前已免費收購: ${state.storyTracker.freeBuys}/${mission.winCondition.minFreeBuysRequired} 次)`;
+        }
+        missionField.innerHTML = `<span style="color:#ffe099; font-weight:800;">⚔️【${mission.name}】</span> — ${conditionText}`;
+      } else {
+        missionField.textContent = "📜 故事戰役加載中...";
+      }
+    } else {
+      // 非故事模式下的預設提示
+      missionBadge.textContent = "對局目標";
+      missionBadge.style.backgroundColor = 'rgba(255,255,255,0.05)';
+      missionBadge.style.borderColor = 'rgba(255,255,255,0.2)';
+      missionField.innerHTML = isvsAI 
+        ? "🤖 <span style='color:var(--text-muted);'>帝國爭霸模式：率先在 28 回合內達到 15 分，且總分超越電腦 AI 即可勝出！</span>"
+        : "🏆 <span style='color:var(--text-muted);'>成就大師模式：在 28 回合終點線前奪得 15 分，並在對局中嘗試解鎖各種隱藏成就！</span>";
+    }
+  }
 
   const indicator = document.getElementById('turn-owner-indicator');
   indicator.style.display = isvsAI ? 'block' : 'none';
@@ -539,6 +571,8 @@ window.toggleSelectSame = function(color) {
   render();
 };
 
+window.handleMusicToggle = () => ActionDispatcher.dispatch('TOGGLE_MUSIC');
+window.handleSfxToggle = () => ActionDispatcher.dispatch('TOGGLE_SFX');
 window.handleDoDiffClick = function() {
   const state = CoreState.get();
   if (state.selectedDiff.length === 0) return;
@@ -604,6 +638,7 @@ window.openGameOptionsModal = () => {
   
   document.getElementById('mode-btn-single').classList.toggle('active', m === 'singlePlayer');
   document.getElementById('mode-btn-ai').classList.toggle('active', m === 'vsAI');
+  document.getElementById('mode-btn-story').classList.toggle('active', m === 'storyMode');
   
   document.getElementById('game-options-modal').classList.add('show');
 };
@@ -627,8 +662,6 @@ window.closeTalentPoolModal = () => {
 window.openAchievementHistory = () => SingleMode.openAchievementHistory();
 window.closeAchievementHistory = () => SingleMode.closeAchievementHistory();
 window.saveCurrentProgress = () => SingleMode.saveCurrentProgress();
-window.handleMusicToggle = () => ActionDispatcher.dispatch('TOGGLE_MUSIC');
-window.handleSfxToggle = () => ActionDispatcher.dispatch('TOGGLE_SFX');
 window.startFloatingTutorial = () => { document.getElementById('tutorial-start-modal').classList.remove('show'); hideWelcomeModal(); document.getElementById('floating-tutorial-widget').style.display = 'block'; showStepData(0); };
 window.hideWelcomeModal = () => { document.getElementById('welcome-back-modal').style.display = 'none'; if (!CoreState.get().settings.isMusicMuted && audioEl) audioEl.play().catch(() => {}); };
 
