@@ -148,30 +148,10 @@ html, body {
 
 .diff-setting-box { display: grid; grid-template-columns: repeat(2, 1fr); gap: 6px; margin: 10px 0; }
 
-/* ── 【分層與穿透安全防御修正區】 ── */
+/* ── 【隔離與滑鼠事件強制響應區】 ── */
 .diff-opt-btn { padding: 8px 4px; font-size: 0.75rem; font-weight: 700; background: #1a1410; border: 1px solid #4a3a30; color: var(--text-muted); border-radius: 4px; cursor: pointer; transition: all 0.2s ease; }
-
-#story-layer {
-  z-index: 999999 !important; /* 確保故事和小說劇情圖層位於絕對最上層 */
-  pointer-events: auto !important;
-}
-#story-map-modal {
-  z-index: 99998 !important; /* 故事選關彈窗位於次上層 */
-  pointer-events: auto !important;
-}
-.modal-overlay {
-  z-index: 9990 !important; /* 其他系統功能彈窗中高層 */
-}
-.action-panel {
-  position: relative;
-  z-index: 10 !important; /* 確保主畫面面板在普通非彈窗狀態下可以自由互動 */
-}
-.action-panel .token-btn { 
-  pointer-events: auto !important; 
-}
-#story-map-modal .diff-opt-btn { 
-  pointer-events: auto !important; 
-}
+#story-map-modal .diff-opt-btn { pointer-events: auto !important; }
+.action-panel .token-btn { pointer-events: auto !important; }
 
 .diff-opt-btn.active[data-diff="easy"] { background: var(--diff-easy); color: #000; border-color: #fff; }
 .diff-opt-btn.active[data-diff="normal"] { background: var(--diff-normal); color: #000; border-color: #fff; }
