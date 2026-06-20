@@ -3,7 +3,7 @@ import { CoreState } from './state.js';
 import { GameEngine } from './gameEngine.js';
 import { SingleMode } from './singleMode.js';
 import { AiMode } from './aiMode.js';
-import { STORY_MISSIONS } from './missions/levelsData.js';
+import { STORY_MISSIONS } from './missions/levelsData.js'; // 📥 對齊新版 25 關視覺小說靜態資料庫庫路徑
 
 const RAW_CARDS = {
   lv1: [
@@ -282,14 +282,13 @@ export const ActionDispatcher = {
             window.StoryMode.saveStoryProgress(mission.id);
           }
 
-          // ─── 【全新重塑：過關直接進行下一關繼續挑戰】 ───
+          // ─── 【全新重塑：過關直接自動進行下一關繼續挑戰】 ───
           if (currentLvl < 25) {
             restartBtn.textContent = `📜 命運推進：挑戰第 ${currentLvl + 1} 關`;
             restartBtn.className = "btn-primary";
             restartBtn.onclick = () => {
               playUniformSfx();
               document.getElementById('win-modal').classList.remove('show');
-              // 進度自動切換到下一關並啟動
               state.storyProgress.currentLevel = currentLvl + 1;
               ActionDispatcher.dispatch('INIT_GAME');
               alert(`💡 提醒：已為您自動載入下一關【第 ${currentLvl + 1} 關：${STORY_MISSIONS[currentLvl].name}】！`);
@@ -301,7 +300,6 @@ export const ActionDispatcher = {
             };
           }
         } else {
-          // 失敗分支
           iconEl.textContent = '❌';
           titleEl.textContent = `戰役失敗：未能突破考驗！`;
           bodyEl.textContent = `對局已消耗 ${state.turn} 回合（上限: ${turnLimit} 回合），得分為 ${p.score} 分。`;
@@ -339,7 +337,6 @@ export const ActionDispatcher = {
       return;
     }
 
-    // 單人模式與對戰模式結算
     if (state.player.score >= 15 || state.ai.score >= 15 || state.turn > 28) {
       window.render();
       SingleMode.auditEndGameAchievements();
@@ -450,7 +447,6 @@ export const ActionDispatcher = {
       GameEngine.shuffle(fullNoblesPool);
       state.nobles = fullNoblesPool.slice(0, 3);
       
-      // 故事模式下，強制將當前選擇關卡對應的輔助官設為隨行
       state.settings.selectedAssistant = `ast${currentLvl}`;
     } else {
       const fullNoblesPool = JSON.parse(JSON.stringify(ALL_NOBLES_POOL));
