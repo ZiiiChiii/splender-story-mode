@@ -25,6 +25,7 @@ export const StoryMode = {
   saveStoryProgress(completedLvlId) {
     const s = CoreState.get().storyProgress;
     
+    // 通關解鎖下一關
     if (completedLvlId >= s.maxUnlockedLevel && s.maxUnlockedLevel < 25) {
       s.maxUnlockedLevel = completedLvlId + 1;
     }
@@ -82,7 +83,7 @@ export const StoryMode = {
     modal.innerHTML = `
       <div class="modal" style="max-width:520px; max-height:85vh; display:flex; flex-direction:column; overflow:hidden; padding:16px;">
         <h2 class="modal-title">📜 皇家故事模式戰役</h2>
-        <p style="font-size:0.75rem; color:var(--text-muted); margin-bottom:6px;">攻克 25 大貿易商戰，收服傳奇輔助官名冊</p>
+        <p style="font-size:0.75rem; color:var(--text-muted); margin-bottom:6px;">點選下方格卡可重複挑戰同一關，或推進新章節</p>
         
         <div style="background:rgba(0,0,0,0.4); padding:10px; border-radius:4px; border:1px solid rgba(212,175,55,0.25); text-align:left; margin-bottom:8px;">
           <div style="font-size:0.75rem; font-weight:800; color:#d4af37; margin-bottom:2px;">【${currentMission.speaker}】：</div>
@@ -116,6 +117,5 @@ window.startSelectedStoryLevel = function() {
   const modal = document.getElementById('game-options-modal');
   if (modal) modal.classList.remove('show');
   
-  // 核心邏輯：重開局並載入關卡自定義資料與追蹤器
   window.ActionDispatcher.dispatch('SWITCH_MODE', { mode: 'storyMode' });
 };
