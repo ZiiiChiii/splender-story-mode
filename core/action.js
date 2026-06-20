@@ -276,7 +276,11 @@ export const ActionDispatcher = {
           titleEl.textContent = `戰役捷報：第 ${currentLvl} 關突破！`;
           bodyEl.textContent = `精湛的商賈巨擘！您成功在 ${state.turn} 回合內完成挑戰！`;
           modalBox.style.borderColor = '#2ecc71';
-          if (window.StoryMode) window.StoryMode.saveStoryProgress(currentLvl);
+          
+          // 【核心修復】：確保傳入的是任務定義的實體 .id
+          if (window.StoryMode) {
+            window.StoryMode.saveStoryProgress(mission.id);
+          }
         } else {
           iconEl.textContent = '❌';
           titleEl.textContent = `戰役失敗：未能突破考驗！`;
