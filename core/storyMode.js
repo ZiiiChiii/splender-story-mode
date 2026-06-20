@@ -112,7 +112,6 @@ export const StoryMode = {
 window.selectStoryLevel = function(lvl, isFromModalClick = false) {
   if (typeof window.playUniformSfx === 'function') window.playUniformSfx();
   
-  // 如果是全域被污染引起的誤點擊（且地圖根本沒開），直接攔截防穿透
   if (!isFromModalClick && !document.getElementById('story-map-modal')?.classList.contains('show')) {
     return;
   }
