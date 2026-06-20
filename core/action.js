@@ -3,7 +3,7 @@ import { CoreState } from './state.js';
 import { GameEngine } from './gameEngine.js';
 import { SingleMode } from './singleMode.js';
 import { AiMode } from './aiMode.js';
-import { STORY_MISSIONS } from './levels.js';
+import { STORY_MISSIONS } from './missions/levelsData.js';
 
 const RAW_CARDS = {
   lv1: [
@@ -101,7 +101,6 @@ export const ActionDispatcher = {
         p.bonus[card.provides]++;
         p.score += card.points;
         
-        // 故事追蹤：從牌庫購買
         if (state.mode === 'storyMode' && state.storyTracker) {
           if (totalGemsSpent === 0) state.storyTracker.freeBuys++;
           if (card.points >= 4) state.storyTracker.highPointCards++;
@@ -133,7 +132,6 @@ export const ActionDispatcher = {
         p.score += card.points;
         p.reserved.splice(idx, 1);
         
-        // 故事追蹤：從保留區購買
         if (state.mode === 'storyMode' && state.storyTracker) {
           state.storyTracker.reservedBuys++;
           if (totalGemsSpent === 0) state.storyTracker.freeBuys++;
@@ -174,16 +172,16 @@ export const ActionDispatcher = {
     window.render();
   },
 
-  finalizeTurn(actor) {
+  finalizeTurn(actionActor) {
     const state = CoreState.get();
-    const currentBonus = actor === 'player' ? state.player.bonus : state.ai.bonus;
-    const initialScore = actor === 'player' ? state.player.score : state.ai.score;
+    const currentBonus = actionActor === 'player' ? state.player.bonus : state.ai.bonus;
+    const initialScore = actionActor === 'player' ? state.player.score : state.ai.score;
     const earnedNobles = GameEngine.checkNoblesVisit(state.nobles, currentBonus);
     
     let noblePointsGained = 0;
     earnedNobles.forEach(n => {
       n.completed = true;
-      if (actor === 'player') { 
+      if (actionActor === 'player') { 
         state.player.score += n.points; 
         noblePointsGained += n.points;
         window.playNobleSfx(n.gender); 
@@ -191,8 +189,7 @@ export const ActionDispatcher = {
       else state.ai.score += n.points;
     });
 
-    // 判斷是否觸發 Combo (同回合內有卡片得分且有貴族拜訪)
-    if (actor === 'player' && state.mode === 'storyMode' && state.storyTracker) {
+    if (actionActor === 'player' && state.mode === 'storyMode' && state.storyTracker) {
       const cardPointsGained = state.player.score - initialScore - noblePointsGained;
       if (cardPointsGained > 0 && noblePointsGained > 0) {
         state.storyTracker.comboTriggered = true;
@@ -209,10 +206,8 @@ export const ActionDispatcher = {
       const p = state.player;
       const turnLimit = cfg.turnLimit || 99;
 
-      // 判斷是否超時（turnLimit 為 99 時視為無限制）
       const isTimeUp = (turnLimit < 99) && (state.turn > turnLimit);
 
-      // 判斷是否達成勝利條件
       let isWin = false;
       switch (win.type) {
         case 'score_only':
@@ -292,8 +287,7 @@ export const ActionDispatcher = {
         return;
       }
       
-      // 第 20 關環境毒素功能：每 X 回合強制扣除籌碼手續費
-      if (actor === 'player' && cfg.tokenTaxInterval && (state.turn % cfg.tokenTaxInterval === 0)) {
+      if (actionActor === 'player' && cfg.tokenTaxInterval && (state.turn % cfg.tokenTaxInterval === 0)) {
         let taxCount = 0;
         const colors = ['w', 'u', 'g', 'r', 'k', 'o'];
         for (let c of colors) {
@@ -342,7 +336,7 @@ export const ActionDispatcher = {
     if (state.mode === 'singlePlayer') {
       state.turn++;
     } else if (state.mode === 'vsAI') {
-      if (actor === 'player') {
+      if (actionActor === 'player') {
         state.currentTurnOwner = 'ai';
         window.render();
         setTimeout(() => { AiMode.thinkAndExecute(state); }, 1000);
@@ -392,17 +386,14 @@ export const ActionDispatcher = {
       const currentLvl = state.storyProgress?.currentLevel || 1;
       const mission = STORY_MISSIONS[currentLvl - 1];
 
-      // 套用關卡自訂初始銀行庫存
       if (mission?.setup?.initBank) {
         state.bank = { ...mission.setup.initBank };
       }
 
-      // 套用自訂玩家起始分數 (例如莎士比亞第 20 關自帶 2 分)
       if (mission?.setup?.initPlayerScore) {
         state.player.score = mission.setup.initPlayerScore;
       }
 
-      // 初始化關卡專屬任務計數器
       state.storyTracker = {
         reservedBuys: 0,
         freeBuys: 0,
@@ -410,12 +401,10 @@ export const ActionDispatcher = {
         comboTriggered: false
       };
 
-      // 殘局處理 (例如第 22 關先知殘局)
       if (mission?.setup?.initAiScore) {
         state.ai.score = mission.setup.initAiScore;
       }
       if (mission?.setup?.initAiTier2Bonus) {
-        // 分配 4 張中階產業減免資產給 AI
         state.ai.bonus = { w: 1, u: 1, g: 1, r: 1, k: 0 };
       }
 
