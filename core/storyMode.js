@@ -111,8 +111,14 @@ export const StoryMode = {
 
 window.selectStoryLevel = function(lvl) {
   if (typeof window.playUniformSfx === 'function') window.playUniformSfx();
+  
+  // 安全校驗：只有在故事模式選單確實顯示時，才響應選擇關卡變更
+  if (!document.getElementById('story-map-modal')?.classList.contains('show')) {
+    return;
+  }
+
   CoreState.get().storyProgress.currentLevel = lvl;
-  CoreState.get().settings.selectedAssistant = `ast${lvl}`; // 自動定向對應劇情能力的官員
+  CoreState.get().settings.selectedAssistant = `ast${lvl}`; 
   StoryMode.openStoryMapModal();
   if (typeof window.render === 'function') window.render(); 
 };
@@ -128,7 +134,6 @@ window.startSelectedStoryLevel = function() {
 
   const currentLvl = state.storyProgress?.currentLevel || 1;
 
-  // 📥 對接全新視覺小說劇場
   if (window.storyModule && window.storyModule.loadStage) {
     window.storyModule.loadStage(currentLvl, () => {
       window.ActionDispatcher.dispatch('INIT_GAME');
