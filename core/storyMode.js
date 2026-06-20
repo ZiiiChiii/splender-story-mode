@@ -1,14 +1,7 @@
 // core/storyMode.js
-//
 import { CoreState } from './state.js';
 import { ASSISTANTS_DATABASE } from './assistantData.js';
 import { STORY_MISSIONS } from './missions/levelsData.js';
-
-// 全域視覺小說劇情管理暫存器
-window.vnScripts = [];
-window.vnIndex = -1;
-window.vnCallback = null;
-window.vnTypingTween = null;
 
 export const StoryMode = {
   loadStoryProgress() {
@@ -32,15 +25,19 @@ export const StoryMode = {
   saveStoryProgress(completedLvlId) {
     const s = CoreState.get().storyProgress;
     
-    // 【核心同步修復】：依據被攻克的唯一關卡 ID 推進最大解鎖進度
-    if (completedLvlId >= s.maxUnlockedLevel && s.maxUnlockedLevel < 25) {
-      s.maxUnlockedLevel = completedLvlId + 1;
+    // 通關後自動擴充進度解鎖下 2 關
+    const targetUnlock = completedLvlId + 2;
+    if (targetUnlock > s.maxUnlockedLevel) {
+      s.maxUnlockedLevel = Math.min(25, targetUnlock);
     }
     
-    // 同步解鎖下一關的輔助官能力
-    const nextAstId = `ast${completedLvlId + 1}`;
-    if (completedLvlId < 25 && !s.unlockedAssistantIds.includes(nextAstId)) {
-      s.unlockedAssistantIds.push(nextAstId);
+    const nextAstId1 = `ast${completedLvlId + 1}`;
+    const nextAstId2 = `ast${completedLvlId + 2}`;
+    if (completedLvlId + 1 <= 25 && !s.unlockedAssistantIds.includes(nextAstId1)) {
+      s.unlockedAssistantIds.push(nextAstId1);
+    }
+    if (completedLvlId + 2 <= 25 && !s.unlockedAssistantIds.includes(nextAstId2)) {
+      s.unlockedAssistantIds.push(nextAstId2);
     }
     
     localStorage.setItem('splendor_story_progress_2026', JSON.stringify({
@@ -48,7 +45,6 @@ export const StoryMode = {
       unlockedAssistantIds: s.unlockedAssistantIds
     }));
 
-    // 【即時刷新機制】：如果解鎖地圖當前已開著，通關時即時重新渲染地圖上的按鈕樣式
     if (document.getElementById('story-map-modal')?.classList.contains('show')) {
       this.openStoryMapModal();
     }
@@ -60,12 +56,7 @@ export const StoryMode = {
     const maxUnlocked = state.storyProgress.maxUnlockedLevel;
 
     let modal = document.getElementById('story-map-modal');
-    if (!modal) {
-      modal = document.createElement('div');
-      modal.className = 'modal-overlay';
-      modal.id = 'story-map-modal';
-      document.body.appendChild(modal);
-    }
+    if (!modal) return;
 
     let levelsHtml = STORY_MISSIONS.map(cfg => {
       const isUnlocked = cfg.id <= maxUnlocked;
@@ -78,7 +69,9 @@ export const StoryMode = {
 
       return `
         <button class="diff-opt-btn ${activeClass}" ${disabledAttr} 
-          style="text-align:left; padding:6px; display:flex; flex-direction:column; justify-content:space-between; opacity:${isUnlocked ? 1 : 0.25}; border-color:${isCurrent ? '#ffcc00' : '#4a3a30'};" 
+          style="text-align:left; padding:6px; display:flex; flex-direction:column; justify-content:space-between; 
+                 opacity:${isUnlocked ? 1 : 0.2}; pointer-events:${isUnlocked ? 'auto' : 'none'}; 
+                 border-color:${isCurrent ? '#ffcc00' : '#4a3a30'}; background:${isCurrent ? '#2d2219' : 'rgba(0,0,0,0.2)'};" 
           onclick="window.selectStoryLevel(${cfg.id})">
           <div style="font-weight:800; color:#ffe099; font-size:0.7rem; white-space:nowrap; text-overflow:ellipsis; overflow:hidden; width:100%;">第 ${cfg.id} 關 ${cfg.name} ${isCurrent ? '🎯' : ''}</div>
           <div style="font-size:0.58rem; color:#fff;">${scoreDisplay}分 / ${turnDisplay}回</div>
@@ -92,7 +85,7 @@ export const StoryMode = {
     modal.innerHTML = `
       <div class="modal" style="max-width:520px; max-height:85vh; display:flex; flex-direction:column; overflow:hidden; padding:16px;">
         <h2 class="modal-title">📜 皇家故事模式戰役</h2>
-        <p style="font-size:0.75rem; color:var(--text-muted); margin-bottom:6px;">攻克 25 大貿易商戰，收服傳奇輔助官名冊</p>
+        <p style="font-size:0.75rem; color:var(--text-muted); margin-bottom:6px;">可任意點選已解鎖的關卡進行重複挑戰，或點選下一關繼續推進</p>
         
         <div style="background:rgba(0,0,0,0.4); padding:10px; border-radius:4px; border:1px solid rgba(212,175,55,0.25); text-align:left; margin-bottom:8px;">
           <div style="font-size:0.75rem; font-weight:800; color:#d4af37; margin-bottom:2px;">【${currentMission.speaker}】：</div>
@@ -106,121 +99,41 @@ export const StoryMode = {
         </div>
 
         <div style="display:flex; gap:6px; flex-shrink:0;">
-          <button class="btn-primary" style="flex:1; padding:8px;" onclick="window.startSelectedStoryLevel()">開啟此章節戰役</button>
-          <button class="btn-replay" style="flex:1; margin:0; padding:8px; background:#3a2e22; border:1px solid #d4af37;" onclick="document.getElementById('story-map-modal').classList.remove('show')">返回</button>
+          <button class="btn-primary" style="flex:1; padding:8px;" onclick="window.startSelectedStoryLevel()">開啟選定章節戰役</button>
+          <button class="btn-replay" style="flex:1; margin:0; padding:8px; background:#3a2e22; border:1px solid #d4af37;" onclick="document.getElementById('story-map-modal').classList.remove('show')">關閉</button>
         </div>
       </div>
     `;
 
     modal.classList.add('show');
-  },
-
-  // 📥 視覺小說核心引導調度器
-  showVisualNovelStory(scripts, onStoryComplete) {
-    const layer = document.getElementById('story-layer');
-    if (!layer) {
-      onStoryComplete();
-      return;
-    }
-
-    window.vnScripts = scripts;
-    window.vnIndex = -1;
-    window.vnCallback = onStoryComplete;
-
-    // 呼叫 GSAP 漸入劇情圖層
-    gsap.fromTo(layer, 
-      { opacity: 0 }, 
-      { opacity: 1, duration: 0.4, onStart: () => { layer.style.display = 'flex'; }, onComplete: () => { window.vnNextDialogue(); } }
-    );
   }
 };
 
 window.selectStoryLevel = function(lvl) {
+  if (typeof window.playUniformSfx === 'function') window.playUniformSfx();
   CoreState.get().storyProgress.currentLevel = lvl;
+  CoreState.get().settings.selectedAssistant = `ast${lvl}`; // 自動定向對應劇情能力的官員
   StoryMode.openStoryMapModal();
+  if (typeof window.render === 'function') window.render(); 
 };
 
 window.startSelectedStoryLevel = function() {
+  if (typeof window.playUniformSfx === 'function') window.playUniformSfx();
   document.getElementById('story-map-modal').classList.remove('show');
   const modal = document.getElementById('game-options-modal');
   if (modal) modal.classList.remove('show');
-
-  // 先在全域狀態中鎖定模式，但不立刻渲染戰局棋盤
+  
   const state = CoreState.get();
   state.mode = 'storyMode';
 
-  const currentLvl = (state.storyProgress && state.storyProgress.currentLevel) ? state.storyProgress.currentLevel : 1;
-  const currentCfg = STORY_MISSIONS[currentLvl - 1] || { name: "未知戰役", story: "商會記錄殘缺...", dialogue: "...", speaker: "神祕人", imgUrl: "" };
+  const currentLvl = state.storyProgress?.currentLevel || 1;
 
-  // 建立對話數據結構（第 1 句為背景紀實，無立繪；第 2 句為將領對話，自帶立繪）
-  const scripts = [
-    { name: "背景紀實", text: currentCfg.story, img: "" },
-    { name: currentCfg.speaker, text: currentCfg.dialogue, img: currentCfg.imgUrl }
-  ];
-
-  // 劇本播完後的 Callback 函數：一字不差發送 INIT_GAME 給原本的動作分發器
-  const startGameplay = () => {
-    if (window.ActionDispatcher && window.ActionDispatcher.dispatch) {
+  // 📥 對接全新視覺小說劇場
+  if (window.storyModule && window.storyModule.loadStage) {
+    window.storyModule.loadStage(currentLvl, () => {
       window.ActionDispatcher.dispatch('INIT_GAME');
-    }
-  };
-
-  // 喚醒視覺小說攔截線
-  StoryMode.showVisualNovelStory(scripts, startGameplay);
-};
-
-// 📥 全域點擊劇情前進調度器
-window.vnNextDialogue = function() {
-  window.vnIndex++;
-
-  // 如果對話全部播完了，用 GSAP 淡出劇情圖層並開啟正式對局
-  if (window.vnIndex >= window.vnScripts.length) {
-    const layer = document.getElementById('story-layer');
-    gsap.to(layer, {
-      opacity: 0, 
-      duration: 0.5, 
-      onComplete: () => {
-        layer.style.display = "none";
-        if (typeof window.vnCallback === 'function') {
-          window.vnCallback();
-        }
-      }
     });
-    return;
-  }
-
-  const currentScript = window.vnScripts[window.vnIndex];
-  const nameTag = document.getElementById('vn-name-tag');
-  const dialogueText = document.getElementById('vn-dialogue-text');
-  const charWrapper = document.getElementById('vn-character');
-  const charImg = document.getElementById('vn-character-img');
-
-  // 更新名字與立繪定位
-  nameTag.innerText = currentScript.name;
-  if (currentScript.img) {
-    charImg.src = currentScript.img;
-    charWrapper.style.display = 'flex';
-    
-    // 說話時利用 GSAP 做出場或微微跳動的效果
-    gsap.fromTo(charWrapper, 
-      { y: 0 }, 
-      { y: -10, duration: 0.1, yoyo: true, repeat: 1, ease: "power1.inOut" }
-    );
   } else {
-    charWrapper.style.display = 'none'; // 「背景紀實」模式不顯示立繪
+    window.ActionDispatcher.dispatch('INIT_GAME');
   }
-
-  // 【GSAP 應用：打字機效果】
-  if (window.vnTypingTween) window.vnTypingTween.kill();
-  dialogueText.innerText = "";
-  
-  let textObj = { charCount: 0 };
-  window.vnTypingTween = gsap.to(textObj, {
-    charCount: currentScript.text.length,
-    duration: Math.max(0.4, currentScript.text.length * 0.04), // 動態字速
-    ease: "none",
-    onUpdate: () => {
-      dialogueText.innerText = currentScript.text.substr(0, Math.ceil(textObj.charCount));
-    }
-  });
 };
