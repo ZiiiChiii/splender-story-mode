@@ -148,7 +148,7 @@ html, body {
 
 .diff-setting-box { display: grid; grid-template-columns: repeat(2, 1fr); gap: 6px; margin: 10px 0; }
 
-/* ── 【安全隔離修正區】 ── */
+/* ── 【隔離與滑鼠事件強制響應區】 ── */
 .diff-opt-btn { padding: 8px 4px; font-size: 0.75rem; font-weight: 700; background: #1a1410; border: 1px solid #4a3a30; color: var(--text-muted); border-radius: 4px; cursor: pointer; transition: all 0.2s ease; }
 #story-map-modal .diff-opt-btn { pointer-events: auto !important; }
 .action-panel .token-btn { pointer-events: auto !important; }
