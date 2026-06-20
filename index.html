@@ -1,0 +1,242 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover" />
+<title>璀璨寶石 — 皇家大會堂 (核心分離擴充版)</title>
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@700;900&family=Orbitron:wght@700;900&family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
+
+<link rel="stylesheet" href="style.css">
+
+<script src="https://cdn.jsdelivr.net/npm/gsap@3.12.5/dist/gsap.min.js"></script>
+</head>
+<body>
+
+<audio id="bg-music" src="https://assets.mixkit.co/music/785/785.mp3" loop></audio>
+<audio id="sfx-gem" src="https://assets.mixkit.co/active_storage/sfx/2003/2003-preview.mp3"></audio>
+<audio id="sfx-buy" src="https://assets.mixkit.co/active_storage/sfx/1999/1999-preview.mp3"></audio>
+<audio id="sfx-reserve" src="https://assets.mixkit.co/active_storage/sfx/3175/3175-preview.mp3"></audio>
+<audio id="sfx-select" src="https://assets.mixkit.co/active_storage/sfx/2073/2073-preview.mp3"></audio>
+<audio id="sfx-unselect" src="https://assets.mixkit.co/active_storage/sfx/2585/2585-preview.mp3"></audio>
+<audio id="sfx-noble-male" src="https://files.catbox.moe/q5v1cb.mp3"></audio>
+<audio id="sfx-noble-female" src="https://files.catbox.moe/fjlwtl.mp3"></audio>
+
+<audio id="sfx-ach-easy" src="https://assets.mixkit.co/active_storage/sfx/253/253-preview.mp3"></audio>
+<audio id="sfx-ach-normal" src="https://assets.mixkit.co/active_storage/sfx/2058/2058-preview.mp3"></audio>
+<audio id="sfx-ach-hard" src="https://assets.mixkit.co/active_storage/sfx/2067/2067-preview.mp3"></audio>
+<audio id="sfx-ach-expert" src="https://assets.mixkit.co/active_storage/sfx/2063/2063-preview.mp3"></audio>
+<audio id="sfx-ach-master" src="https://assets.mixkit.co/active_storage/sfx/2059/2059-preview.mp3"></audio>
+
+<div class="shell">
+  <div class="top-meta-wrap">
+    <header class="header">
+      <h1 class="game-title">SPLENDOR</h1>
+    </header>
+    <div class="status-bar">
+      <div class="status-pill" id="turn-owner-indicator" style="display:none; border-color:#ffcc00; font-weight:700;">👤 玩家回合</div>
+      <button class="music-btn" style="border-color:#2ecc71; color:#2ecc71;" onclick="playUniformSfx(); saveCurrentProgress()">💾 保存進度</button>
+      <button class="music-btn" style="border-color:#d4af37" onclick="playUniformSfx(); openGameOptionsModal()">⚙️ 遊戲選項</button>
+      <div class="status-pill">回合 <strong id="turn-txt">0</strong></div>
+      <div class="status-pill">威望 <strong id="score-txt" style="color:#e6b464; text-shadow: var(--glow-warm);">0</strong> / 15</div>
+    </div>
+  </div>
+
+  <div class="achievement-banner" id="ach-banner-btn" onclick="playUniformSfx(); openAchievementHistory()">
+    <div class="ach-latest-container">
+      <span class="ach-badge-title">Latest Achievement</span>
+      <div class="ach-latest-display" id="ach-latest-field">🏆 暫無新成就，繼續努力收購！</div>
+    </div>
+    <div class="ach-stats-summary" id="ach-stats-field" style="display:none;">0 / 30</div>
+  </div>
+
+  <section class="nobles-section" id="guide-nobles">
+    <div class="nobles-grid" id="nobles-layer"></div>
+  </section>
+
+  <div class="dashboard-container" id="guide-dashboard">
+    <section class="dashboard" style="display: flex; flex-direction: column; gap: 4px;">
+      <div id="player-dashboard-title" style="font-size:0.55rem; color:#ffe099; font-weight:700; display:none;">👤 玩家金庫</div>
+      <div class="res-grid" id="res-layer"></div>
+      <div class="cap-bar" id="cap-txt">背包: 0 / 10</div>
+      
+      <div id="ai-dashboard-box" style="display:none; border-top:1px dashed rgba(255,255,255,0.1); padding-top:4px; margin-top:2px;">
+        <div style="font-size:0.55rem; color:#e74c3c; font-weight:700; margin-bottom:2px;">🤖 電腦 AI 金庫 (分數: <span id="ai-score-txt">0</span>)</div>
+        <div class="res-grid" id="ai-res-layer"></div>
+      </div>
+    </section>
+    
+    <section class="earned-nobles-panel">
+      <div class="assistant-subpanel">
+        <div class="earned-nobles-title" style="color: #ffe099;">🤝 首席輔助官</div>
+        <div id="assistant-display-layer" style="display: flex; align-items: center; gap: 6px; padding-top: 4px;">
+          <p style="font-size:0.55rem; color:var(--text-muted); padding:4px 0;">孤軍奮戰中</p>
+        </div>
+      </div>
+      
+      <div class="earned-nobles-title">👑 已拜訪的貴族</div>
+      <div class="earned-nobles-list" id="earned-nobles-layer">
+        <p style="font-size:0.55rem; color:var(--text-muted); padding: 4px 0;">尚無貴族拜訪</p>
+      </div>
+    </section>
+  </div>
+
+  <section class="action-panel" id="guide-actions">
+    <div class="action-row">
+      <div class="act-group">
+        <p class="action-title">🟢 拿 3 個 different 色籌碼</p>
+        <div class="token-selectors" id="diff-selectors"></div>
+        <button class="btn-primary" id="btn-do-diff" disabled onclick="handleDoDiffClick()">確認收下 (3色)</button>
+      </div>
+      <div class="act-group">
+        <p class="action-title">🟡 拿 2 個同色籌碼</p>
+        <div class="token-selectors" id="same-selectors"></div>
+        <button class="btn-primary" id="btn-do-same" disabled onclick="handleDoSameClick()">確認收下 (2色)</button>
+      </div>
+    </div>
+    <div class="msg-box" id="error-msg"></div>
+  </section>
+
+  <div class="matrix-reserved-wrapper">
+    <section class="board-matrix" id="guide-matrix">
+      <div class="board-row">
+        <div class="row-header lv3">
+          <span class="section-title" style="color:#d4af37; font-weight:700;">頂級物業 (Lv3)</span>
+          <span class="deck-count" id="deck-lv3-txt">剩餘: 0</span>
+        </div>
+        <div class="grid-4" id="row-lv3"></div>
+      </div>
+      
+      <div class="board-row">
+        <div class="row-header lv2">
+          <span class="section-title" style="color:#b0b5b8; font-weight:700;">中階產業 (Lv2)</span>
+          <span class="deck-count" id="deck-lv2-txt">剩餘: 0</span>
+        </div>
+        <div class="grid-4" id="row-lv2"></div>
+      </div>
+
+      <div class="board-row">
+        <div class="row-header lv1">
+          <span class="section-title" style="color:#a1704a; font-weight:700;">基礎礦脈 (Lv1)</span>
+          <span class="deck-count" id="deck-lv1-txt">剩餘: 0</span>
+        </div>
+        <div class="grid-4" id="row-lv1"></div>
+      </div>
+    </section>
+
+    <section class="reserved-section" id="guide-reserved">
+      <p class="section-title" style="color:#d4af37">🔒 保密保留區</p>
+      <div class="grid-4" id="reserved-layer"></div>
+    </section>
+  </div>
+</div>
+
+<div class="modal-overlay" id="game-options-modal">
+  <div class="modal" style="max-width:460px;">
+    <h2 class="modal-title">⚙️ 皇家貿易商會選項</h2>
+    <p style="font-size:0.8rem; color:var(--text-muted); margin-bottom:10px;">調配您的經商偏好與對局模式</p>
+
+    <p style="font-size:0.75rem; color:#ffe099; text-align:left; font-weight:700; margin-top:4px;">🎮 模式切換 (切換將直接重開新對局)：</p>
+    <div style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 6px; margin: 4px 0 10px 0;">
+      <button class="diff-opt-btn" id="mode-btn-single" onclick="playUniformSfx(); ActionDispatcher.dispatch('SWITCH_MODE', { mode: 'singlePlayer' })">🏆 成就大師</button>
+      <button class="diff-opt-btn" id="mode-btn-ai" onclick="playUniformSfx(); ActionDispatcher.dispatch('SWITCH_MODE', { mode: 'vsAI' })">🤖 帝國爭霸</button>
+      <button class="diff-opt-btn" id="mode-btn-story" style="border-color:#2ecc71;" onclick="playUniformSfx(); import('./core/storyMode.js').then(m => m.StoryMode.openStoryMapModal())">📜 故事戰役</button>
+    </div>
+
+    <div class="menu-grid-layout" style="margin-top: 12px;">
+      <button id="menu-toggle-music" class="menu-row-btn" onclick="playUniformSfx(); handleMusicToggle()">🎵 背景音樂：開啟</button>
+      <button id="menu-toggle-sfx" class="menu-row-btn" onclick="playUniformSfx(); handleSfxToggle()">🔊 遊戲音效：開啟</button>
+      <button class="menu-row-btn" style="border-color:#ffe099;" onclick="playUniformSfx(); openTalentPoolModal()">🏛️ 挑選首席輔助官 (人才庫)</button>
+    </div>
+    
+    <button class="btn-replay" style="background:#3a2e22; border:1px solid #d4af37;" onclick="playUniformSfx(); closeGameOptionsModal()">返回大會堂</button>
+  </div>
+</div>
+
+<div class="modal-overlay" id="talent-pool-modal">
+  <div class="modal" style="max-width:460px;">
+    <h2 class="modal-title">🏛️ 皇家貴族人才庫</h2>
+    <p style="font-size:0.8rem; color:var(--text-muted); margin-bottom:10px;">點擊選定一位作為下一局的「首席輔助官」</p>
+    
+    <div class="talent-pool-modal-grid" id="talent-pool-modal-layer"></div>
+    <p style="font-size:0.65rem; color:#e67e22; margin-top:6px;">* 提示：新設定的首席輔助官將在重開新局時正式隨行效忠！</p>
+    
+    <button class="btn-replay" onclick="playUniformSfx(); closeTalentPoolModal()">儲存並關閉</button>
+  </div>
+</div>
+
+<div class="modal-overlay" id="tutorial-start-modal">
+  <div class="modal" style="max-width: 480px; max-height: 90vh; overflow-y: auto;">
+    <span style="font-size:2.2rem;">📜</span>
+    <h2 class="modal-title">皇家大會堂：貿易法則</h2>
+    
+    <div class="rule-box">
+      <div class="rule-title">👑 1. 遊戲目標</div>
+      <p style="margin-bottom: 12px; color:#c7bfb5;">精明地調配資源，透過募集籌碼與收購產業卡，**最先在 28 回合內累積達到 15 分威望值** 的工藝大師將獲得最終勝利！</p>
+      
+      <div class="rule-title">🔄 2. 核心遊戲流程 (每回合步驟)</div>
+      <div class="rule-step"><strong>執行動作 (三選一)：</strong></div>
+      <p style="margin-left: 14px; font-size:0.8rem; color:var(--text-muted); margin-bottom:4px;">• 獲得 3 顆 different 顏色的寶石籌碼</p>
+      <p style="margin-left: 14px; font-size:0.8rem; color:var(--text-muted); margin-bottom:4px;">• 獲得 2 顆相同顏色的寶石籌碼 (庫存需為 2 顆以上)</p>
+      <p style="margin-left: 14px; font-size:0.8rem; color:var(--text-muted); margin-bottom:10px;">• 支付相應代價 <strong>購買</strong> 或 <strong>保留</strong> 一張發展卡</p>
+      
+      <div class="rule-title">🔄 3. 貴族檢定與隨機規則</div>
+      <p style="font-size:0.8rem; color:var(--text-muted); margin-bottom:12px; line-height:1.5;">每局遊戲由議事堂隨機委派 3 位領主貴族出席。當發展卡累積達到領主所需的永久產量時，貴族會前來拜訪並贈予 3 分威望！</p>
+    </div>
+
+    <button class="btn-replay" id="btn-start-field-tutorial" onclick="playUniformSfx(); startFloatingTutorial();">進入交易大會堂</button>
+  </div>
+</div>
+
+<div class="modal-overlay" id="welcome-back-modal">
+  <div class="modal">
+    <span style="font-size:2.5rem;">💎</span>
+    <h2 class="modal-title" style="letter-spacing: 0.05em;">璀璨寶石交易殿堂</h2>
+    <p style="font-size:0.95rem; color:#ffe099; line-height:1.6; font-weight:600; margin: 15px 0;">歡迎進入璀璨寶石交易殿堂！</p>
+    <p style="font-size:0.82rem; color:var(--text-muted); line-height:1.5; margin-bottom:10px;">皇家對局已鎖定 28 回合終點線。祝您在今日的貿易戰局中奪得最高榮譽。</p>
+    <button class="btn-replay" id="btn-welcome-confirm" onclick="playUniformSfx(); hideWelcomeModal();">開啟音樂並進入遊戲</button>
+  </div>
+</div>
+
+<div id="floating-tutorial-widget" style="display: none; position: fixed; bottom: 20px; left: 50%; transform: translateX(-50%); width: 90%; max-width: 420px; background: rgba(18, 14, 11, 0.98); border: 2px solid #ffcc00; border-radius: 8px; box-shadow: 0 10px 30px rgba(0,0,0,0.85); z-index: 9999; padding: 15px; text-align: left; animation: embedFadeIn 0.3s ease-out;">
+  <div id="floating-tutorial-widget-header" style="font-family: 'Cinzel', serif; font-size: 1.05rem; color: #ffcc00; font-weight: 900; margin-bottom: 6px; letter-spacing: 0.05em; text-shadow: 0 1px 2px #000;"></div>
+  <div id="floating-tutorial-text" style="font-size: 0.85rem; color: #ffffff; line-height: 1.5; margin-bottom: 12px; font-weight: 500;"></div>
+  <div style="display: flex; justify-content: space-between; align-items: center;">
+    <div id="floating-tutorial-dots" style="display: flex; gap: 5px;"></div>
+    <button id="floating-tutorial-next-btn" class="btn-tutorial-next" onclick="playUniformSfx(); nextFloatingStep();">下一步</button>
+  </div>
+</div>
+
+<div class="modal-overlay" id="ach-history-modal-container" onclick="if(event.target===this){ playUniformSfx(); closeAchievementHistory(); }">
+  <div class="modal ach-modal">
+
+    <div class="ach-modal-header">
+      <h2 class="modal-title">⚜️ 皇家榮譽堂</h2>
+      <div class="ach-stats-summary" id="ach-stats-field" style="display:none;"></div>
+      <button class="music-btn" onclick="playUniformSfx(); closeAchievementHistory();">✕ 關閉</button>
+    </div>
+
+    <div class="ach-scroll-body" id="ach-matrix-injector">
+      </div>
+
+  </div>
+</div>
+
+<div class="modal-overlay" id="win-modal">
+  <div class="modal">
+    <span style="font-size:2.5rem;" id="win-modal-icon">🏆</span>
+    <h2 class="modal-title" id="win-modal-title">璀璨大師，實至名歸！</h2>
+    <p style="font-size:0.85rem; color:var(--text-muted); line-height:1.6; margin-bottom:8px;" id="modal-body-txt"></p>
+    <p style="font-size:0.8rem; color:#ffe099; line-height:1.4;" id="modal-diff-result-txt"></p>
+    <div style="display:flex; gap:8px; margin-top:12px; justify-content:center;">
+      <button class="btn-replay" id="btn-restart" onclick="playUniformSfx(); restartGame();">重開新局</button>
+    </div>
+  </div>
+</div>
+
+<div id="effects-layer" style="position:fixed; inset:0; pointer-events:none; z-index:9999;"></div>
+
+<script src="game.js" type="module"></script>
+</body>
+</html>
