@@ -57,7 +57,7 @@ async function loadCoreModules() {
 
   window.ActionDispatcher = ActionDispatcher;
   window.SingleMode = SingleMode;
-  window.StoryMode = storyMod.StoryMode; // 確保將 StoryMode 物件掛載全域
+  window.StoryMode = storyMod.StoryMode; 
   window.STORY_MISSIONS = levelsMod.STORY_MISSIONS; 
   
   storyMod.StoryMode.loadStoryProgress();
@@ -273,20 +273,18 @@ window.render = function() {
   document.getElementById('ai-dashboard-box').style.display = isvsAI ? 'block' : 'none';
   document.getElementById('player-dashboard-title').style.display = isvsAI ? 'block' : 'none';
   
-  // ─── 🛡️ 【解耦安全修復】：多功能動態橫幅（防止因舊節點遺失導致 null 指針異常） ───
+  // ─── 🛡️ 【解耦渲染核心修正】：完全使用動態橫幅對接，防範 null 報錯 ───
   const bannerZone = document.getElementById('dynamic-banner-zone');
   const bannerBadge = document.getElementById('dynamic-banner-badge');
   const bannerText = document.getElementById('dynamic-banner-text');
 
   if (bannerZone && bannerBadge && bannerText) {
     if (isvsAI) {
-      // 狀態 2 (電腦對戰)：完全隱藏成就欄，騰出垂直視野
       bannerZone.style.display = 'none';
     } else {
       bannerZone.style.display = 'flex';
       
       if (isSingleMode) {
-        // 狀態 1 (單人模式)：成就欄顯示最新已達成的成就入口
         bannerBadge.textContent = "榮譽成就";
         bannerBadge.style.backgroundColor = 'rgba(230, 126, 34, 0.2)';
         bannerBadge.style.borderColor = '#e67e22';
@@ -298,7 +296,6 @@ window.render = function() {
         bannerText.innerHTML = `🏆 當前已斬獲 <span style="color:#ffcc00; font-weight:800;">${unlCount} / 30</span> 項皇家勳章！<span style="color:var(--text-muted); font-size:0.55rem; margin-left:6px;">[ 💡 點此可開啟榮譽堂查看完整清單 ]</span>`;
         
       } else if (isStoryMode) {
-        // 狀態 3 (故事模式)：改成當前關卡名稱與特殊條件顯示，點擊開啟選關地圖
         const currentLvl = fullState.storyProgress?.currentLevel || 1;
         const mission = window.STORY_MISSIONS ? window.STORY_MISSIONS[currentLvl - 1] : null;
         
@@ -308,17 +305,34 @@ window.render = function() {
           bannerBadge.style.backgroundColor = 'rgba(212, 175, 55, 0.2)';
           bannerBadge.style.borderColor = '#d4af37';
           
-          let conditionText = mission.dialogue || '';
-          if (fullState.storyTracker && mission.winCondition.type === 'score_and_reserve_buy') {
-            conditionText += ` <span style="color:#2ecc71;">(契約收購進度: ${fullState.storyTracker.reservedBuys}/${mission.winCondition.minReservedBuys})</span>`;
-          } else if (fullState.storyTracker && mission.winCondition.type === 'score_and_free_buys') {
-            conditionText += ` <span style="color:#2ecc71;">(免籌碼收購進度: ${fullState.storyTracker.freeBuys}/${mission.winCondition.minFreeBuysRequired})</span>`;
-          } else if (fullState.storyTracker && mission.winCondition.type === 'high_score_and_tier3_count') {
-            const highCards = fullState.storyTracker.highPointCards || 0;
-            conditionText += ` <span style="color:#2ecc71;">(高階物業進度: ${highCards}/${mission.winCondition.requiredTier3CardsWithPoints4})</span>`;
+          let conditionText = mission.winCondition.targetScore ? `威望達到 ${mission.winCondition.targetScore} 分` : '特定條件';
+          if (mission.id === 2) conditionText = "達到15分，且紅寶石限制少於8顆";
+          if (mission.id === 3) conditionText = "達到15分，且保留並買下卡片達3次";
+          if (mission.id === 4) conditionText = "達到15分，且整局禁止使用黃金籌碼";
+          if (mission.id === 5) conditionText = "達到15分，且通關時5色卡片數量皆 >= 2張";
+          if (mission.id === 7) conditionText = "達到15分，且任何回合結束時背包籌碼不超過6顆";
+          if (mission.id === 8) conditionText = "達到15分，且整局禁止購買任何Lv1發展卡";
+          if (mission.id === 9) conditionText = "達到15分，且最終名下只能有黑與白卡";
+          if (mission.id === 10) conditionText = "達到15分，且通關時手上持有至少4枚黃金籌碼";
+          if (mission.id === 13) conditionText = "最終分數必須「剛好等於 15 分」，超分算輸";
+          if (mission.id === 15) conditionText = "達到15分，且至少3次買卡是「完全沒消耗籌碼」";
+          if (mission.id === 16) conditionText = "不限分數，率先獲得 3 位貴族拜訪即可通關";
+          if (mission.id === 17) conditionText = "通關那一回合，必須同時獲得卡片分與貴族分";
+          if (mission.id === 18) conditionText = "擊敗侵略型 AI，且整局玩家獲得的貴族分必須為 0";
+          if (mission.id === 19) conditionText = "達20分，移除Lv1卡，且有名下至少3張>=4分的卡";
+          if (mission.id === 20) conditionText = "達到15分，且系統每過 5 個回合隨機扣2枚籌碼";
+          if (mission.id === 21) conditionText = "達15分，且銀行普通籌碼初始庫存全為 0";
+          if (mission.id === 22) conditionText = "擊敗高級AI（開局AI自帶8分與4張隨機Lv2卡）";
+          if (mission.id === 23) conditionText = "威望達20分，且通關時5種顏色永久減免皆 >= 3";
+          if (mission.id === 25) conditionText = "威望達到 25 分，且成功吸引至少 2 位貴族進駐";
+
+          if (fullState.storyTracker && mission.id === 3) {
+            conditionText += ` <span style="color:#2ecc71;">(當前進度: ${fullState.storyTracker.reservedBuys}/3)</span>`;
+          } else if (fullState.storyTracker && mission.id === 15) {
+            conditionText += ` <span style="color:#2ecc71;">(當前進度: ${fullState.storyTracker.freeBuys}/3)</span>`;
           }
           
-          bannerText.innerHTML = `<span style="color:#ffe099; font-weight:800;">⚔️【${mission.name}】</span> ${conditionText} <span style="color:#ffcc00; font-size:0.55rem; margin-left:6px;">[ 🗺️ 點此可自由切換戰役關卡 ]</span>`;
+          bannerText.innerHTML = `<span style="color:#ffe099; font-weight:800;">⚔️【${mission.name}】</span> 目標：${conditionText} <span style="color:#ffcc00; font-size:0.55rem; margin-left:6px;">[ 🗺️ 點此可自選或重挑關卡 ]</span>`;
         } else {
           bannerText.textContent = "📜 故事戰役檔案加載中...";
         }
@@ -549,7 +563,6 @@ function setupIdleCardAnimations() {
   }
 }
 
-// ─── 【安全跨模組全域點擊事件分發代理】 ───
 window.handleBannerZoneClick = function() {
   if (!CoreState) return;
   playUniformSfx();
@@ -607,6 +620,132 @@ window.toggleSelectSame = function(color) {
     playUniformSfx();
   }
   render();
+};
+
+// ==========================================
+// 📥 封裝全25關完整的視覺小說動畫模組
+// ==========================================
+window.storyModule = {
+    gameStages: {
+        1: { chapter: "👑 第一章：微光村的石匠（第 1 - 5 關）", title: "第 1 關：初入礦脈", bg: "微光村的後山藏著廢棄的紅岩礦床。老內政官傑洛米提著油燈攔住你，不屑地看著你手中的劣質鑿子，要你證明基本的經商手段。", condition: "25回合內威望達到15分（無AI）", name: "內政官 傑洛米", text: "年輕人，這片紅岩礦不歡迎空有熱血的傻瓜。在 25 回合內拿到 15 分，我就承認你是個合格的學徒。" },
+        2: { chapter: "👑 第一章：微光村的石匠（第 1 - 5 關）", title: "第 2 關：稅率與翡翠", bg: "你帶著紅寶石敲開了鎮公所的大門。刻薄的財政卿薇多莉亞正為當季的綠寶石稅收發愁，她決定用高額的稅率刁難你這個外來者。", condition: "達到15分，且紅寶石籌碼拿取/使用少於8顆", name: "財政卿 薇多莉亞", text: "噢？聽說傑洛米看好你？但我的帳本只認實力。這局你的紅寶石籌碼被課了重稅，少用點紅寶石，拿到 15 分給我看！" },
+        3: { chapter: "👑 第一章：微光村的石匠（第 1 - 5 關）", title: "第 3 關：鐵血的訂單", bg: "守備隊的赫克特騎士需要大量黑曜石來打造新兵的重甲。然而市場上的黑曜石被全面封鎖，你必須學會利用「保留契約」暗中囤積。", condition: "達到15分，且成功執行「保留並買下」至少3次", name: "鐵血騎士 赫克特", text: "商會那群禿鷹把黑曜石的合約藏得死死的！小傢伙，用你的保密合約（保留卡牌）幫我截獲 3 張高級產業，軍隊少不了你的好處！" },
+        4: { chapter: "👑 第一章：微光村的石匠（第 1 - 5 關）", title: "第 4 關：聖光的試煉", bg: "地方教堂正要修繕白璧聖堂，聖騎士羅蘭德負責監督。他要求這批寶石必須色澤純淨，不允許任何投機取巧的黃金假人參雜其中。", condition: "達到15分，且整局禁止使用黃金籌碼", name: "聖騎士 羅蘭德", text: "光明不容虛假。聽聞你精通商道，但這一次，我不許你在交易中使用任何一枚投機的黃金籌碼。純靠實力來見我吧。" },
+        5: { chapter: "👑 第一章：微光村的石匠（第 1 - 5 關）", title: "第 5 關：王后的深藍生辰", bg: "微光村迎來了微服出巡的桂妮薇兒王后。她聽聞了你的名聲，指名要見識一下五色俱全的「基礎寶石交響曲」，作為她的生辰賀禮。", condition: "達到15分，且通關時5色卡片數量皆 >= 2張", name: "璀璨王后 桂妮薇兒", text: "絢麗的頂級物業固然耀眼，但真正的大師能把底層的基礎原石搭配得完美無瑕。孩子，讓我看看你的基本功。" },
+        6: { chapter: "🦁 第二章：橡木鎮的崛起商賈（第 6 - 10 關）", title: "第 6 關：雄獅的胃口", bg: "橡木鎮的領主亞瑟子爵是一位野心勃勃的擴張主義者。他舉辦了一場商賈晚宴，限時讓所有人交出成績單，只有最快拿到分數的人才能留下。", condition: "限制20回合內威望達到15分", name: "帝國雄獅 亞瑟", text: "我的軍隊每天都在燒錢，商會不需要慢吞吞的牛車！20 回合內拿不下 15 分的人，就給我滾出橡木鎮！" },
+        7: { chapter: "🦁 第二章：橡木鎮的崛起商賈（第 6 - 10 關）", title: "第 7 關：暗夜的密盟", bg: "黑市的影子統治者查理曼在暗巷攔住了你。他看中了你的潛力，但也警告你，手上的財富太過招搖會引來殺身之禍，必須輕裝上陣。", condition: "達到15分，且任何回合結束時背包籌碼不超過6顆", name: "密盟密使 查理曼", text: "小傢伙，聽說亞瑟給了你特權？但在黑市，胃口太大只會撐死。把你的隨身錢包縮小，拿滿 15 分給我看看。" },
+        8: { chapter: "🦁 第二章：橡木鎮的崛起商賈（第 6 - 10 關）", title: "第 8 關：火山重工的訂單", bg: "鎮上唯一的傳奇鐵匠瓦肯正在打造皇家聖器。他脾氣火爆，拒絕收購任何低階的碎石卡片，他只要最高階的物業投資。", condition: "達到15分，且整局禁止購買任何Lv1發展卡", name: "傳奇鐵匠 瓦肯", text: "別拿那些 Lv1 的破爛玩意來髒了我的鐵匠鋪！想跟我做生意，就純靠高級產業（Lv2/Lv3）把分數湊到 15 分！" },
+        9: { chapter: "🦁 第二章：橡木鎮的崛起商賈（第 6 - 10 關）", title: "第 9 關：雙色協奏曲", bg: "宮廷樂長塞巴斯蒂安來到鎮上尋找靈感。他認為經商就如同拉琴，講究雙音的和諧，他要求你的資產必須呈現完美的雙色極致。", condition: "達到15分，且最終名下只能有黑與白卡", name: "大提琴家 塞巴斯蒂安", text: "雜亂的顏色是噪音。這局遊戲，我只要看到你發展黑與白（k 與 w）的產業，其餘顏色的卡片不准出現在你的名下。" },
+        10: { chapter: "🦁 第二章：橡木鎮的崛起商賈（第 6 - 10 關）", title: "第 10 關：沙漠商隊的門檻", bg: "來自遙遠絲路的阿里帶著巨大的駱駝商隊駐紮在鎮外。他見過無數大風大浪，普通的財富根本打動不了他，只有金光閃閃的黃金能讓他多看一眼。", condition: "達到15分，且通關時手上持有至少4枚黃金籌碼", name: "異域商賈 阿里", text: "我的駱駝馱滿了香料與翡翠。年輕人，聽說你最近很風光？如果你能不靠那些花花綠綠的石頭，光靠黃金鋪路拿下 15 分，我就與你簽約。" },
+        11: { chapter: "🌲 第三章：巨石要塞的邊境商戰（第 11 - 15 關）", title: "第 11 關：占星師的金融風暴", bg: "巨石要塞遭遇了星象異變，引發了強烈的信用通膨。占星師露娜封鎖了銀行的實體籌碼，你必須學會「空手套白狼」的永續鏈。", condition: "25回合內達到15分（銀行普通籌碼初始全為2顆）", name: "皇家占星師 露娜", text: "星辰預示著匱乏。這一局，銀行的每種普通籌碼庫存都只有 2 顆！你必須依賴你以前累積的產業減免，才能活下去。" },
+        12: { chapter: "🌲 第三章：巨石要塞的邊境商戰（第 11 - 15 關）", title: "第 12 關：鍊金術的對決", bg: "要塞裡的科學家帕拉塞爾斯不相信凡人的經商手段，他研發了一個能自動計算最優解的「鍊金傀儡 AI」。你必須在商戰中擊敗他的造物。", condition: "與初階 AI 對決並獲得勝利（比AI先達15分）", name: "鍊金術師 帕拉塞爾斯", text: "真理只存在於算式中。我的自動傀儡會搶走所有高價值的卡牌。來吧，在它將你吞噬之前，先拿到 15 分！" },
+        13: { chapter: "🌲 第三章：巨石要塞的邊境商戰（第 11 - 15 關）", title: "第 13 關：地下領主的黃金稅", bg: "矮人國王索林統治著要塞底部的金庫。他是一個不折不扣的守財奴，他宣布所有買卡的交易都必須支付昂貴的黃金手續費。", condition: "最終分數必須「剛好等於 15 分」，超過直接算輸", name: "地下領主 索林", text: "想在我的地盤買卡？沒問題！但每張卡你都必須額外支付黃金，除非你能展現驚人的精算，讓最終分數剛好完美符合我的幸運數字！" },
+        14: { chapter: "🌲 第三章：巨石要塞的邊境商戰（第 11 - 15 關）", title: "第 14 關：遊俠的森林限速", bg: "邊境森林遭遇敵襲，精靈遊俠萊戈拉斯奉命戒嚴。他封鎖了林道，留給物資商人的時間轉瞬即逝，你必須發動一場閃電戰。", condition: "極限挑戰！16 回合內威望達到 15 分", name: "精靈遊俠 萊戈拉斯", text: "戰爭不等人，人類。我只給你 16 個回合的時間。如果 16 回合內你無法湊齊軍需（15分），我的箭不會留情。" },
+        15: { chapter: "🌲 第三章：巨石要塞的邊境商戰（第 11 - 15 關）", title: "第 15 關：聖女的奇蹟信譽", bg: "戰火逼近要塞，人心惶惶。聖女貞德在前線振臂高呼，她要求你展現大商賈的氣魄——不消耗任何一枚實體籌碼，光靠你之前累積的產業信用買下卡牌。", condition: "達到15分，且至少3次買卡是「完全沒消耗籌碼」", name: "聖女 貞德", text: "戰士們需要實體寶石當作重鑄武器的原料！商人，證明你的名譽吧，光靠你名下的實業減免，免費收購 3 張卡片給我看！" },
+        16: { chapter: "⚜️ 第四章：翡翠首都的宮廷商戰（第 16 - 20 關）", title: "第 16 關：外交官的引薦信", bg: "想要進入皇家大會堂，必須拿到外交官麥特尼的引薦信。這位政客不看你的錢袋，他只看你名下吸引了多少位封建貴族的認可。", condition: "不限分數，率先獲得 3 位貴族拜訪即可通關", name: "帝國外交官 麥特尼", text: "在首都，滿手銅臭是最下等的。想要我的引薦信？去招攬 3 位貴族老爺來為你的商號背書吧，分數我不在乎。" },
+        17: { chapter: "⚜️ 第四章：翡翠首都的宮廷商戰（第 16 - 20 關）", title: "第 17 關：伯爵夫人的晚宴", bg: "卡蜜拉夫人在她的奢華莊園舉辦了社交晚宴。她喜歡戲劇性的場面，要求前來競標的商賈必須在最後一刻端出令人震驚的龐大資產。", condition: "通關那一回合，必須同時獲得卡片分與貴族分", name: "宮廷伯爵夫人 卡蜜拉", text: "平淡的累積太無趣了。我要你在獲得最後勝利的那一回合，同時觸發卡片得分與貴族拜訪，那才是真正的璀璨藝術。" },
+        18: { chapter: "⚜️ 第四章：翡翠首都的宮廷商戰（第 16 - 20 關）", title: "第 18 關：黑市刺客的截胡", bg: "首都商會的巨頭派出了黑市刺客澤德來暗殺你的商譽。澤德會派出一名「侵略型 AI」，瘋狂保留或搶走你下一手最想買的卡片。", condition: "擊敗侵略型 AI，且整局玩家獲得的貴族分必須為 0", name: "影刃刺客 澤德", text: "你的每一步都在我的陰影凝視之下。聽說你擅長外交？很遺憾，這一局貴族們被我恐嚇了，你拿不到任何貴族分！" },
+        19: { chapter: "⚜️ 第四章：翡翠首都的宮廷商戰（第 16 - 20 關）", title: "第 19 關：新大陸的黃金潮", bg: "大航海家麥哲倫帶著海外殖民地的巨額財富歸國，引發了新一輪的壟斷潮。市場風向大變，所有低階 Lv1 卡片全部被海外物資沖垮。", condition: "達20分，移除Lv1卡，且有名下至少3張>=4分的卡", name: "大航海家 麥哲倫", text: "海洋帶來的财富超乎想像！小打小鬧的時代結束了，這局遊戲沒有 Lv1 卡片，且你必須拿下 3 張價值 4 分以上的頂級物業！" },
+        20: { chapter: "⚜️ 第四章：翡翠首都的宮廷商戰（第 16 - 20 關）", title: "第 20 關：大文豪的末日劇本", bg: "莎士比亞正在撰寫一部名為《資本崩盤》的悲劇。為了尋找靈感，他對你的商號施加了「命運詛咒」，每過數個回合，你的實體財富就會憑空蒸發。", condition: "達到15分，且系統每過 5 個回合隨機扣2枚籌碼", name: "大文豪 莎士比亞", text: "悲劇才是永恆。商人，在每 5 回合就會隨機被國庫充公 2 枚籌碼的絕境下，寫出逆流而上的傳奇史詩吧！" },
+        21: { chapter: "👑 第五章：皇家大會堂的璀璨至尊（第 21 - 25 關）", title: "第 21 關：聖殿騎士團的鐵腕", bg: "掌控帝國經濟命脈的聖殿騎士團長休擋在你的最終王座前。他用鐵腕政策實施了全面禁運，你無法再從銀行獲得任何普通籌碼。", condition: "達15分，且銀行普通籌碼初始庫存全為 0", name: "聖殿騎士團長 休", text: "聖殿金庫接管了市場！這一局，銀行不提供任何普通籌碼，你只能靠開局自帶的資金與保留卡牌獲得的黃金來運轉！" },
+        22: { chapter: "👑 第五章：皇家大會堂的璀璨至尊（第 21 - 25 關）", title: "第 22 關：先知的絕地殘局", bg: "先知卡珊德拉看穿了未來的命運。她擺下了一個你已經陷入破產邊緣、對手卻已經全面領先的「命運殘局」，考驗你是否有扭轉乾坤的器量。", condition: "擊敗高級AI（開局AI自帶8分與4張隨機Lv2卡）", name: "預言者 卡珊德拉", text: "命運已定，你已步入絕地。電腦 AI 開局便擁有 8 分與 4 張高階產業。逆風翻盤吧，撕碎這注定的悲劇！" },
+        23: { chapter: "👑 第五章：皇家大會堂的璀璨至尊（第 21 - 25 關）", title: "第 23 關：大魔導師的五色矩陣", bg: "帝國大賢者梅林在大會堂的中央布下了元素結界。他要求真正的璀璨大師不允許有任何一門學科偏科，必須達到五色均衡的極致。", condition: "威望達20分，且通關時5種顏色永久減免皆 >= 3", name: "大魔導師 梅林", text: "寶石即是元素。水火風雷土，偏廢任何一端都稱不上至尊。通關之時，我要看到你名下五種顏色的永久產量全部跨越界限！" },
+        24: { chapter: "👑 第五章：皇家大會堂的璀璨至尊（第 21 - 25 關）", title: "第 24 關：至高女皇的鐵腕對決", bg: "北方的至高女皇凱薩琳親臨大會堂。她不相信言辭，只崇尚絕對的統治力。她將親自下場，用毫無失誤的神級 AI 算法與你進行終極對決。", condition: "在 vsAI 模式中擊敗「神級 AI」", name: "帝國女皇 凱薩琳", text: "朕的帝國建立在鐵與血之上。面對朕親自操控的神級精算 AI，展現你最完美、不容許出錯的任何一個回合吧！" },
+        25: { chapter: "👑 第五章：皇家大會堂的璀璨至尊（第 21 - 25 關）", title: "第 25 關：皇家大會堂的終極加冕", bg: "大會堂的鐘聲響起，全體 24 位你曾擊敗並收服的夥伴列隊兩旁。王座之上，上一任璀璨至尊大師正靜靜地看著你，等待著你完成這場前無古人的 25 分傳奇加冕。", condition: "威望達到 25 分，且成功吸引至少 2 位貴族進駐", name: "璀璨至尊 大師", text: "從小村莊的石匠，到要塞的奇蹟，再到首都的商戰風雲。你已經集結了所有人才。來吧，超越我，成為新的璀璨至尊！" }
+    },
+    currentStageId: 1,
+    dialogueStep: 0, 
+    isTyping: false,
+    currentTween: null,
+    textObj: { charCount: 0 },
+    onStoryCompleteCallback: null,
+
+    loadStage(stageId, callback) {
+        if (!this.gameStages[stageId]) {
+            if (callback) callback();
+            return;
+        }
+        this.currentStageId = stageId;
+        this.dialogueStep = 0;
+        this.onStoryCompleteCallback = callback;
+
+        const layer = document.getElementById("story-layer");
+        layer.style.opacity = 1;
+        layer.style.display = "flex";
+
+        const stageData = this.gameStages[stageId];
+        document.getElementById("story-chapter-title").innerText = stageData.chapter + " - " + stageData.title;
+        document.getElementById("story-intro-panel").innerText = stageData.bg;
+        document.getElementById("story-condition-badge").innerText = "🏆 目標：" + stageData.condition;
+        
+        document.getElementById("story-char-img").src = `https://images.placeholders.dev/?width=320&height=520&text=No.${stageId}+${encodeURIComponent(stageData.name.split(' ')[1] || stageData.name)}&bgColor=%232c3e50&textColor=%23ffffff`;
+        this.animateCharacterIn();
+    },
+
+    animateCharacterIn() {
+        gsap.fromTo("#story-character", { x: -150, opacity: 0 }, { x: 0, opacity: 1, duration: 1, ease: "power2.out" });
+        this.renderDialogue();
+    },
+
+    renderDialogue() {
+        const stageData = this.gameStages[this.currentStageId];
+        let targetText = "";
+
+        if (this.dialogueStep === 0) {
+            document.getElementById('story-name-tag').innerText = stageData.name;
+            targetText = stageData.text;
+        } else {
+            document.getElementById('story-name-tag').innerText = "系統提示";
+            targetText = `本關挑戰目標：【${stageData.condition}】。準備好就點擊對話框開始挑戰吧！`;
+        }
+
+        if (this.dialogueStep === 0) {
+            gsap.fromTo("#story-character", { y: 0 }, { y: -15, duration: 0.1, yoyo: true, repeat: 1, ease: "power1.inOut" });
+        }
+
+        const textElement = document.getElementById('story-dialogue-text');
+        textElement.innerText = "";
+        this.isTyping = true;
+        this.textObj.charCount = 0;
+
+        this.currentTween = gsap.to(this.textObj, {
+            charCount: targetText.length,
+            duration: targetText.length * 0.04,
+            ease: "none",
+            onUpdate: () => {
+                textElement.innerText = targetText.substr(0, Math.ceil(this.textObj.charCount));
+            },
+            onComplete: () => {
+                this.isTyping = false;
+            }
+        });
+    },
+
+    nextDialogue() {
+        if (this.isTyping) {
+            if (this.currentTween) this.currentTween.progress(1);
+            return;
+        }
+        if (this.dialogueStep === 0) {
+            this.dialogueStep = 1;
+            this.renderDialogue();
+        } else {
+            this.endStory();
+        }
+    },
+
+    endStory() {
+        gsap.to("#story-layer", { 
+            opacity: 0, 
+            duration: 0.5, 
+            onComplete: () => {
+                document.getElementById("story-layer").style.display = "none";
+                if (typeof this.onStoryCompleteCallback === "function") {
+                    this.onStoryCompleteCallback();
+                }
+            }
+        });
+    }
 };
 
 window.handleMusicToggle = () => ActionDispatcher.dispatch('TOGGLE_MUSIC');
