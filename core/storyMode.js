@@ -62,6 +62,8 @@ export const StoryMode = {
       const isUnlocked = cfg.id <= maxUnlocked;
       const isCurrent = cfg.id === state.storyProgress.currentLevel;
       const activeClass = isCurrent ? 'active' : '';
+      
+      // 確保未解鎖的關卡才加上 disabled，已解鎖的完全開放點擊
       const disabledAttr = isUnlocked ? '' : 'disabled';
       const astCfg = ASSISTANTS_DATABASE[cfg.rewardAssistantId];
       const turnDisplay = cfg.setup.turnLimit >= 99 ? '無限' : cfg.setup.turnLimit;
@@ -69,7 +71,9 @@ export const StoryMode = {
 
       return `
         <button class="diff-opt-btn ${activeClass}" ${disabledAttr} 
-          style="text-align:left; padding:6px; display:flex; flex-direction:column; justify-content:space-between; opacity:${isUnlocked ? 1 : 0.25}; border-color:${isCurrent ? '#ffcc00' : '#4a3a30'};" 
+          style="text-align:left; padding:6px; display:flex; flex-direction:column; justify-content:space-between; 
+                 opacity:${isUnlocked ? 1 : 0.2}; pointer-events:${isUnlocked ? 'auto' : 'none'}; 
+                 border-color:${isCurrent ? '#ffcc00' : '#4a3a30'}; background:${isCurrent ? '#2d2219' : 'rgba(0,0,0,0.2)'};" 
           onclick="window.selectStoryLevel(${cfg.id})">
           <div style="font-weight:800; color:#ffe099; font-size:0.7rem; white-space:nowrap; text-overflow:ellipsis; overflow:hidden; width:100%;">第 ${cfg.id} 關 ${cfg.name} ${isCurrent ? '🎯' : ''}</div>
           <div style="font-size:0.58rem; color:#fff;">${scoreDisplay}分 / ${turnDisplay}回</div>
@@ -83,7 +87,7 @@ export const StoryMode = {
     modal.innerHTML = `
       <div class="modal" style="max-width:520px; max-height:85vh; display:flex; flex-direction:column; overflow:hidden; padding:16px;">
         <h2 class="modal-title">📜 皇家故事模式戰役</h2>
-        <p style="font-size:0.75rem; color:var(--text-muted); margin-bottom:6px;">點選下方格卡可重複挑戰同一關，或推進新章節</p>
+        <p style="font-size:0.75rem; color:var(--text-muted); margin-bottom:6px;">點選下方已解鎖的關卡格卡可切換或重複挑戰同一關</p>
         
         <div style="background:rgba(0,0,0,0.4); padding:10px; border-radius:4px; border:1px solid rgba(212,175,55,0.25); text-align:left; margin-bottom:8px;">
           <div style="font-size:0.75rem; font-weight:800; color:#d4af37; margin-bottom:2px;">【${currentMission.speaker}】：</div>
@@ -107,12 +111,16 @@ export const StoryMode = {
   }
 };
 
+// ─── 【確保全域暴露防範無法點擊】 ───
 window.selectStoryLevel = function(lvl) {
+  if (typeof window.playUniformSfx === 'function') window.playUniformSfx();
   CoreState.get().storyProgress.currentLevel = lvl;
   StoryMode.openStoryMapModal();
+  if (typeof window.render === 'function') window.render(); // 同步刷新主畫面的當前目標橫幅
 };
 
 window.startSelectedStoryLevel = function() {
+  if (typeof window.playUniformSfx === 'function') window.playUniformSfx();
   document.getElementById('story-map-modal').classList.remove('show');
   const modal = document.getElementById('game-options-modal');
   if (modal) modal.classList.remove('show');
