@@ -1,4 +1,5 @@
 // core/storyMode.js
+//
 import { CoreState } from './state.js';
 import { ASSISTANTS_DATABASE } from './assistantData.js';
 import { STORY_MISSIONS } from './missions/levelsData.js';
@@ -22,19 +23,29 @@ export const StoryMode = {
     }
   },
 
-  saveStoryProgress(completedLvl) {
+  saveStoryProgress(completedLvlId) {
     const s = CoreState.get().storyProgress;
-    if (completedLvl >= s.maxUnlockedLevel && s.maxUnlockedLevel < 25) {
-      s.maxUnlockedLevel = completedLvl + 1;
+    
+    // 【核心同步修復】：依據被攻克的唯一關卡 ID 推進最大解鎖進度
+    if (completedLvlId >= s.maxUnlockedLevel && s.maxUnlockedLevel < 25) {
+      s.maxUnlockedLevel = completedLvlId + 1;
     }
-    const nextAstId = `ast${completedLvl + 1}`;
-    if (completedLvl < 25 && !s.unlockedAssistantIds.includes(nextAstId)) {
+    
+    // 同步解鎖下一關的輔助官能力
+    const nextAstId = `ast${completedLvlId + 1}`;
+    if (completedLvlId < 25 && !s.unlockedAssistantIds.includes(nextAstId)) {
       s.unlockedAssistantIds.push(nextAstId);
     }
+    
     localStorage.setItem('splendor_story_progress_2026', JSON.stringify({
       maxUnlockedLevel: s.maxUnlockedLevel,
       unlockedAssistantIds: s.unlockedAssistantIds
     }));
+
+    // 【即時刷新機制】：如果解鎖地圖當前已開著，通關時即時重新渲染地圖上的按鈕樣式
+    if (document.getElementById('story-map-modal')?.classList.contains('show')) {
+      this.openStoryMapModal();
+    }
   },
 
   openStoryMapModal() {
