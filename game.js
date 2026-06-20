@@ -57,6 +57,7 @@ async function loadCoreModules() {
 
   window.ActionDispatcher = ActionDispatcher;
   window.SingleMode = SingleMode;
+  window.StoryMode = storyMod.StoryMode; // 【核心修正】：將 StoryMode 物件掛載全域，確保 saveStoryProgress 能被 action 呼叫
   window.STORY_MISSIONS = levelsMod.STORY_MISSIONS; 
   
   storyMod.StoryMode.loadStoryProgress();
@@ -272,17 +273,20 @@ window.render = function() {
   document.getElementById('ai-dashboard-box').style.display = isvsAI ? 'block' : 'none';
   document.getElementById('player-dashboard-title').style.display = isvsAI ? 'block' : 'none';
   
+  // ─── 【全新三模式成就欄狀態變更核心】 ───
   const bannerZone = document.getElementById('dynamic-banner-zone');
   const bannerBadge = document.getElementById('dynamic-banner-badge');
   const bannerText = document.getElementById('dynamic-banner-text');
 
   if (bannerZone && bannerBadge && bannerText) {
     if (isvsAI) {
+      // 狀態 2: 電腦對戰模式下，完全隱藏成就欄位
       bannerZone.style.display = 'none';
     } else {
       bannerZone.style.display = 'flex';
       
       if (isSingleMode) {
+        // 狀態 1: 單人成就大師模式下，維持原樣顯示最新成就進度
         bannerBadge.textContent = "榮譽成就";
         bannerBadge.style.backgroundColor = 'rgba(230, 126, 34, 0.2)';
         bannerBadge.style.borderColor = '#e67e22';
@@ -294,6 +298,7 @@ window.render = function() {
         bannerText.innerHTML = `🏆 當前已斬獲 <span style="color:#ffcc00; font-weight:800;">${unlCount} / 30</span> 項皇家勳章！<span style="color:var(--text-muted); font-size:0.55rem; margin-left:6px;">[ 💡 點此可開啟榮譽堂查看完整清單 ]</span>`;
         
       } else if (isStoryMode) {
+        // 狀態 3: 故事模式下，改成當前關卡名稱與特殊勝利條件追蹤
         const currentLvl = fullState.storyProgress?.currentLevel || 1;
         const mission = window.STORY_MISSIONS ? window.STORY_MISSIONS[currentLvl - 1] : null;
         
@@ -541,6 +546,7 @@ function setupIdleCardAnimations() {
   }
 }
 
+// ─── 【多功能部屬橫幅：點擊事件分發代理】 ───
 window.handleBannerZoneClick = function() {
   if (!CoreState) return;
   playUniformSfx();
@@ -548,12 +554,15 @@ window.handleBannerZoneClick = function() {
   if (m === 'singlePlayer') {
     window.openAchievementHistory();
   } else if (m === 'storyMode') {
-    import('./core/storyMode.js').then(mod => {
-      mod.StoryMode.openStoryMapModal();
-    });
+    if (window.StoryMode) {
+      window.StoryMode.openStoryMapModal();
+    }
   }
 };
 
+// ==========================================
+// 5. 其餘事件分發代理
+// ==========================================
 window.toggleSelectDiff = function(color) {
   if(CoreState.get().currentTurnOwner !== 'player') return;
   document.getElementById('error-msg').textContent = '';
