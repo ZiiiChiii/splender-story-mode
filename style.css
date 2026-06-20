@@ -1,902 +1,641 @@
-// game.js
-// ==========================================
-// 1. 全域 UI 樣式常數定義
-// ==========================================
-const GEM_TYPES = ['w', 'u', 'g', 'r', 'k']; 
-const GEM_CLASSES = { w: 'bg-w', u: 'bg-u', g: 'bg-g', r: 'bg-r', k: 'bg-k', o: 'bg-o' };
-const GEM_BTN_CLASSES = { w: 'token-btn-w', u: 'token-btn-u', g: 'token-btn-g', r: 'token-btn-r', k: 'token-btn-k' };
+/* ── Reset & Base ──────────────────────────────────────────── */
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 
-const CUSTOM_CARD_IMAGES = {
-  g: ["https://i.ibb.co/KxX2gxBP/1.jpg", "https://i.ibb.co/35Wz9SGp/2.jpg", "https://i.ibb.co/4nRZhdV9/3.jpg", "https://i.ibb.co/VW851t3Q/4.jpg", "https://i.ibb.co/zh2mXJDS/5.jpg"],
-  u: ["https://i.ibb.co/cc5LQG4Z/1.jpg", "https://i.ibb.co/JjQb4p1F/2.jpg", "https://i.ibb.co/spKMvZfr/3.jpg", "https://i.ibb.co/R4QS49Zj/4.jpg", "https://i.ibb.co/HLFX94d2/5.jpg"],
-  r: ["https://i.ibb.co/rf43Prw8/1.jpg", "https://i.ibb.co/gFPGMGK7/2.jpg", "https://i.ibb.co/bjgntGqQ/3.jpg", "https://i.ibb.co/NghmMzHM/4.jpg", "https://i.ibb.co/VWhLdVjL/5.jpg"],
-  w: ["https://i.ibb.co/DDkcxCww/1.jpg", "https://i.ibb.co/Z6wkT9sw/2.jpg", "https://i.ibb.co/dstw94C5/3.jpg", "https://i.ibb.co/HLcpg8kB/4.jpg", "https://i.ibb.co/p6Y1Tt5M/5.jpg"],
-  k: ["https://i.ibb.co/6cKPW5Ff/1.jpg", "https://i.ibb.co/7tRFCqBb/2.jpg", "https://i.ibb.co/gbGqKfnv/3.jpg", "https://i.ibb.co/zHS6cht3/4.jpg", "https://i.ibb.co/SwrD6WdV/5.jpg"]
-};
-
-const TUTORIAL_STEPS_DATA = [
-  { elementId: "guide-actions", title: "🟢 第一步：行動挑選面板", text: "輪到您的回合時，可以選擇拿取 3 個不同顏色或 2 個同色籌碼。" },
-  { elementId: "guide-dashboard", title: "🪙 第二步：皇家金庫資產欄", text: "左側為持有的籌碼與卡片減免產量，注意背包籌碼總上限為 10 顆！" },
-  { elementId: "guide-matrix", title: "💎 第三步：核心產業卡片矩陣", text: "可在此花費籌碼收購或保留卡片。左上為威望分數，右上是永久寶石產量。" },
-  { elementId: "guide-nobles", title: "⚜️ 第四步：貴族覲見區", text: "當發展卡累積達到貴族所需的永久產量時，貴族會前來拜訪並贈予 3 分！" },
-  { elementId: "guide-reserved", title: "🔒 第五步：機密保留契約", text: "可保留卡牌入此區並獲得 1 顆黃金。保留上限為 3 張。" }
-];
-
-// ==========================================
-// 2. 音效與動畫全域追蹤暫存器
-// ==========================================
-let audioEl, sfxGemEl, sfxBuyEl, sfxReserveEl, sfxSelectEl, sfxUnselectEl, sfxNobleMale, sfxNobleFemale;
-let sfxAchievementsMap = {};
-
-let lastRenderedCardIds = new Set();
-let lastPlayerState = null;
-let currentTutorialStep = 0;
-
-let activeFlyingCardIds = new Set();
-let isAnimating = false; 
-
-window._idleTweensMap = window._idleTweensMap || new Map(); 
-
-let CoreState, GameEngine, SingleMode, AiMode, ActionDispatcher;
-
-async function loadCoreModules() {
-  const stateMod = await import('./core/state.js');
-  const engineMod = await import('./core/gameEngine.js');
-  const singleMod = await import('./core/singleMode.js');
-  const aiMod = await import('./core/aiMode.js');
-  const actionMod = await import('./core/action.js');
-  const storyMod = await import('./core/storyMode.js');
-  const assistantMod = await import('./core/assistantData.js');
-  const levelsMod = await import('./core/missions/levelsData.js'); 
-
-  CoreState = stateMod.CoreState;
-  GameEngine = engineMod.GameEngine;
-  SingleMode = singleMod.SingleMode;
-  AiMode = aiMod.AiMode;
-  ActionDispatcher = actionMod.ActionDispatcher;
-
-  window.ActionDispatcher = ActionDispatcher;
-  window.SingleMode = SingleMode;
-  window.StoryMode = storyMod.StoryMode; 
-  window.STORY_MISSIONS = levelsMod.STORY_MISSIONS; 
+:root {
+  --bg-table:    #16100c;
+  --surface:     #1e1915;
+  --felt-green:  #0e1c15;
+  --card-bg:     rgba(24, 20, 18, 0.88);
+  --card-border: rgba(212, 175, 55, 0.18);
+  --text:        #f4f0ea;
+  --text-muted:  #968a7f;
+  --radius:      8px;
+  --radius-sm:   4px;
   
-  storyMod.StoryMode.loadStoryProgress();
-  assistantMod.AssistantManager.renderActiveAssistantUI();
-}
-
-window.playUniformSfx = function() {
-  if (!CoreState) return; 
-  if (sfxSelectEl && !CoreState.get().settings.isSfxMuted) {
-    sfxSelectEl.currentTime = 0; sfxSelectEl.play().catch(() => {});
-  }
-}
-
-window.playActionGemSfx = function() {
-  if (!CoreState) return; 
-  if (sfxGemEl && !CoreState.get().settings.isSfxMuted) {
-    sfxGemEl.currentTime = 0; sfxGemEl.play().catch(() => {});
-  }
-}
-
-window.playNobleSfx = function(gender) {
-  if (!CoreState) return; 
-  if (CoreState.get().settings.isSfxMuted) return;
-  if (gender === 'female' && sfxNobleFemale) {
-    sfxNobleFemale.currentTime = 0; sfxNobleFemale.play().catch(() => {});
-  } else if (gender === 'male' && sfxNobleMale) {
-    sfxNobleMale.currentTime = 0; sfxNobleMale.play().catch(() => {});
-  }
-}
-
-window.playAchievementSfx = function(tier) {
-  if (!CoreState) return; 
-  const targetSFX = sfxAchievementsMap[tier] || sfxAchievementsMap['easy'];
-  if (targetSFX && !CoreState.get().settings.isSfxMuted) {
-    targetSFX.currentTime = 0; targetSFX.play().catch(() => {});
-  }
-}
-
-function deepClone(obj) {
-  return JSON.parse(JSON.stringify(obj));
-}
-
-function setDynamicVh() {
-  const vh = window.innerHeight * 0.01;
-  document.documentElement.style.setProperty('--vh', `${vh}px`);
-}
-
-// ==========================================
-// 3. GSAP 3D 拋物線飛行與金庫 Bounce 動畫
-// ==========================================
-function animateCardFlightToGoldVault(cardId, providesColor, callback) {
-  const sourceDom = document.getElementById(`dom-card-${cardId}`);
-  const vaultDom = document.getElementById(`vault-target-${providesColor}`);
-  const fxContainer = document.getElementById('effects-layer');
-
-  if (!sourceDom) { if (callback) callback(); return; }
-
-  isAnimating = true; 
-  activeFlyingCardIds.add(cardId);
-
-  const flyingCardDomId = `dom-card-${cardId}`;
-  if (window._idleTweensMap && window._idleTweensMap.has(flyingCardDomId)) {
-    window._idleTweensMap.get(flyingCardDomId).kill();
-    window._idleTweensMap.delete(flyingCardDomId);
-  }
-
-  const start = sourceDom.getBoundingClientRect();
-  const finalTarget = vaultDom || document.getElementById('guide-dashboard') || document.body;
-  const end = finalTarget.getBoundingClientRect();
-
-  const flyCard = sourceDom.cloneNode(true);
-  flyCard.removeAttribute('id');
-  flyCard.style.position = 'fixed';
-  flyCard.style.left = start.left + 'px';
-  flyCard.style.top = start.top + 'px';
-  flyCard.style.width = start.width + 'px';
-  flyCard.style.height = start.height + 'px';
-  flyCard.style.margin = '0';
-  flyCard.style.zIndex = '10000';
-  flyCard.style.pointerEvents = 'none';
-
-  gsap.set(flyCard, { transformOrigin: "center center", transformStyle: "preserve-3d", perspective: 800 }); 
-  fxContainer.appendChild(flyCard);
-
-  sourceDom.style.opacity = '0.15';
-
-  const deltaX = (end.left + end.width / 2) - (start.left + start.width / 2);
-  const deltaY = (end.top + end.height / 2) - (start.top + start.height / 2);
-
-  const tl = gsap.timeline();
-
-  tl.to(flyCard, {
-    duration: 0.15,
-    scale: 1.12,
-    ease: "power2.out"
-  })
-  .to(flyCard, {
-    duration: 0.65,
-    x: deltaX,
-    y: deltaY - 90, 
-    rotationY: 180, 
-    rotationX: 15,
-    scale: 0.15,
-    ease: "power2.inOut"
-  })
-  .to(flyCard, {
-    duration: 0.15,
-    scale: 0,
-    opacity: 0,
-    ease: "power1.in",
-    onComplete: () => {
-      flyCard.remove();
-      sourceDom.style.opacity = '';
-      activeFlyingCardIds.delete(cardId); 
-
-      if (vaultDom) { 
-        gsap.fromTo(vaultDom,
-          { scale: 1 },
-          { scale: 1.35, duration: 0.12, yoyo: true, repeat: 1, ease: "back.out(2)",
-            onComplete: () => { gsap.set(vaultDom, { scale: 1 }); }
-          }
-        );
-      }
-
-      if (callback) callback();
-      isAnimating = false; 
-    }
-  });
-}
-
-function renderDashboardGems(targetElementId, actorData, diffs) {
-  const container = document.getElementById(targetElementId);
-  if (!container) return;
-
-  const survivingDiffs = {};
-  container.querySelectorAll('.floating-diff').forEach(span => {
-    const block = span.closest('.res-block');
-    if (block && block.id) {
-      const color = block.id.replace('vault-target-', '');
-      survivingDiffs[color] = survivingDiffs[color] || [];
-      span.remove(); 
-      survivingDiffs[color].push(span); 
-    }
-  });
-
-  let html = '';
-  ['w', 'u', 'g', 'r', 'k', 'o'].forEach(k => {
-    const tokenVal = actorData.tokens[k] || 0;
-    const bonusVal = actorData.bonus[k] || 0;
-    const isGold = (k === 'o');
-    
-    let bDiffHtml = (diffs && !isGold && diffs.bonus[k] > 0)
-      ? `<span class="floating-permanent-anim">+${diffs.bonus[k]} 🛡️</span>` : '';
-
-    html += `
-      <div class="res-block" id="vault-target-${k}">
-        ${bDiffHtml}
-        <div class="res-circle ${GEM_CLASSES[k]}"></div>
-        <div class="res-text-group">
-          <span class="res-count">${tokenVal}</span>
-          ${!isGold
-            ? (bonusVal > 0
-                ? `<span class="res-bonus">+${bonusVal}</span>`
-                : `<span class="res-bonus" style="visibility:hidden;">+0</span>`)
-            : `<span class="res-bonus" style="color:#968a7f; font-size:0.55rem;">百搭</span>`}
-        </div>
-      </div>
-    `;
-  });
-  container.innerHTML = html;
-
-  for (const [color, spans] of Object.entries(survivingDiffs)) {
-    const blockEl = document.getElementById(`vault-target-${color}`);
-    if (blockEl) spans.forEach(s => blockEl.appendChild(s));
-  }
-
-  if (diffs) {
-    ['w', 'u', 'g', 'r', 'k', 'o'].forEach(k => {
-      const diff = diffs.tokens[k];
-      if (!diff || diff === 0) return;
-
-      const blockEl = document.getElementById(`vault-target-${k}`);
-      if (!blockEl) return;
-
-      const diffSpan = document.createElement('span');
-      diffSpan.className = `floating-diff ${diff > 0 ? 'plus' : 'minus'}`;
-      diffSpan.textContent = diff > 0 ? `+${diff}` : `${diff}`;
-      blockEl.appendChild(diffSpan);
-
-      blockEl.classList.add('animate-pulse-glow');
-      setTimeout(() => blockEl.classList.remove('animate-pulse-glow'), 700);
-      setTimeout(() => { if (diffSpan.parentNode) diffSpan.remove(); }, 1300);
-    });
-  }
-}
-
-// ==========================================
-// 4. 全域 Render 控制器
-// ==========================================
-window.render = function() {
-  if (!CoreState) return;
-  const fullState = CoreState.get();
-  const player = fullState.player;
-
-  document.getElementById('turn-txt').textContent = fullState.turn;
-  document.getElementById('score-txt').textContent = player.score;
-
-  const isSingleMode = fullState.mode === 'singlePlayer';
-  const isvsAI = fullState.mode === 'vsAI';
-  const isStoryMode = fullState.mode === 'storyMode';
-  const isPlayerTurn = fullState.currentTurnOwner === 'player';
-
-  document.getElementById('ai-dashboard-box').style.display = isvsAI ? 'block' : 'none';
-  document.getElementById('player-dashboard-title').style.display = isvsAI ? 'block' : 'none';
+  --c-diamond:   url('https://i.ibb.co/ZpJqvt5d/white.png');
+  --c-sapphire:  url('https://i.ibb.co/4nGkn3HP/sapphire.png');
+  --c-emerald:   url('https://i.ibb.co/0pVz7WV5/green.png');
+  --c-ruby:      url('https://i.ibb.co/wZ9gmt1p/red.png');
+  --c-onyx:      url('https://i.ibb.co/y72gvDj/black.png');
+  --c-gold:      url('https://i.ibb.co/PZ1dZDyH/gold.png');
   
-  const bannerZone = document.getElementById('dynamic-banner-zone');
-  const bannerBadge = document.getElementById('dynamic-banner-badge');
-  const bannerText = document.getElementById('dynamic-banner-text');
+  --glow-warm: 0 0 12px rgba(230, 180, 100, 0.35);
 
-  if (bannerZone && bannerBadge && bannerText) {
-    if (isvsAI) {
-      bannerZone.style.display = 'none';
-    } else {
-      bannerZone.style.display = 'flex';
-      
-      if (isSingleMode) {
-        bannerBadge.textContent = "榮譽成就";
-        bannerBadge.style.backgroundColor = 'rgba(230, 126, 34, 0.2)';
-        bannerBadge.style.borderColor = '#e67e22';
-        bannerZone.style.cursor = 'pointer';
-        
-        const archive = localStorage.getItem('splendor_achievements_v1');
-        let unlCount = 0;
-        if (archive) { try { unlCount = Object.keys(JSON.parse(archive)).length; } catch(e){} }
-        bannerText.innerHTML = `🏆 當前已斬獲 <span style="color:#ffcc00; font-weight:800;">${unlCount} / 30</span> 項皇家勳章！<span style="color:var(--text-muted); font-size:0.55rem; margin-left:6px;">[ 💡 點此可開啟榮譽堂查看完整清單 ]</span>`;
-        
-      } else if (isStoryMode) {
-        const currentLvl = fullState.storyProgress?.currentLevel || 1;
-        const mission = window.STORY_MISSIONS ? window.STORY_MISSIONS[currentLvl - 1] : null;
-        
-        bannerZone.style.cursor = 'pointer';
-        if (mission) {
-          bannerBadge.textContent = `第 ${currentLvl} 關 任務`;
-          bannerBadge.style.backgroundColor = 'rgba(212, 175, 55, 0.2)';
-          bannerBadge.style.borderColor = '#d4af37';
-          
-          let conditionText = mission.winCondition.targetScore ? `威望達到 ${mission.winCondition.targetScore} 分` : '特定條件';
-          if (mission.id === 2) conditionText = "達到15分，且紅寶石限制少於8顆";
-          if (mission.id === 3) conditionText = "達到15分，且保留並買下卡片達3次";
-          if (mission.id === 4) conditionText = "達到15分，且整局禁止使用黃金籌碼";
-          if (mission.id === 5) conditionText = "達到15分，且通關時5色卡片數量皆 >= 2張";
-          if (mission.id === 7) conditionText = "達到15分，且任何回合結束時背包籌碼不超過6顆";
-          if (mission.id === 8) conditionText = "達到15分，且整局禁止購買任何Lv1發展卡";
-          if (mission.id === 9) conditionText = "達到15分，且最終名下只能有黑與白卡";
-          if (mission.id === 10) conditionText = "達到15分，且通關時手上持有至少4枚黃金籌碼";
-          if (mission.id === 13) conditionText = "最終分數必須「剛好等於 15 分」，超分算輸";
-          if (mission.id === 15) conditionText = "達到15分，且至少3次買卡是「完全沒消耗籌碼」";
-          if (mission.id === 16) conditionText = "不限分數，率先獲得 3 位貴族拜訪即可通關";
-          if (mission.id === 17) conditionText = "通關那一回合，必須同時獲得卡片分與貴族分";
-          if (mission.id === 18) conditionText = "擊敗侵略型 AI，且整局玩家獲得的貴族分必須為 0";
-          if (mission.id === 19) conditionText = "達20分，移除Lv1卡，且有名下至少3張>=4分的卡";
-          if (mission.id === 20) conditionText = "達到15分，且系統每過 5 個回合隨機扣2枚籌碼";
-          if (mission.id === 21) conditionText = "達15分，且銀行普通籌碼初始庫存全為 0";
-          if (mission.id === 22) conditionText = "擊敗高級AI（開局AI自帶8分與4張隨機Lv2卡）";
-          if (mission.id === 23) conditionText = "威望達20分，且通關時5種顏色永久減免皆 >= 3";
-          if (mission.id === 25) conditionText = "威望達到 25 分，且成功吸引至少 2 位貴族進駐";
-
-          if (fullState.storyTracker && mission.id === 3) {
-            conditionText += ` <span style="color:#2ecc71;">(當前進度: ${fullState.storyTracker.reservedBuys}/3)</span>`;
-          } else if (fullState.storyTracker && mission.id === 15) {
-            conditionText += ` <span style="color:#2ecc71;">(當前進度: ${fullState.storyTracker.freeBuys}/3)</span>`;
-          }
-          
-          bannerText.innerHTML = `<span style="color:#ffe099; font-weight:800;">⚔️【${mission.name}】</span> 目標：${conditionText} <span style="color:#ffcc00; font-size:0.55rem; margin-left:6px;">[ 🗺️ 點此可自選或重挑關卡 ]</span>`;
-        } else {
-          bannerText.textContent = "📜 故事戰役檔案加載中...";
-        }
-      }
-    }
-  }
-
-  let totalTokens = 0;
-  for (let k in player.tokens) totalTokens += player.tokens[k];
-
-  let diffs = { tokens: {}, bonus: {} };
-  if (lastPlayerState) {
-    for (let k in player.tokens) diffs.tokens[k] = player.tokens[k] - lastPlayerState.tokens[k];
-    for (let k in player.bonus) diffs.bonus[k] = player.bonus[k] - lastPlayerState.bonus[k];
-  }
-
-  lastPlayerState = deepClone(player);
-
-  renderDashboardGems('res-layer', player, diffs);
-  if (isvsAI) {
-    document.getElementById('ai-score-txt').textContent = fullState.ai.score;
-    renderDashboardGems('ai-res-layer', fullState.ai, null);
-  }
-
-  const isAst6Active = (fullState.settings.selectedAssistant === 'ast6');
-  const currentBagCap = isAst6Active ? 12 : 10;
-  const capTxtEl = document.getElementById('cap-txt');
-  capTxtEl.textContent = `背包: ${totalTokens} / ${currentBagCap}`;
-  
-  capTxtEl.classList.remove('bag-warning-yellow', 'bag-danger-red');
-  if (totalTokens === 10) {
-    capTxtEl.classList.add('bag-danger-red');
-  } else if (totalTokens > 7) {
-    capTxtEl.classList.add('bag-warning-yellow');
-  }
-
-  ['lv1', 'lv2', 'lv3'].forEach(level => {
-    document.getElementById(`deck-${level}-txt`).textContent = `剩餘: ${fullState.decks[level].length}`;
-    
-    document.getElementById(`row-${level}`).innerHTML = fullState.board[level].map((card, idx) => {
-      if (!card) return `<div class="card empty">已全數售罄</div>`;
-      
-      let costHtml = '';
-      for (let k in card.cost) {
-        costHtml += `
-          <div class="cost-dot ${(player.bonus[k] || 0) >= card.cost[k] ? 'free' : ''}">
-            <span class="cost-dot-circle ${GEM_CLASSES[k]}"></span><span>${card.cost[k]}</span>
-          </div>`;
-      }
-      
-      const afford = GameEngine.canAffordCard(player.bonus, player.tokens, card.cost);
-      let imgUrl = CUSTOM_CARD_IMAGES[card.provides][parseInt(card.id) % CUSTOM_CARD_IMAGES[card.provides].length];
-
-      return `
-        <div class="card ${!lastRenderedCardIds.has(card.id) ? 'animate-deal' : ''}" id="dom-card-${card.id}" data-affordable="${afford.affordable}" style="background-image: url('${imgUrl}');">
-          <div class="card-content-wrapper">
-            <div class="card-top"><span class="card-pts">${card.points > 0 ? card.points : ''}</span><div class="card-gem-icon ${GEM_CLASSES[card.provides]}"></div></div>
-            <div>
-              <div class="card-costs">${costHtml}</div>
-              <div class="card-actions">
-                <button class="btn-card" ${!isPlayerTurn || !afford.affordable ? 'disabled' : ''} onclick="buyBoardCard('${level}', ${idx})">收購</button>
-                <button class="btn-card" ${!isPlayerTurn || player.reserved.length >= (fullState.settings.selectedAssistant === 'ast7' ? 4 : 3) ? 'disabled' : ''} onclick="reserveBoardCard('${level}', ${idx})">保留</button>
-              </div>
-            </div>
-          </div>
-        </div>
-      `;
-    }).join('');
-  });
-
-  const resLayerReserved = document.getElementById('reserved-layer');
-  if (player.reserved.length === 0) {
-    resLayerReserved.innerHTML = `<div class="card empty" style="grid-column: span 4;">🔒 當前保密保留區尚無契約手牌 (上限 3 張)</div>`;
-  } else {
-    resLayerReserved.innerHTML = [0, 1, 2, 3].map(i => {
-      const card = player.reserved[i];
-      if (!card) return i < (fullState.settings.selectedAssistant === 'ast7' ? 4 : 3) ? `<div class="card empty">空位</div>` : '';
-      const afford = GameEngine.canAffordCard(player.bonus, player.tokens, card.cost);
-      let imgUrl = CUSTOM_CARD_IMAGES[card.provides][parseInt(card.id) % CUSTOM_CARD_IMAGES[card.provides].length];
-      
-      let resCostHtml = '';
-      for (let k in card.cost) {
-        resCostHtml += `
-          <div class="cost-dot ${(player.bonus[k] || 0) >= card.cost[k] ? 'free' : ''}">
-            <span class="cost-dot-circle ${GEM_CLASSES[k]}"></span><span>${card.cost[k]}</span>
-          </div>`;
-      }
-
-      return `
-        <div class="card" id="dom-card-${card.id}" style="background-image: url('${imgUrl}');">
-          <div class="card-content-wrapper">
-            <div class="card-top"><span class="card-pts">${card.points > 0 ? card.points : ''}</span><div class="card-gem-icon ${GEM_CLASSES[card.provides]}"></div></div>
-            <div class="card-costs">${resCostHtml}</div>
-            <div class="card-actions"><button class="btn-card" ${!isPlayerTurn || !afford.affordable ? 'disabled' : ''} onclick="buyReservedCard(${i})">簽署收購</button></div>
-          </div>
-        </div>
-      `;
-    }).join('');
-  }
-
-  ['lv1', 'lv2', 'lv3'].forEach(l => fullState.board[l]?.forEach(c => { if(c) lastRenderedCardIds.add(c.id); }));
-
-  const noblesLayer = document.getElementById('nobles-layer');
-  if (noblesLayer) {
-    noblesLayer.innerHTML = fullState.nobles
-      .filter(n => !n.completed)
-      .map(n => {
-        let reqHtml = '';
-        for (let k in n.req) {
-          reqHtml += `<div class="cost-dot"><span class="cost-dot-circle ${GEM_CLASSES[k]}"></span><span>${n.req[k]}</span></div>`;
-        }
-        return `
-          <div class="noble-card">
-            <img src="${n.img}" alt="${n.name}" class="noble-img">
-            <div class="noble-overlay">
-              <div class="card-top">
-                <span class="noble-pts">${n.points}</span>
-                <span class="noble-name">${n.name}</span>
-              </div>
-              <div class="noble-reqs">${reqHtml}</div>
-            </div>
-          </div>
-        `;
-      }).join('');
-  }
-
-  const earnedNoblesLayer = document.getElementById('earned-nobles-layer');
-  if (earnedNoblesLayer) {
-    const earned = fullState.nobles.filter(n => n.completed);
-    earnedNoblesLayer.innerHTML = earned.length === 0
-      ? `<p style="font-size:0.55rem; color:var(--text-muted); padding: 4px 0;">尚無貴族拜訪</p>`
-      : earned.map(n => `
-          <div class="earned-noble-mini">
-            <img src="${n.img}" alt="${n.name}">
-            <span>${n.name}</span>
-          </div>
-        `).join('');
-  }
-
-  const gemColors = ['w', 'u', 'g', 'r', 'k'];
-  const diffLayer = document.getElementById('diff-selectors'); 
-  const sameLayer = document.getElementById('same-selectors'); 
-
-  if (diffLayer) {
-    diffLayer.innerHTML = gemColors.map(k => {
-      const inBank = fullState.bank[k] > 0;
-      const alreadySelected = fullState.selectedDiff?.includes(k);
-      return `
-        <div class="token-container-cell">
-          <button class="token-btn ${GEM_BTN_CLASSES[k]} ${alreadySelected ? 'selected' : ''}"
-            ${!inBank || !isPlayerTurn ? 'disabled style="opacity:0.08;"' : ''}
-            onclick="toggleSelectDiff('${k}')">
-          </button>
-          <span class="token-count-label">庫存:${fullState.bank[k]}</span>
-        </div>
-      `;
-    }).join('');
-  }
-
-  if (sameLayer) {
-    sameLayer.innerHTML = gemColors.map(k => {
-      const needBankCount = (fullState.settings.selectedAssistant === 'ast9') ? 1 : 2; 
-      const canTake2 = fullState.bank[k] >= needBankCount;
-      const alreadySelected = fullState.selectedSame === k;
-      return `
-        <div class="token-container-cell">
-          <button class="token-btn ${GEM_BTN_CLASSES[k]} ${alreadySelected ? 'selected' : ''}"
-            ${!canTake2 || !isPlayerTurn ? 'disabled style="opacity:0.08;"' : ''}
-            onclick="toggleSelectSame('${k}')">
-          </button>
-          <span class="token-count-label">庫存:${fullState.bank[k]}</span>
-        </div>
-      `;
-    }).join('');
-  }
-
-  const btnDiff = document.getElementById('btn-do-diff');
-  const btnSame = document.getElementById('btn-do-same');
-  if (btnDiff) btnDiff.disabled = !isPlayerTurn || fullState.selectedDiff.length === 0;
-  if (btnSame) btnSame.disabled = !isPlayerTurn || !fullState.selectedSame;
-
-  requestAnimationFrame(() => setupIdleCardAnimations());
+  --diff-easy:    #2ecc71; 
+  --diff-normal:  #f1c40f; 
+  --diff-hard:    #e67e22; 
+  --diff-expert:  #e74c3c; 
+  --diff-master:  #9b59b6; 
 }
 
-function setupIdleCardAnimations() {
-  const currentCardIds = new Set();
-  
-  document.querySelectorAll('.board-matrix .card[data-affordable="true"]').forEach((el, i) => {
-    const cardId = el.id || '';
-    if (!cardId) return;
-    
-    const pureId = cardId.replace('dom-card-', '');
-    if (activeFlyingCardIds.has(pureId)) return; 
-    
-    currentCardIds.add(cardId);
-    
-    if (window._idleTweensMap.has(cardId)) {
-      const existingTween = window._idleTweensMap.get(cardId);
-      if (existingTween && !existingTween.killed) {
-        return; 
-      }
-      window._idleTweensMap.delete(cardId); 
-    }
-    
-    gsap.killTweensOf(el);
-    gsap.set(el, { y: 0, rotation: 0 });
-    
-    const tween = gsap.to(el, {
-      y: -6,
-      rotation: 0.8,
-      duration: 1.6 + (i % 4) * 0.18,
-      repeat: -1,
-      yoyo: true,
-      ease: "sine.inOut",
-      delay: (i % 4) * 0.3
-    });
-    window._idleTweensMap.set(cardId, tween);
-  });
-
-  for (const [id, tween] of window._idleTweensMap.entries()) {
-    if (!currentCardIds.has(id)) {
-      tween.kill();
-      window._idleTweensMap.delete(id);
-      
-      const el = document.getElementById(id);
-      if (el) gsap.set(el, { y: 0, rotation: 0 });
-    }
-  }
+html, body {
+  height: calc(var(--vh, 1vh) * 100);
+  min-height: calc(var(--vh, 1vh) * 100);
+  background: 
+    radial-gradient(circle at 50% 0%, rgba(212, 175, 55, 0.15) 0%, rgba(0, 0, 0, 0) 60%),
+    radial-gradient(circle at center, #182e22 0%, #0a140f 80%, #050a07 100%);
+  background-size: cover;
+  background-attachment: fixed;
+  color: var(--text);
+  font-family: 'Inter', sans-serif;
+  padding: 8px;
+  overflow: hidden; 
+  box-shadow: inset 0 0 150px rgba(0,0,0,0.95);
 }
 
-window.handleBannerZoneClick = function() {
-  if (!CoreState) return;
-  playUniformSfx();
-  const m = CoreState.get().mode;
-  if (m === 'singlePlayer') {
-    window.openAchievementHistory();
-  } else if (m === 'storyMode') {
-    if (window.StoryMode) {
-      window.StoryMode.openStoryMapModal();
-    }
-  }
-};
-
-window.toggleSelectDiff = function(color) {
-  if(CoreState.get().currentTurnOwner !== 'player') return;
-  document.getElementById('error-msg').textContent = '';
-  const state = CoreState.get();
-  
-  let currentTotalTokens = 0;
-  for (let k in state.player.tokens) currentTotalTokens += state.player.tokens[k];
-  if (currentTotalTokens >= 10) return;
-
-  state.selectedSame = null;
-  
-  const idx = state.selectedDiff.indexOf(color);
-  if (idx > -1) {
-    state.selectedDiff.splice(idx, 1);
-    const sfxUnselectEl = document.getElementById('sfx-unselect');
-    if (sfxUnselectEl && !state.settings.isSfxMuted) sfxUnselectEl.play();
-  } else {
-    if (state.selectedDiff.length >= 3) state.selectedDiff.shift();
-    state.selectedDiff.push(color);
-    playUniformSfx();
-  }
-  render();
-};
-
-window.toggleSelectSame = function(color) {
-  if(CoreState.get().currentTurnOwner !== 'player') return;
-  document.getElementById('error-msg').textContent = '';
-  const state = CoreState.get();
-  
-  let currentTotalTokens = 0;
-  for (let k in state.player.tokens) currentTotalTokens += state.player.tokens[k];
-  if (currentTotalTokens >= 10) return;
-
-  state.selectedDiff = [];
-  
-  if (state.selectedSame === color) {
-    state.selectedSame = null;
-    const sfxUnselectEl = document.getElementById('sfx-unselect');
-    if (sfxUnselectEl && !state.settings.isSfxMuted) sfxUnselectEl.play();
-  } else {
-    state.selectedSame = color;
-    playUniformSfx();
-  }
-  render();
-};
-
-// ==========================================
-// 📥 封裝全25關完整的視覺小說動畫模組
-// ==========================================
-window.storyModule = {
-    gameStages: {
-        1: { chapter: "👑 第一章：微光村的石匠（第 1 - 5 關）", title: "第 1 關：初入礦脈", bg: "微光村的後山藏著廢棄的紅岩礦床。老內政官傑洛米提著油燈攔住你，不屑地看著你手中的劣質鑿子，要你證明基本的經商手段。", condition: "25回合內威望達到15分（無AI）", name: "內政官 傑洛米", text: "年輕人，這片紅岩礦不歡迎空有熱血的傻瓜。在 25 回合內拿到 15 分，我就承認你是個合格的學徒。" },
-        2: { chapter: "👑 第一章：微光村的石匠（第 1 - 5 關）", title: "第 2 關：稅率與翡翠", bg: "你帶著紅寶石敲開了鎮公所的大門。刻薄的財政卿薇多莉亞正為當季的綠寶石稅收發愁，她決定用高額的稅率刁難你這個外來者。", condition: "達到15分，且紅寶石籌碼拿取/使用少於8顆", name: "財政卿 薇多莉亞", text: "噢？聽說傑洛米看好你？但我的帳本只認實力。這局你的紅寶石籌碼被課了重稅，少用點紅寶石，拿到 15 分給我看！" },
-        3: { chapter: "👑 第一章：微光村的石匠（第 1 - 5 關）", title: "第 3 關：鐵血的訂單", bg: "守備隊的赫克特騎士需要大量黑曜石來打造新兵的重甲。然而市場上的黑曜石被全面封鎖，你必須學會利用「保留契約」暗中囤積。", condition: "達到15分，且成功執行「保留並買下」至少3次", name: "鐵血騎士 赫克特", text: "商會那群禿鷹把黑曜石的合約藏得死死的！小傢伙，用你的保密合約（保留卡牌）幫我截獲 3 張高級產業，軍隊少不了你的好處！" },
-        4: { chapter: "👑 第一章：微光村的石匠（第 1 - 5 關）", title: "第 4 關：聖光的試煉", bg: "地方教堂正要修繕白璧聖堂，聖騎士羅蘭德負責監督。他要求這批寶石必須色澤純淨，不允許任何投機取巧的黃金假人參雜其中。", condition: "達到15分，且整局禁止使用黃金籌碼", name: "聖騎士 羅蘭德", text: "光明不容虛假。聽聞你精通商道，但這一次，我不許你在交易中使用任何一枚投機的黃金籌碼。純靠實力來見我吧。" },
-        5: { chapter: "👑 第一章：微光村的石匠（第 1 - 5 關）", title: "第 5 關：王后的深藍生辰", bg: "微光村迎來了微服出巡的桂妮薇兒王后。她聽聞了你的名聲，指名要見識一下五色俱全的「基礎寶石交響曲」，作為她的生辰賀禮。", condition: "達到15分，且通關時5色卡片數量皆 >= 2張", name: "璀璨王后 桂妮薇兒", text: "絢麗的頂級物業固然耀眼，但真正的大師能把底層的基礎原石搭配得完美無瑕。孩子，讓我看看你的基本功。" },
-        6: { chapter: "🦁 第二章：橡木鎮的崛起商賈（第 6 - 10 關）", title: "第 6 關：雄獅的胃口", bg: "橡木鎮的領主亞瑟子爵是一位野心勃勃的擴張主義者。他舉辦了一場商賈晚宴，限時讓所有人交出成績單，只有最快拿到分數的人才能留下。", condition: "限制20回合內威望達到15分", name: "帝國雄獅 亞瑟", text: "我的軍隊每天都在燒錢，商會不需要慢吞吞的牛車！20 回合內拿不下 15 分的人，就給我滾出橡木鎮！" },
-        7: { chapter: "🦁 第二章：橡木鎮的崛起商賈（第 6 - 10 關）", title: "第 7 關：暗夜的密盟", bg: "黑市的影子統治者查理曼在暗巷攔住了你。他看中了你的潛力，但也警告你，手上的財富太過招搖會引來殺身之禍，必須輕裝上陣。", condition: "達到15分，且任何回合結束時背包籌碼不超過6顆", name: "密盟密使 查理曼", text: "小傢伙，聽說亞瑟給了你特權？但在黑市，胃口太大只會撐死。把你的隨身錢包縮小，拿滿 15 分給我看看。" },
-        8: { chapter: "🦁 第二章：橡木鎮的崛起商賈（第 6 - 10 關）", title: "第 8 關：火山重工的訂單", bg: "鎮上唯一的傳奇鐵匠瓦肯正在打造皇家聖器。他脾氣火爆，拒絕收購任何低階的碎石卡片，他只要最高階的物業投資。", condition: "達到15分，且整局禁止購買任何Lv1發展卡", name: "傳奇鐵匠 瓦肯", text: "別拿那些 Lv1 的破爛玩意來髒了我的鐵匠鋪！想跟我做生意，就純靠高級產業（Lv2/Lv3）把分數湊到 15 分！" },
-        9: { chapter: "🦁 第二章：橡木鎮的崛起商賈（第 6 - 10 關）", title: "第 9 關：雙色協奏曲", bg: "宮廷樂長塞巴斯蒂安來到鎮上尋找靈感。他認為經商就如同拉琴，講究雙音的和諧，他要求你的資產必須呈現完美的雙色極致。", condition: "達到15分，且最終名下只能有黑與白卡", name: "大提琴家 塞巴斯蒂安", text: "雜亂的顏色是噪音。這局遊戲，我只要看到你發展黑與白（k 與 w）的產業，其餘顏色的卡片不准出現在你的名下。" },
-        10: { chapter: "🦁 第二章：橡木鎮的崛起商賈（第 6 - 10 關）", title: "第 10 關：沙漠商隊的門檻", bg: "來自遙遠絲路的阿里帶著巨大的駱駝商隊駐紮在鎮外。他見過無數大風大浪，普通的財富根本打動不了他，只有金光閃閃的黃金能讓他多看一眼。", condition: "達到15分，且通關時手上持有至少4枚黃金籌碼", name: "異域商賈 阿里", text: "我的駱駝馱滿了香料與翡翠。年輕人，聽說你最近很風光？如果你能不靠那些花花綠綠的石頭，光靠黃金鋪路拿下 15 分，我就與你簽約。" },
-        11: { chapter: "🌲 第三章：巨石要塞的邊境商戰（第 11 - 15 關）", title: "第 11 關：占星師的金融風暴", bg: "巨石要塞遭遇了星象異變，引發了強烈的信用通膨。占星師露娜封鎖了銀行的實體籌碼，你必須學會「空手套白狼」的永續鏈。", condition: "25回合內達到15分（銀行普通籌碼初始全為2顆）", name: "皇家占星師 露娜", text: "星辰預示著匱乏。這一局，銀行的每種普通籌碼庫存都只有 2 顆！你必須依賴你以前累積的產業減免，才能活下去。" },
-        12: { chapter: "🌲 第三章：巨石要塞的邊境商戰（第 11 - 15 關）", title: "第 12 關：鍊金術的對決", bg: "要塞裡的科學家帕拉塞爾斯不相信凡人的經商手段，他研發了一個能自動計算最優解的「鍊金傀儡 AI」。你必須在商戰中擊敗他的造物。", condition: "與初階 AI 對決並獲得勝利（比AI先達15分）", name: "鍊金術師 帕拉塞爾斯", text: "真理只存在於算式中。我的自動傀儡會搶走所有高價值的卡牌。來吧，在它將你吞噬之前，先拿到 15 分！" },
-        13: { chapter: "🌲 第三章：巨石要塞的邊境商戰（第 11 - 15 關）", title: "第 13 關：地下領主的黃金稅", bg: "矮人國王索林統治著要塞底部的金庫。他是一個不折不扣的守財奴，他宣布所有買卡的交易都必須支付昂貴的黃金手續費。", condition: "最終分數必須「剛好等於 15 分」，超過直接算輸", name: "地下領主 索林", text: "想在我的地盤買卡？沒問題！但每張卡你都必須額外支付黃金，除非你能展現驚人的精算，讓最終分數剛好完美符合我的幸運數字！" },
-        14: { chapter: "🌲 第三章：巨石要塞的邊境商戰（第 11 - 15 關）", title: "第 14 關：遊俠的森林限速", bg: "邊境森林遭遇敵襲，精靈遊俠萊戈拉斯奉命戒嚴。他封鎖了林道，留給物資商人的時間轉瞬即逝，你必須發動一場閃電戰。", condition: "極限挑戰！16 回合內威望達到 15 分", name: "精靈遊俠 萊戈拉斯", text: "戰爭不等人，人類。我只給你 16 個回合的時間。如果 16 回合內你無法湊齊軍需（15分），我的箭不會留情。" },
-        15: { chapter: "🌲 第三章：巨石要塞的邊境商戰（第 11 - 15 關）", title: "第 15 關：聖女的奇蹟信譽", bg: "戰火逼近要塞，人心惶惶。聖女貞德在前線振臂高呼，她要求你展現大商賈的氣魄——不消耗任何一枚實體籌碼，光靠你之前累積的產業信用買下卡牌。", condition: "達到15分，且至少3次買卡是「完全沒消耗籌碼」", name: "聖女 貞德", text: "戰士們需要實體寶石當作重鑄武器的原料！商人，證明你的名譽吧，光靠你名下的實業減免，免費收購 3 張卡片給我看！" },
-        16: { chapter: "⚜️ 第四章：翡翠首都的宮廷商戰（第 16 - 20 關）", title: "第 16 關：外交官的引薦信", bg: "想要進入皇家大會堂，必須拿到外交官麥特尼的引薦信。這位政客不看你的錢袋，他只看你名下吸引了多少位封建貴族的認可。", condition: "不限分數，率先獲得 3 位貴族拜訪即可通關", name: "帝國外交官 麥特尼", text: "在首都，滿手銅臭是最下等的。想要我的引薦信？去招攬 3 位貴族老爺來為你的商號背書吧，分數我不在乎。" },
-        17: { chapter: "⚜️ 第四章：翡翠首都的宮廷商戰（第 16 - 20 關）", title: "第 17 關：伯爵夫人的晚宴", bg: "卡蜜拉夫人在她的奢華莊園舉辦了社交晚宴。她喜歡戲劇性的場面，要求前來競標的商賈必須在最後一刻端出令人震驚的龐大資產。", condition: "通關那一回合，必須同時獲得卡片分與貴族分", name: "宮廷伯爵夫人 卡蜜拉", text: "平淡的累積太無趣了。我要你在獲得最後勝利的那一回合，同時觸發卡片得分與貴族拜訪，那才是真正的璀璨藝術。" },
-        18: { chapter: "⚜️ 第四章：翡翠首都的宮廷商戰（第 16 - 20 關）", title: "第 18 關：黑市刺客的截胡", bg: "首都商會的巨頭派出了黑市刺客澤德來暗殺你的商譽。澤德會派出一名「侵略型 AI」，瘋狂保留或搶走你下一手最想買的卡片。", condition: "擊敗侵略型 AI，且整局玩家獲得的貴族分必須為 0", name: "影刃刺客 澤德", text: "你的每一步都在我的陰影凝視之下。聽說你擅長外交？很遺憾，這一局貴族們被我恐嚇了，你拿不到任何貴族分！" },
-        19: { chapter: "⚜️ 第四章：翡翠首都的宮廷商戰（第 16 - 20 關）", title: "第 19 關：新大陸的黃金潮", bg: "大航海家麥哲倫帶著海外殖民地的巨額財富歸國，引發了新一輪的壟斷潮。市場風向大變，所有低階 Lv1 卡片全部被海外物資充垮。", condition: "達20分，移除Lv1卡，且有名下至少3張>=4分的卡", name: "大航海家 麥哲倫", text: "海外财富超乎想像！小打小鬧的時代結束了，這局遊戲沒有 Lv1 卡片，且你必須拿下 3 張價值 4 分以上的頂級物業！" },
-        20: { chapter: "⚜️ 第四章：翡翠首都的宮廷商戰（第 16 - 20 關）", title: "第 20 關：大文豪的末日劇本", bg: "莎士比亞正在撰寫一部名為《資本崩盤》的悲劇。為了尋找靈感，他對你的商號施加了「命運詛咒」，每過數個回合，你的實體財富就會憑空蒸發。", condition: "達到15分，且系統每過 5 個回合隨機扣2枚籌碼", name: "大文豪 莎士比亞", text: "悲劇才是永恆。商人，在每 5 回合就會隨機被國庫充公 2 枚籌碼的絕境下，寫出逆流而上的傳奇史詩吧！" },
-        21: { chapter: "👑 第五章：皇家大會堂的璀璨至尊（第 21 - 25 關）", title: "第 21 關：聖殿騎士團的鐵腕", bg: "掌控帝國經濟命脈的聖殿騎士團長休擋在你的最終王座前。他用鐵腕政策實施了全面禁運，你無法再從銀行獲得任何普通籌碼。", condition: "達15分，且銀行普通籌碼初始庫存全為 0", name: "聖殿騎士團長 休", text: "聖殿金庫接管了市場！這一局，銀行不提供任何普通籌碼，你只能靠開局自帶的資金與保留卡牌獲得的黃金來運轉！" },
-        22: { chapter: "👑 第五章：皇家大會堂的璀璨至尊（第 21 - 25 關）", title: "第 22 關：先知的絕地殘局", bg: "先知卡珊德拉看穿了未來的命運。她擺下了一個你已經陷入破產邊緣、對手卻已經全面領先的「命運殘局」，考驗你是否有扭轉乾坤的器量。", condition: "擊敗高級AI（開局AI自帶8分與4張隨機Lv2卡）", name: "預言者 卡珊德拉", text: "命運已定，你已步入絕地。電腦 AI 開局便擁有 8 分與 4 張高階產業。逆風翻盤吧，撕碎這注定的悲劇！" },
-        23: { chapter: "👑 第五章：皇家大會堂的璀璨至尊（第 21 - 25 關）", title: "第 23 關：大魔導師的五色矩陣", bg: "帝國大賢者梅林在大會堂的中央布下了元素結界。他要求真正的璀璨大師不允許有任何一門學科偏科，必須達到五色均衡的極致。", condition: "威望達20分，且通關時5種顏色永久減免皆 >= 3", name: "大魔導師 梅林", text: "寶石即是元素。水火風雷土，偏廢任何一端都稱不上至尊。通關之時，我要看到你名下五種顏色的永久產量全部跨越界限！" },
-        24: { chapter: "👑 第五章：皇家大會堂的璀璨至尊（第 21 - 25 關）", title: "第 24 關：至高女皇的鐵腕對決", bg: "北方的至高女皇凱薩琳親臨大會堂。她不相信言辭，只崇尚絕對的統治力。她將親自下場，用毫無失誤的神級 AI 算法與你進行終極對決。", condition: "在 vsAI 模式中擊敗「神級 AI」", name: "帝國女皇 凱薩琳", text: "朕的帝國建立在鐵與血之上。面對朕親自操控的神級精算 AI，展現你最完美、不容許出錯的任何一個回合吧！" },
-        25: { chapter: "👑 第五章：皇家大會堂的璀璨至尊（第 21 - 25 關）", title: "第 25 關：皇家大會堂的終極加冕", bg: "大會堂的鐘聲響起，全體 24 位你曾擊敗並收服的夥伴列隊兩旁。王座之上，上一任璀璨至尊大師正靜靜地看著你，等待著你完成這場前無古人的 25 分傳奇加冕。", condition: "威望達到 25 分，且成功吸引至少 2 位貴族進駐", name: "璀璨至尊 大師", text: "從小村莊的石匠，到要塞的奇蹟，再到首都的商戰風雲。你已經集結了所有人才。來吧，超越我，成為新的璀璨至尊！" }
-    },
-    currentStageId: 1,
-    dialogueStep: 0, 
-    isTyping: false,
-    currentTween: null,
-    textObj: { charCount: 0 },
-    onStoryCompleteCallback: null,
-
-    loadStage(stageId, callback) {
-        if (!this.gameStages[stageId]) {
-            if (callback) callback();
-            return;
-        }
-        this.currentStageId = stageId;
-        this.dialogueStep = 0;
-        this.onStoryCompleteCallback = callback;
-
-        const layer = document.getElementById("story-layer");
-        layer.style.opacity = 1;
-        layer.style.display = "flex";
-        // ── 🎯 核心修正：開啟劇情展演時，強制開啟點擊鎖，使對話框與點擊可正常被響應 ──
-        layer.classList.add('story-active');
-
-        const stageData = this.gameStages[stageId];
-        document.getElementById("story-chapter-title").innerText = stageData.chapter + " - " + stageData.title;
-        document.getElementById("story-intro-panel").innerText = stageData.bg;
-        document.getElementById("story-condition-badge").innerText = "🏆 目標：" + stageData.condition;
-        
-        document.getElementById("story-char-img").src = `https://images.placeholders.dev/?width=320&height=520&text=No.${stageId}+${encodeURIComponent(stageData.name.split(' ')[1] || stageData.name)}&bgColor=%232c3e50&textColor=%23ffffff`;
-        this.animateCharacterIn();
-    },
-
-    animateCharacterIn() {
-        gsap.fromTo("#story-character", { x: -150, opacity: 0 }, { x: 0, opacity: 1, duration: 1, ease: "power2.out" });
-        this.renderDialogue();
-    },
-
-    renderDialogue() {
-        const stageData = this.gameStages[this.currentStageId];
-        let targetText = "";
-
-        if (this.dialogueStep === 0) {
-            document.getElementById('story-name-tag').innerText = stageData.name;
-            targetText = stageData.text;
-        } else {
-            document.getElementById('story-name-tag').innerText = "系統提示";
-            targetText = `本關挑戰目標：【${stageData.condition}】。準備好就點擊對話框開始挑戰吧！`;
-        }
-
-        if (this.dialogueStep === 0) {
-            gsap.fromTo("#story-character", { y: 0 }, { y: -15, duration: 0.1, yoyo: true, repeat: 1, ease: "power1.inOut" });
-        }
-
-        const textElement = document.getElementById('story-dialogue-text');
-        textElement.innerText = "";
-        this.isTyping = true;
-        this.textObj.charCount = 0;
-
-        this.currentTween = gsap.to(this.textObj, {
-            charCount: targetText.length,
-            duration: targetText.length * 0.04,
-            ease: "none",
-            onUpdate: () => {
-                textElement.innerText = targetText.substr(0, Math.ceil(this.textObj.charCount));
-            },
-            onComplete: () => {
-                this.isTyping = false;
-            }
-        });
-    },
-
-    nextDialogue() {
-        if (this.isTyping) {
-            if (this.currentTween) this.currentTween.progress(1);
-            return;
-        }
-        if (this.dialogueStep === 0) {
-            this.dialogueStep = 1;
-            this.renderDialogue();
-        } else {
-            this.endStory();
-        }
-    },
-
-    endStory() {
-        // ── 🎯 核心修正：點擊關閉完結時，立即解除外部 story-active 類名，徹底恢復底層 Token 與 UI 的原始點擊流 ──
-        const layer = document.getElementById("story-layer");
-        if (layer) layer.classList.remove('story-active');
-
-        gsap.to("#story-layer", { 
-            opacity: 0, 
-            duration: 0.5, 
-            onComplete: () => {
-                document.getElementById("story-layer").style.display = "none";
-                if (typeof this.onStoryCompleteCallback === "function") {
-                    this.onStoryCompleteCallback();
-                }
-            }
-        });
-    }
-};
-
-window.handleMusicToggle = () => ActionDispatcher.dispatch('TOGGLE_MUSIC');
-window.handleSfxToggle = () => ActionDispatcher.dispatch('TOGGLE_SFX');
-window.handleDoDiffClick = function() {
-  const state = CoreState.get();
-  if (state.selectedDiff.length === 0) return;
-  playActionGemSfx();
-  const colors = [...state.selectedDiff];
-  state.selectedDiff = [];      
-  state.selectedSame = null;
-  ActionDispatcher.dispatch('TAKE_DIFF', { colors });
-};
-
-window.handleDoSameClick = function() {
-  const state = CoreState.get();
-  if (!state.selectedSame) return;
-  playActionGemSfx();
-  const color = state.selectedSame;
-  state.selectedSame = null;    
-  state.selectedDiff = [];
-  ActionDispatcher.dispatch('TAKE_SAME', { color });
-};
-
-window.buyBoardCard = function(level, idx) {
-  const card = CoreState.get().board[level][idx];
-  if (!card) return;
-
-  const cardId = String(card.id);
-  if (activeFlyingCardIds.has(cardId)) return;
-
-  animateCardFlightToGoldVault(cardId, card.provides, () => {
-    if (sfxBuyEl && !CoreState.get().settings.isSfxMuted) {
-      sfxBuyEl.currentTime = 0; sfxBuyEl.play().catch(() => {});
-    }
-    ActionDispatcher.dispatch('BUY_BOARD', { level, idx });
-  });
-};
-
-window.buyReservedCard = function(idx) {
-  const card = CoreState.get().player.reserved[idx];
-  if (!card) return;
-
-  const cardId = String(card.id);
-  if (activeFlyingCardIds.has(cardId)) return;
-
-  animateCardFlightToGoldVault(cardId, card.provides, () => {
-    if (sfxBuyEl && !CoreState.get().settings.isSfxMuted) {
-      sfxBuyEl.currentTime = 0; sfxBuyEl.play().catch(() => {});
-    }
-    ActionDispatcher.dispatch('BUY_RESERVED', { idx });
-  });
-};
-
-window.reserveBoardCard = function(level, idx) {
-  if (sfxReserveEl && !CoreState.get().settings.isSfxMuted) {
-    sfxReserveEl.currentTime = 0; sfxReserveEl.play().catch(() => {});
-  }
-  ActionDispatcher.dispatch('RESERVE_CARD', { level, idx });
-};
-
-window.openGameOptionsModal = () => {
-  const s = CoreState.get().settings;
-  const m = CoreState.get().mode;
-  document.getElementById('menu-toggle-music').textContent = s.isMusicMuted ? "🔇 背景音樂：靜音" : "🎵 背景音樂：開啟";
-  document.getElementById('menu-toggle-sfx').textContent = s.isSfxMuted ? "🔇 遊戲音效：靜音" : "🔊 遊戲音效：開啟";
-  
-  document.getElementById('mode-btn-single').classList.toggle('active', m === 'singlePlayer');
-  document.getElementById('mode-btn-ai').classList.toggle('active', m === 'vsAI');
-  document.getElementById('mode-btn-story').classList.toggle('active', m === 'storyMode');
-  
-  document.getElementById('game-options-modal').classList.add('show');
-};
-
-window.closeGameOptionsModal = () => document.getElementById('game-options-modal').classList.remove('show');
-window.closeWinModal = () => { document.getElementById('win-modal').classList.remove('show'); };
-window.restartGame = () => { document.getElementById('win-modal').classList.remove('show'); ActionDispatcher.dispatch('INIT_GAME'); };
-
-window.openTalentPoolModal = () => { 
-  import('./core/assistantData.js').then(m => {
-    m.AssistantManager.renderTalentPoolModalUI(); 
-    document.getElementById('talent-pool-modal').classList.add('show'); 
-  });
-};
-
-window.closeTalentPoolModal = () => { 
-  document.getElementById('talent-pool-modal').classList.remove('show'); 
-  import('./core/assistantData.js').then(m => m.AssistantManager.renderActiveAssistantUI()); 
-};
-
-window.openAchievementHistory = () => SingleMode.openAchievementHistory();
-window.closeAchievementHistory = () => SingleMode.closeAchievementHistory();
-window.saveCurrentProgress = () => SingleMode.saveCurrentProgress();
-window.startFloatingTutorial = () => { document.getElementById('tutorial-start-modal').classList.add('show'); hideWelcomeModal(); document.getElementById('floating-tutorial-widget').style.display = 'block'; showStepData(0); };
-window.hideWelcomeModal = () => { document.getElementById('welcome-back-modal').style.display = 'none'; if (!CoreState.get().settings.isMusicMuted && audioEl) audioEl.play().catch(() => {}); };
-
-function showStepData(stepIdx) {
-  currentTutorialStep = stepIdx;
-  TUTORIAL_STEPS_DATA.forEach((s, i) => document.getElementById(s.elementId)?.classList.toggle('tutorial-highlight', i === stepIdx));
-  const step = TUTORIAL_STEPS_DATA[stepIdx];
-  if (step) {
-    document.getElementById(step.elementId)?.scrollIntoView({ behavior: 'smooth', block: 'center' });
-    document.getElementById('floating-tutorial-widget-header').textContent = step.title;
-    document.getElementById('floating-tutorial-text').textContent = step.text;
-  }
-  document.getElementById('floating-tutorial-dots').innerHTML = TUTORIAL_STEPS_DATA.map((_, i) => `<div class="t-dot ${i === stepIdx ? 'active' : ''}\"></div>`).join('');
-  document.getElementById('floating-tutorial-next-btn').textContent = stepIdx === TUTORIAL_STEPS_DATA.length - 1 ? "進入大會堂" : "下一步";
+.shell {
+  max-width: 950px;
+  margin: 0 auto;
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+  position: relative;
 }
 
-window.nextFloatingStep = () => {
-  if (currentTutorialStep < TUTORIAL_STEPS_DATA.length - 1) showStepData(currentTutorialStep + 1);
-  else {
-    TUTORIAL_STEPS_DATA.forEach(s => document.getElementById(s.elementId)?.classList.remove('tutorial-highlight'));
-    document.getElementById('floating-tutorial-widget').style.display = 'none';
-    localStorage.setItem('splendor_tutorial_completed_2026', 'true');
+.top-meta-wrap {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 6px;
+  background: rgba(0, 0, 0, 0.55);
+  padding: 6px 12px;
+  border-radius: var(--radius-sm);
+  border: 1px solid rgba(212, 175, 55, 0.2);
+  box-shadow: 0 4px 10px rgba(0,0,0,0.4);
+  flex-shrink: 0;
+}
+
+.header { text-align: left; }
+.game-title {
+  font-family: 'Cinzel', serif;
+  font-size: 1.2rem;
+  font-weight: 900;
+  letter-spacing: .15em;
+  background: linear-gradient(135deg, #ffe099, #d4af37, #aa7c11);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  text-shadow: var(--glow-warm);
+}
+.status-bar { display: flex; gap: 8px; align-items: center; }
+.status-pill {
+  background: rgba(0, 0, 0, 0.6);
+  border: 1px solid rgba(212, 175, 55, 0.25);
+  border-radius: 2px;
+  padding: 3px 10px;
+  font-size: 0.75rem;
+}
+.status-pill strong { font-family: 'Orbitron', sans-serif; color: #d4af37; text-shadow: var(--glow-warm); }
+
+.music-btn {
+  background: linear-gradient(180deg, #3a2e22, #1c150e);
+  border: 1px solid #d4af37;
+  color: #ffe099;
+  border-radius: var(--radius-sm);
+  padding: 4px 10px;
+  font-size: 0.75rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  box-shadow: 0 2px 5px rgba(0,0,0,0.5);
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+.music-btn:hover {
+  filter: brightness(1.2);
+  box-shadow: 0 0 8px rgba(212, 175, 55, 0.4);
+}
+
+.achievement-banner {
+  background: linear-gradient(90deg, rgba(20, 15, 12, 0.95), rgba(35, 28, 22, 0.95));
+  border: 1px dashed rgba(212, 175, 55, 0.4);
+  border-radius: var(--radius-sm);
+  padding: 8px 12px;
+  margin-bottom: 8px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  cursor: pointer;
+  box-shadow: 0 4px 12px rgba(0,0,0,0.5);
+  transition: all 0.25s ease;
+  position: relative;
+  overflow: hidden;
+  flex-shrink: 0;
+}
+.achievement-banner:hover {
+  border-color: #d4af37;
+  background: linear-gradient(90deg, rgba(30, 22, 18, 0.98), rgba(45, 36, 28, 0.98));
+  box-shadow: 0 0 12px rgba(212, 175, 55, 0.2);
+}
+.ach-latest-container { display: flex; align-items: center; gap: 10px; flex: 1; }
+.ach-badge-title { font-size: 0.65rem; font-weight: 800; color: #d4af37; text-transform: uppercase; letter-spacing: 0.05em; background: rgba(212, 175, 55, 0.1); padding: 2px 6px; border-radius: 2px; border: 1px solid rgba(212, 175, 55, 0.2); }
+.ach-latest-display { font-size: 0.82rem; font-weight: 600; color: var(--text-muted); display: flex; align-items: center; gap: 6px; }
+.ach-latest-display.has-ach { animation: achPopGlow 0.5s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards; }
+
+@keyframes achPopGlow {
+  0% { transform: scale(0.95); filter: brightness(1.8); }
+  30% { transform: scale(1.05); filter: brightness(2.2); background: rgba(212, 175, 55, 0.2); }
+  100% { transform: scale(1); filter: brightness(1); }
+}
+.ach-stats-summary { font-family: 'Orbitron', sans-serif; font-size: 0.75rem; color: #ffe099; background: rgba(0,0,0,0.3); padding: 3px 8px; border-radius: 10px; border: 1px solid rgba(255,255,255,0.05); }
+
+.talent-pool-modal-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 8px; max-height: 240px; overflow-y: auto; padding: 8px 4px; }
+.talent-mini-card { display: flex; align-items: center; gap: 8px; background: rgba(0,0,0,0.4); padding: 6px; border-radius: var(--radius-sm); border: 1px solid rgba(212, 175, 55, 0.25); cursor: pointer; transition: all 0.2s ease; }
+.talent-mini-card:hover { border-color: #ffe099; background: rgba(212, 175, 55, 0.15); }
+.talent-mini-card.selected { border-color: #ffe099; background: rgba(212, 175, 55, 0.25); box-shadow: 0 0 8px rgba(212, 175, 55, 0.5); }
+.talent-mini-card img { width: 32px; height: 32px; object-fit: cover; border-radius: 4px; border: 1px solid rgba(255,255,255,0.1); }
+.talent-mini-card span { font-size: 0.75rem; color: #ffe099; font-weight: 600; }
+
+.diff-setting-box { display: grid; grid-template-columns: repeat(2, 1fr); gap: 6px; margin: 10px 0; }
+
+.diff-opt-btn { padding: 8px 4px; font-size: 0.75rem; font-weight: 700; background: #1a1410; border: 1px solid #4a3a30; color: var(--text-muted); border-radius: 4px; cursor: pointer; transition: all 0.2s ease; }
+#story-map-modal .diff-opt-btn { pointer-events: auto !important; }
+.action-panel .token-btn { pointer-events: auto !important; }
+
+.diff-opt-btn.active[data-diff="easy"] { background: var(--diff-easy); color: #000; border-color: #fff; }
+.diff-opt-btn.active[data-diff="normal"] { background: var(--diff-normal); color: #000; border-color: #fff; }
+.diff-opt-btn.active[data-diff="hard"] { background: var(--diff-hard); color: #000; border-color: #fff; }
+.diff-opt-btn.active[data-diff="expert"] { background: var(--diff-expert); color: #fff; border-color: #fff; }
+.diff-opt-btn.active[data-diff="master"] { background: var(--diff-master); color: #fff; border-color: #fff; }
+
+.menu-grid-layout { display: flex; flex-direction: column; gap: 8px; margin: 14px 0; }
+.menu-row-btn { width: 100%; padding: 10px; font-size: 0.85rem; font-weight: 700; color: #ffe099; background: linear-gradient(180deg, #2a2018, #150f0b); border: 1px solid #d4af37; border-radius: var(--radius-sm); cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 8px; transition: all 0.2s; }
+.menu-row-btn:hover { filter: brightness(1.2); box-shadow: 0 0 8px rgba(212, 175, 55, 0.3); }
+
+.nobles-section { margin-bottom: 8px; border: 2px solid transparent; border-radius: var(--radius); padding: 2px; flex-shrink: 0; }
+.nobles-grid { display: flex; gap: 8px; overflow-x: auto; }
+
+.noble-card {
+  position: relative;
+  background: #110e0c;
+  border: 1px solid #9c7a3c;
+  border-radius: var(--radius-sm);
+  min-width: 90px;
+  height: 90px;
+  flex: 1;
+  box-shadow: 0 4px 8px rgba(0,0,0,0.6);
+  transition: all 0.3s ease;
+  overflow: hidden;
+}
+.noble-img { width: 100%; height: 100%; object-fit: cover; position: absolute; top: 0; left: 0; z-index: 1; opacity: 0.9; }
+.noble-overlay {
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(0deg, rgba(0,0,0,0.85) 0%, rgba(0,0,0,0.2) 60%, rgba(0,0,0,0.6) 100%);
+  z-index: 2;
+  padding: 6px;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+}
+.noble-card.completed { opacity: 0.15; transform: scale(0.95); border-color: var(--text-muted); box-shadow: none; }
+.noble-card.completed .noble-overlay { background: rgba(0, 0, 0, 0.9); }
+.noble-name { font-size: 0.55rem; color: #ffe099; font-weight: 600; letter-spacing: 0.05em; text-shadow: 0 1px 3px rgba(0,0,0,0.9); }
+.noble-pts { font-family: 'Cinzel', serif; font-size: 0.9rem; font-weight: 900; color: #fff; text-shadow: 0 0 6px #d4af37, 0 1px 3px #000; }
+.noble-reqs { display: flex; flex-direction: column; gap: 2px; font-size: 0.6rem; font-weight: bold; background: rgba(0,0,0,0.6); padding: 3px; border-radius: 3px; max-width: fit-content; }
+.noble-req-item { display: flex; align-items: center; gap: 3px; color: #fff; text-shadow: 0 1px 2px #000; }
+
+.dashboard-container { display: flex; gap: 8px; margin-bottom: 8px; flex-shrink: 0; }
+.dashboard {
+  flex: 3;
+  background: rgba(10, 24, 18, 0.85);
+  border: 2px solid #2a221b;
+  box-shadow: inset 0 4px 12px rgba(0,0,0,0.8), 0 2px 4px rgba(255,255,255,0.05);
+  border-radius: var(--radius);
+  padding: 8px;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+}
+.res-grid { display: flex; justify-content: space-around; align-items: center; gap: 4px; }
+.res-block { background: none; border: none; padding: 0; text-align: center; position: relative; display: flex; align-items: center; gap: 4px; }
+.res-circle {
+  width: 22px; height: 22px; border-radius: 50%;
+  display: inline-block;
+  box-shadow: 0 2px 4px rgba(0,0,0,0.6), inset 0 1px 2px rgba(255,255,255,0.2);
+  background-size: cover; background-position: center; color: transparent !important;
+}
+.res-text-group { display: flex; flex-direction: column; align-items: flex-start; justify-content: center; position: relative; }
+
+@keyframes gemPulseGlow { 0% { transform: scale(1); filter: brightness(1); } 50% { transform: scale(1.2); filter: brightness(1.5); } 100% { transform: scale(1); filter: brightness(1); } }
+@keyframes textPopValue { 0% { transform: scale(1); color: #fff; } 30% { transform: scale(1.3); color: #ffd700; text-shadow: 0 0 8px #ffd700; } 100% { transform: scale(1); color: #FFF; } }
+@keyframes permanentFloatUp { 0% { transform: translateY(5px); opacity: 0; } 15% { transform: translateY(-5px); opacity: 1; } 85% { transform: translateY(-8px); opacity: 1; } 100% { transform: translateY(-15px); opacity: 0; } }
+
+.bag-warning-yellow { color: #f1c40f !important; animation: singleFlashWarning 0.5s ease-out 1; }
+.bag-danger-red { color: #e74c3c !important; font-weight: 900 !important; animation: loopFlashWarning 1s ease-in-out infinite; }
+
+.floating-diff {
+  position: absolute;
+  top: -14px;
+  left: 50%;
+  transform: translateX(-50%);
+  font-family: 'Orbitron', sans-serif;
+  font-size: 0.9rem;
+  font-weight: 900;
+  pointer-events: none;
+  z-index: 100;
+  text-shadow: 0 2px 4px rgba(0, 0, 0, 0.95);
+  animation: floatUpFade 1.2s cubic-bezier(0.22, 1, 0.36, 1) forwards;
+}
+.floating-diff.plus { color: #4fffb0 !important; }
+.floating-diff.minus { color: #ff6b6b !important; }
+.floating-permanent-anim { position: absolute; right: -30px; top: -8px; font-family: 'Inter', sans-serif; font-size: 0.65rem; font-weight: 800; color: #2ecc71; pointer-events: none; z-index: 15; text-shadow: 0 1px 2px rgba(0,0,0,0.9); animation: permanentFloatUp 1.5s ease-out forwards; }
+
+@keyframes floatUpFade {
+  0%   { opacity: 0; transform: translateX(-50%) translateY(6px) scale(0.8); }
+  15%  { opacity: 1; transform: translateX(-50%) translateY(0) scale(1.1); }
+  100% { opacity: 0; transform: translateX(-50%) translateY(-26px) scale(0.9); }
+}
+
+.animate-pulse-glow {
+  animation: pulseGlow 0.6s cubic-bezier(0.25, 1, 0.5, 1);
+}
+@keyframes pulseGlow {
+  0%   { box-shadow: 0 0 0px rgba(255,220,80,0); filter: brightness(1); }
+  50%  { box-shadow: 0 0 16px rgba(255,220,80,0.85); filter: brightness(1.3); }
+  100% { box-shadow: 0 0 0px rgba(255,220,80,0); filter: brightness(1); }
+}
+
+.res-block.animate-pulse-glow .res-circle { animation: gemPulseGlow 0.6s ease-in-out; }
+.res-block.animate-pulse-glow .res-count { animation: textPopValue 0.6s cubic-bezier(0.25, 1, 0.5, 1) forwards; }
+.res-block.animate-pulse-glow .res-bonus { animation: textPopValue 0.6s cubic-bezier(0.25, 1, 0.5, 1) forwards; }
+
+.res-count { font-family: 'Orbitron', sans-serif; font-size: 1.05rem; font-weight: 700; line-height: 1; color: #FFF; text-shadow: 0 2px 2px rgba(0,0,0,0.5); }
+.res-bonus { font-size: 0.65rem; color: #ffe099; font-weight: 700; font-family: 'Orbitron', sans-serif; line-height: 1; margin-top: 2px; }
+
+.bg-w { background-image: var(--c-diamond); }
+.bg-u { background-image: var(--c-sapphire); }
+.bg-g { background-image: var(--c-emerald); }
+.bg-r { background-image: var(--c-ruby); }
+.bg-k { background-image: var(--c-onyx); }
+.bg-o { background-image: var(--c-gold); }
+
+.cap-bar { font-size: 0.6rem; color: #738a7c; margin-top: 4px; text-align: left; font-family: 'Orbitron', sans-serif; font-weight: 600; padding-left: 4px; }
+
+.earned-nobles-panel { flex: 1.5; background: rgba(30, 24, 20, 0.6); border: 1px solid rgba(212, 175, 55, 0.2); border-radius: var(--radius); padding: 6px; display: flex; flex-direction: column; gap: 4px; min-width: 160px; }
+.earned-nobles-title { font-size: 0.6rem; font-weight: 700; color: #d4af37; text-transform: uppercase; letter-spacing: 0.05em; border-bottom: 1px solid rgba(212, 175, 55, 0.1); padding-bottom: 2px; }
+.assistant-subpanel { background: rgba(212, 175, 55, 0.06); border: 1px dashed rgba(212, 175, 55, 0.3); border-radius: var(--radius-sm); padding: 4px; margin-bottom: 2px; }
+.earned-nobles-list { display: flex; gap: 4px; flex-wrap: wrap; overflow-y: auto; max-height: 36px; }
+.earned-noble-mini { display: flex; align-items: center; gap: 4px; background: rgba(0,0,0,0.4); padding: 2px 4px; border-radius: var(--radius-sm); border: 1px solid rgba(212, 175, 55, 0.3); }
+.earned-noble-mini img { width: 16px; height: 16px; object-fit: cover; border-radius: 2px; }
+.earned-noble-mini span { font-size: 0.55rem; color: #ffe099; white-space: nowrap; }
+
+.action-panel { background: rgba(0, 0, 0, 0.45); border: 1px solid rgba(212, 175, 55, 0.2); border-radius: var(--radius); padding: 8px; margin-bottom: 10px; box-shadow: 0 4px 15px rgba(0,0,0,0.5); flex-shrink: 0; }
+.action-title { font-size: 0.7rem; font-weight: 700; margin-bottom: 6px; color: #d4af37; letter-spacing: 0.05em; }
+.action-row { display: flex; gap: 6px; }
+.act-group { flex: 1; background: #1a1512; padding: 6px; border-radius: var(--radius-sm); border: 1px solid #2d241f; }
+.token-selectors { display: grid; grid-template-columns: repeat(5, 1fr); gap: 4px; margin-bottom: 6px; }
+
+.token-container-cell { display: flex; flex-direction: column; align-items: center; gap: 4px; }
+.token-btn { padding: 0; border: 1px solid #3a3028; background: #120e0c; border-radius: 50%; width: 28px; height: 28px; margin: 0 auto; cursor: pointer; transition: all 0.15s ease; background-size: 24px 24px; background-repeat: no-repeat; background-position: center center; box-shadow: 0 2px 4px rgba(0,0,0,0.5); position: relative; }
+.token-btn.selected { border-color: #ffe099; box-shadow: 0 0 10px #ffe099, 0 2px 4px rgba(0,0,0,0.8); }
+.token-count-label { font-size: 0.65rem; color: var(--text-muted); text-align: center; font-family: 'Orbitron', sans-serif; font-weight: 700; line-height: 1; }
+
+.token-btn-w { background-image: var(--c-diamond); }
+.token-btn-u { background-image: var(--c-sapphire); }
+.token-btn-g { background-image: var(--c-emerald); }
+.token-btn-r { background-image: var(--c-ruby); }
+.token-btn-k { background-image: var(--c-onyx); }
+
+.btn-primary { width: 100%; padding: 6px; border: 1px solid #8a6418; border-radius: 3px; background: linear-gradient(180deg, #a67c2e, #6e4e13); color: #f4f0ea; font-weight: 700; font-size: 0.7rem; cursor: pointer; text-shadow: 0 1px 2px rgba(0,0,0,0.8); }
+.msg-box { font-size: 0.65rem; color: #c94c4c; text-align: center; margin-top: 2px; min-height: 10px; font-weight: 600; }
+
+.matrix-reserved-wrapper {
+  display: flex;
+  flex-direction: row;
+  gap: 8px;
+  flex: 1;
+  min-height: 0;
+}
+
+.board-matrix {
+  display: flex;
+  flex-direction: column;
+  flex: 1;
+  min-height: 0;
+}
+
+.board-row { display: flex; flex-direction: column; flex: 1; min-height: 0; margin-bottom: 8px; }
+.row-header { display: flex; justify-content: space-between; align-items: baseline; margin-bottom: 4px; border-left: 3px solid #b89742; padding-left: 6px; flex-shrink: 0; }
+.deck-count { font-size: 0.6rem; color: var(--text-muted); font-family: 'Orbitron', sans-serif; }
+.grid-4 { display: grid; grid-template-columns: repeat(4, 1fr); gap: 6px; flex: 1; min-height: 0; }
+
+.card {
+  background: var(--card-bg); background-size: cover; background-position: center; border: 1px solid var(--card-border); border-radius: var(--radius-sm); display: flex; flex-direction: column; justify-content: space-between; height: 100%; position: relative; box-shadow: 0 4px 8px rgba(0,0,0,0.5); overflow: hidden;
+}
+.card-content-wrapper { display: flex; flex-direction: column; justify-content: space-between; width: 100%; height: 100%; flex: 1; padding: 5px; background: linear-gradient(180deg, rgba(16, 12, 10, 0.75) 0%, rgba(16, 12, 10, 0.2) 50%, rgba(16, 12, 10, 0.85) 100%); }
+
+@keyframes cardDealIn { from { opacity: 0; transform: translateY(-10px); } to { opacity: 1; transform: translateY(0); } }
+.animate-deal { animation: cardDealIn 0.35s cubic-bezier(0.25, 1, 0.5, 1) forwards !important; }
+@keyframes cardReserveSink { 0% { transform: scale(1); opacity: 1; } 100% { transform: scale(0.7) translateY(20px); opacity: 0; } }
+.animate-reserve { animation: cardReserveSink 0.3s cubic-bezier(0.4, 0, 0.2, 1) forwards !important; pointer-events: none; z-index: 99; }
+
+.card-top { display: flex; justify-content: space-between; align-items: center; }
+.card-pts { font-family: 'Cinzel', serif; font-size: 1.1rem; font-weight: 900; color: #fff; line-height: 1; text-shadow: 0 2px 4px rgba(0,0,0,1); }
+.card-gem-icon { width: 16px; height: 16px; border-radius: 50%; display: flex; align-items: center; justify-content: center; background-size: cover; background-position: center; }
+.card-costs { display: flex; flex-wrap: wrap; gap: 2px; margin-top: auto; padding-top: 2px; }
+.cost-dot { display: flex; align-items: center; gap: 2px; font-size: 0.6rem; font-weight: 700; padding: 1px 3px; border-radius: 2px; background: rgba(0,0,0,0.85); border: 1px solid rgba(255,255,255,0.1); }
+
+.cost-dot-circle { inline-block; width: 7px; height: 7px; border-radius: 50%; background-size: cover; background-position: center; }
+.card-actions { display: flex; gap: 3px; margin-top: 4px; }
+
+.btn-card { flex: 1; padding: 2px 0; border: 1px solid #4a3e35; background: rgba(28, 23, 20, 0.9); color: var(--text); border-radius: 2px; font-size: 0.55rem; font-weight: 600; cursor: pointer; text-shadow: 0 1px 2px #000; }
+.card.empty { border-style: dashed; border-color: #4a3e35; background: rgba(0,0,0,0.2); opacity: 0.3; justify-content: center; align-items: center; font-size: 0.6rem; height: 100%; box-shadow: none; }
+
+.btn-card:disabled,
+.btn-card[disabled] {
+  opacity: 0.2;
+  cursor: not-allowed;
+  pointer-events: none;
+  border-color: #2a2018;
+  color: #5a4e45;
+}
+
+.btn-primary:disabled,
+.btn-primary[disabled] {
+  opacity: 0.35;
+  cursor: not-allowed;
+  pointer-events: none;
+  filter: grayscale(0.6);
+}
+
+.token-btn:disabled,
+.token-btn[disabled] {
+  cursor: not-allowed;
+  pointer-events: none;
+}
+
+.reserved-section {
+  width: 110px;
+  flex-shrink: 0;
+  display: flex;
+  flex-direction: column;
+  background: rgba(0, 0, 0, 0.35);
+  border: 1px dashed #9c7a3c;
+  padding: 6px;
+  border-radius: var(--radius);
+}
+
+.reserved-section .grid-4 {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  flex: 1;
+}
+
+.modal-overlay { position:fixed; inset:0; background:rgba(0,0,0,0.85); backdrop-filter:blur(5px); display:flex; align-items:center; justify-content:center; padding:20px; z-index:200; opacity:0; pointer-events:none; transition:opacity 0.3s ease; }
+.modal-overlay.show { opacity:1; pointer-events:all; }
+.modal { background:#1e1814; border:2px solid #d4af37; border-radius:8px; padding:24px; max-width:420px; width:100%; text-align:center; box-shadow: 0 10px 35px rgba(0,0,0,0.9); position: relative; }
+.modal-title { font-family: 'Cinzel', serif; font-size: 1.3rem; color: #d4af37; margin-bottom: 12px; text-shadow: var(--glow-warm); font-weight:900; }
+
+.rule-box { text-align: left; background: rgba(0,0,0,0.4); border: 1px solid rgba(212,175,55,0.15); padding: 12px; border-radius: 6px; margin: 12px 0; font-size: 0.85rem; line-height: 1.6; }
+.btn-replay { width: 100%; padding: 10px; background: linear-gradient(180deg, #d4af37, #8a6418); color: #FFF; border: none; border-radius: 4px; font-weight: 700; cursor: pointer; margin-top: 12px; font-size:0.85rem; }
+
+.tutorial-highlight { border: 3px solid #ffcc00 !important; box-shadow: 0 0 30px rgba(255, 204, 0, 0.6) !important; transition: all 0.3s ease; }
+.t-dot { width: 8px; height: 8px; border-radius: 50%; background: rgba(255, 204, 0, 0.2); }
+.t-dot.active { background: #ffcc00; box-shadow: 0 0 10px #ffcc00; }
+.btn-tutorial-next { padding: 6px 16px; background: linear-gradient(180deg, #ffe680, #ffcc00, #b38600); color: #110e0c; border: none; border-radius: 4px; font-size: 0.78rem; font-weight: 800; cursor: pointer; box-shadow: 0 2px 6px rgba(0,0,0,0.5); }
+
+#effects-layer {
+  position: fixed;
+  inset: 0;
+  pointer-events: none;
+  z-index: 99999;
+}
+
+.ach-item-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  background: rgba(0, 0, 0, 0.45);
+  padding: 8px 12px;
+  border-radius: var(--radius-sm);
+  border: 1px solid rgba(255, 255, 255, 0.03);
+  transition: all 0.2s ease;
+  text-align: left;
+}
+.ach-item-row:not(.unlocked) { opacity: 0.35; filter: grayscale(1); }
+.ach-item-row.unlocked { background: rgba(26, 20, 16, 0.85); border: 1px solid rgba(212, 175, 55, 0.25); box-shadow: 0 2px 8px rgba(0,0,0,0.4); }
+.ach-row-meta { display: flex; flex-direction: column; gap: 3px; flex: 1; padding-right: 8px; }
+.ach-row-name { font-size: 0.85rem; font-weight: 700; color: #fff; }
+.ach-item-row.unlocked .ach-row-name { color: #ffe099; }
+.ach-row-desc { font-size: 0.72rem; color: var(--text-muted); line-height: 1.3; }
+.ach-item-row.unlocked .ach-row-desc { color: #f4f0ea; }
+.ach-row-tag { font-size: 0.62rem; font-weight: 800; padding: 3px 8px; border-radius: 2px; text-transform: uppercase; letter-spacing: 0.05em; white-space: nowrap; }
+
+.ach-modal {
+  width: 90%;
+  max-width: 520px;
+  max-height: 75vh;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  padding: 0;
+}
+
+.ach-modal-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 14px 16px 10px;
+  border-bottom: 1px solid #3a3028;
+  flex-shrink: 0;
+}
+
+.ach-modal-header .modal-title {
+  margin: 0;
+  font-size: 1rem;
+}
+
+.ach-scroll-body {
+  flex: 1;
+  overflow-y: auto;
+  padding: 12px 14px;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.ach-scroll-body::-webkit-scrollbar { width: 4px; }
+.ach-scroll-body::-webkit-scrollbar-track { background: rgba(0,0,0,0.2); }
+.ach-scroll-body::-webkit-scrollbar-thumb { background: #9c7a3c; border-radius: 2px; }
+
+@media (max-width: 768px) {
+  .noble-card { min-width: 72px; height: 72px; }
+  .res-circle { width: 17px; height: 17px; }
+  .res-count { font-size: 0.9rem; }
+  .token-btn { width: 22px; height: 22px; background-size: 18px 18px; }
+}
+
+@media (max-width: 375px) {
+  .game-title { font-size: 0.75rem !important; }
+  .noble-card { min-width: 46px !important; height: 46px !important; }
+  .res-circle { width: 11px !important; height: 11px !important; }
+  .res-count { font-size: 0.6rem !important; }
+  .token-btn { width: 14px !important; height: 14px !important; background-size: 11px 11px !important; }
+  .reserved-section { width: 62px !important; }
+  .card-pts { font-size: 0.65rem !important; }
+  .btn-card { font-size: 0.38rem !important; }
+}
+
+@media (max-width: 430px) {
+  html, body {
+    padding: 2px !important;
+    overflow: hidden !important;
+    margin: 0;
+    height: calc(var(--vh, 1vh) * 100) !important;
+    height: 100dvh !important;
   }
-};
 
-window.addEventListener('DOMContentLoaded', async () => {
-  setDynamicVh();
-  
-  audioEl = document.getElementById('bg-music');
-  sfxGemEl = document.getElementById('sfx-gem');
-  sfxBuyEl = document.getElementById('sfx-buy');
-  sfxReserveEl = document.getElementById('sfx-reserve');
-  sfxSelectEl = document.getElementById('sfx-select');
-  sfxUnselectEl = document.getElementById('sfx-unselect');
-  sfxNobleMale = document.getElementById('sfx-noble-male');
-  sfxNobleFemale = document.getElementById('sfx-noble-female');
-
-  sfxAchievementsMap = {
-    easy: document.getElementById('sfx-ach-easy'),
-    normal: document.getElementById('sfx-ach-normal'),
-    hard: document.getElementById('sfx-ach-hard'),
-    expert: document.getElementById('sfx-ach-expert'),
-    master: document.getElementById('sfx-ach-master')
-  };
-
-  await loadCoreModules();
-  SingleMode.loadTalentPool();
-  ActionDispatcher.dispatch('INIT_GAME');
-  if (!localStorage.getItem('splendor_tutorial_completed_2026')) {
-    document.getElementById('tutorial-start-modal').classList.add('show');
-  } else {
-    document.getElementById('welcome-back-modal').classList.add('show');
+  .shell {
+    height: calc(100% - 4px) !important;
+    display: flex !important;
+    flex-direction: column !important;
+    gap: 0 !important;
+    overflow: hidden !important;
   }
-});
 
-window.addEventListener('resize', setDynamicVh);
+  .top-meta-wrap { padding: 3px 6px !important; margin-bottom: 2px !important; }
+  .game-title { font-size: 0.82rem; letter-spacing: 0.05em; }
+  .status-bar { gap: 3px !important; }
+  .music-btn { padding: 2px 5px !important; font-size: 0.58rem !important; }
+  .status-pill { padding: 2px 5px !important; font-size: 0.58rem !important; }
+
+  .achievement-banner { padding: 3px 8px !important; margin-bottom: 2px !important; }
+  .ach-badge-title { font-size: 0.52rem; }
+  .ach-latest-display { font-size: 0.6rem; }
+  .ach-stats-summary { font-size: 0.58rem; }
+
+  .nobles-section { margin-bottom: 2px !important; padding: 1px !important; flex-shrink: 0 !important; }
+  .section-title { font-size: 0.52rem !important; margin-bottom: 2px !important; }
+  .noble-card { min-width: 52px; height: 52px; flex-shrink: 0; }
+  .noble-name { font-size: 0.4rem; }
+  .noble-pts { font-size: 0.62rem; }
+  .noble-reqs { gap: 1px !important; padding: 1px 2px !important; }
+  .cost-dot-circle { width: 5px; height: 5px; }
+
+  .dashboard-container { gap: 4px !important; margin-bottom: 2px !important; flex-shrink: 0 !important; }
+  .dashboard { padding: 4px 6px !important; }
+  .res-grid { gap: 2px !important; }
+  .res-circle { width: 13px; height: 13px; }
+  .res-count { font-size: 0.68rem; }
+  .res-bonus { font-size: 0.4rem; margin-top: 1px; }
+  .cap-bar { font-size: 0.48rem; margin-top: 2px; }
+  .earned-nobles-panel { padding: 4px !important; min-width: 0; }
+  .earned-nobles-title { font-size: 0.48rem; }
+  .ai-dashboard-box { padding: 3px 6px !important; }
+
+  .action-panel { padding: 4px 6px !important; margin-bottom: 2px !important; flex-shrink: 0 !important; }
+  .action-row { gap: 3px !important; }
+  .act-group { padding: 3px !important; }
+  .action-title { font-size: 0.52rem; margin-bottom: 2px; }
+  .token-btn { width: 16px; height: 16px; background-size: 12px 12px; }
+  .btn-primary { padding: 3px !important; font-size: 0.56rem !important; }
+  .msg-box { font-size: 0.52rem !important; }
+
+  .matrix-reserved-wrapper {
+    display: flex !important;
+    flex-direction: row !important;
+    flex: 1 !important;
+    min-height: 0 !important;
+    overflow: hidden !important;
+    gap: 3px !important;
+  }
+
+  .board-matrix {
+    flex: 1 !important;
+    display: flex !important;
+    flex-direction: column !important;
+    min-height: 0 !important;
+    overflow: hidden !important;
+  }
+
+  .board-row {
+    flex: 1 !important;
+    display: flex !important;
+    flex-direction: column !important;
+    min-height: 0 !important;
+    margin-bottom: 2px !important;
+  }
+
+  .grid-4 { 
+    display: flex !important;
+    flex-direction: row !important;
+    flex: 1 !important;
+    gap: 2px !important; 
+  }
+
+  .card { 
+    flex: 1 !important;
+    min-height: 0 !important; 
+    display: flex !important;
+    flex-direction: column !important;
+  }
+  .card-content-wrapper { 
+    padding: 3px !important; 
+    flex: 1 !important;
+    display: flex !important;
+    flex-direction: column !important;
+    justify-content: space-between !important;
+  }
+  .card-pts { font-size: 0.72rem; }
+  .card-gem-icon { width: 10px; height: 10px; }
+  .card-costs { gap: 1px !important; padding-top: 1px !important; }
+  .cost-dot { font-size: 0.45rem; gap: 1px !important; }
+  .card-actions { gap: 1px !important; margin-top: auto !important; }
+  .btn-card { font-size: 0.42rem; padding: 1px 0 !important; line-height: 1 !important; }
+  .card.empty { font-size: 0.45rem; }
+
+  .reserved-section {
+    width: 70px !important;
+    flex-shrink: 0 !important;
+    padding: 3px !important;
+    display: flex !important;
+    flex-direction: column !important;
+  }
+  .reserved-section .section-title { font-size: 0.45rem; }
+  .reserved-section .grid-4 {
+    flex-direction: column !important;
+    gap: 3px !important;
+    flex: 1 !important;
+  }
+  .reserved-section .card { min-height: 55px !important; }
+
+  .ach-modal { max-height: 85vh !important; width: 95% !important; }
+}
+
+/* ── 【展演層：最高級隔離配置】 ── */
+#story-layer {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  z-index: 999999; 
+  background: rgba(15, 20, 26, 0.92);
+  display: none;
+  flex-direction: column;
+  justify-content: flex-end;
+  align-items: center;
+  padding-bottom: 50px;
+  box-sizing: border-box;
+  font-family: 'Microsoft JhengHei', 'Heiti TC', sans-serif;
+  opacity: 0;
+  pointer-events: none; 
+}
+
+#story-layer.story-active {
+  pointer-events: auto !important;
+}
+
+.vault-bounce {
+  animation: vaultBounce 0.4s cubic-bezier(0.36, 0.07, 0.19, 0.97) both;
+}
+
+@keyframes vaultBounce {
+  0%   { transform: scale(1); }
+  30%  { transform: scale(1.35); }
+  60%  { transform: scale(0.9); }
+  80%  { transform: scale(1.1); }
+  100% { transform: scale(1); }
+}
