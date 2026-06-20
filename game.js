@@ -57,7 +57,7 @@ async function loadCoreModules() {
 
   window.ActionDispatcher = ActionDispatcher;
   window.SingleMode = SingleMode;
-  window.StoryMode = storyMod.StoryMode; 
+  window.StoryMode = storyMod.StoryMode; // 確保將 StoryMode 物件掛載全域
   window.STORY_MISSIONS = levelsMod.STORY_MISSIONS; 
   
   storyMod.StoryMode.loadStoryProgress();
@@ -273,17 +273,20 @@ window.render = function() {
   document.getElementById('ai-dashboard-box').style.display = isvsAI ? 'block' : 'none';
   document.getElementById('player-dashboard-title').style.display = isvsAI ? 'block' : 'none';
   
+  // ─── 🛡️ 【解耦修復】：多功能動態橫幅（防範找不到節點引發卡死） ───
   const bannerZone = document.getElementById('dynamic-banner-zone');
   const bannerBadge = document.getElementById('dynamic-banner-badge');
   const bannerText = document.getElementById('dynamic-banner-text');
 
   if (bannerZone && bannerBadge && bannerText) {
     if (isvsAI) {
+      // 模式 2 (對戰模式)：完全隱藏成就欄位置，騰出垂直視野空間
       bannerZone.style.display = 'none';
     } else {
       bannerZone.style.display = 'flex';
       
       if (isSingleMode) {
+        // 模式 1 (單人模式)：成就欄維持顯示已達成的成就，點入後顯示榮譽堂清單
         bannerBadge.textContent = "榮譽成就";
         bannerBadge.style.backgroundColor = 'rgba(230, 126, 34, 0.2)';
         bannerBadge.style.borderColor = '#e67e22';
@@ -295,6 +298,7 @@ window.render = function() {
         bannerText.innerHTML = `🏆 當前已斬獲 <span style="color:#ffcc00; font-weight:800;">${unlCount} / 30</span> 項皇家勳章！<span style="color:var(--text-muted); font-size:0.55rem; margin-left:6px;">[ 💡 點此可開啟榮譽堂查看完整清單 ]</span>`;
         
       } else if (isStoryMode) {
+        // 模式 3 (故事模式)：改成關卡的條件與當前關卡顯示，點入後選擇已解鎖關卡遊玩
         const currentLvl = fullState.storyProgress?.currentLevel || 1;
         const mission = window.STORY_MISSIONS ? window.STORY_MISSIONS[currentLvl - 1] : null;
         
@@ -305,19 +309,18 @@ window.render = function() {
           bannerBadge.style.borderColor = '#d4af37';
           
           let conditionText = mission.dialogue || '';
-          
           if (fullState.storyTracker && mission.winCondition.type === 'score_and_reserve_buy') {
-            conditionText += ` <span style="color:#2ecc71;">(契約收購進度: ${fullState.storyTracker.reservedBuys}/${mission.winCondition.minReservedBuys})</span>`;
+            conditionText += ` <span style="color:#2ecc71;">(契約收購: ${fullState.storyTracker.reservedBuys}/${mission.winCondition.minReservedBuys})</span>`;
           } else if (fullState.storyTracker && mission.winCondition.type === 'score_and_free_buys') {
-            conditionText += ` <span style="color:#2ecc71;">(免籌碼收購進度: ${fullState.storyTracker.freeBuys}/${mission.winCondition.minFreeBuysRequired})</span>`;
+            conditionText += ` <span style="color:#2ecc71;">(免寶石收購: ${fullState.storyTracker.freeBuys}/${mission.winCondition.minFreeBuysRequired})</span>`;
           } else if (fullState.storyTracker && mission.winCondition.type === 'high_score_and_tier3_count') {
             const highCards = fullState.storyTracker.highPointCards || 0;
-            conditionText += ` <span style="color:#2ecc71;">(高階物業進度: ${highCards}/${mission.winCondition.requiredTier3CardsWithPoints4})</span>`;
+            conditionText += ` <span style="color:#2ecc71;">(高級物業: ${highCards}/${mission.winCondition.requiredTier3CardsWithPoints4})</span>`;
           }
           
-          bannerText.innerHTML = `<span style="color:#ffe099; font-weight:800;">⚔️【${mission.name}】</span> ${conditionText} <span style="color:#ffcc00; font-size:0.55rem; margin-left:6px;">[ 🗺️ 點此可自選或重挑關卡 ]</span>`;
+          bannerText.innerHTML = `<span style="color:#ffe099; font-weight:800;">⚔️【${mission.name}】</span> ${conditionText} <span style="color:#ffcc00; font-size:0.55rem; margin-left:6px;">[ 🗺️ 點此可自由切換戰役關卡 ]</span>`;
         } else {
-          bannerText.textContent = "📜 皇家故事戰役檔案加載中...";
+          bannerText.textContent = "📜 故事戰役檔案加載中...";
         }
       }
     }
@@ -345,7 +348,6 @@ window.render = function() {
   const capTxtEl = document.getElementById('cap-txt');
   capTxtEl.textContent = `背包: ${totalTokens} / ${currentBagCap}`;
   
-  // 【更新背包籌碼限制與顏色字體動態判定】
   capTxtEl.classList.remove('bag-warning-yellow', 'bag-danger-red');
   if (totalTokens === 10) {
     capTxtEl.classList.add('bag-danger-red');
@@ -478,7 +480,7 @@ window.render = function() {
 
   if (sameLayer) {
     sameLayer.innerHTML = gemColors.map(k => {
-      const needBankCount = (fullState.settings.selectedAssistant === 'ast24') ? 1 : 2; 
+      const needBankCount = (fullState.settings.selectedAssistant === 'ast9') ? 1 : 2; 
       const canTake2 = fullState.bank[k] >= needBankCount;
       const alreadySelected = fullState.selectedSame === k;
       return `
@@ -547,6 +549,7 @@ function setupIdleCardAnimations() {
   }
 }
 
+// ─── 【全域安全跨模組劇場對接派發】 ───
 window.handleBannerZoneClick = function() {
   if (!CoreState) return;
   playUniformSfx();
@@ -565,7 +568,6 @@ window.toggleSelectDiff = function(color) {
   document.getElementById('error-msg').textContent = '';
   const state = CoreState.get();
   
-  // 【核心修改】：限制背包只能拿10個寶石，等於10時無法再選取拿取 Token
   let currentTotalTokens = 0;
   for (let k in state.player.tokens) currentTotalTokens += state.player.tokens[k];
   if (currentTotalTokens >= 10) return;
@@ -590,7 +592,6 @@ window.toggleSelectSame = function(color) {
   document.getElementById('error-msg').textContent = '';
   const state = CoreState.get();
   
-  // 【核心修改】：限制背包只能拿10個寶石，等於10時無法再選取拿取 Token
   let currentTotalTokens = 0;
   for (let k in state.player.tokens) currentTotalTokens += state.player.tokens[k];
   if (currentTotalTokens >= 10) return;
