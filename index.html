@@ -12,70 +12,119 @@
 
 <script src="https://cdn.jsdelivr.net/npm/gsap@3.12.5/dist/gsap.min.js"></script>
 <style>
-  /* 視覺小說大欄對話框與立繪專屬樣式，確保疊加圖層完美高於遊戲本體 */
-  #story-layer {
-    box-sizing: border-box;
-    margin: 0;
-    padding: 0;
-    font-family: 'Microsoft JhengHei', sans-serif;
-  }
-  .character-container {
-    position: absolute;
-    bottom: 180px; 
-    width: 300px;
-    height: 500px;
-    display: flex;
-    justify-content: center;
-    align-items: flex-end;
-  }
-  .character-img {
-    max-width: 100%;
-    max-height: 100%;
-    object-fit: contain;
-  }
-  .dialogue-box {
-    position: relative;
-    width: 80%;
-    max-width: 800px;
-    height: 150px;
-    background: rgba(0, 0, 0, 0.85);
-    border: 3px solid #f1c40f;
-    border-radius: 10px;
-    padding: 20px;
-    color: #fff;
-    cursor: pointer;
-    z-index: 10;
-    box-shadow: 0 10px 30px rgba(0,0,0,0.85);
-  }
-  .name-tag {
-    position: absolute;
-    top: -35px;
-    left: 20px;
-    background: #f1c40f;
-    color: #000;
-    padding: 5px 20px;
-    font-weight: bold;
-    border-radius: 5px 5px 0 0;
-    font-size: 1.1rem;
-  }
-  .dialogue-text {
-    font-size: 1.15rem;
-    line-height: 1.6;
-    letter-spacing: 1px;
-    text-align: left;
-  }
-  .click-hint {
-    position: absolute;
-    bottom: 10px;
-    right: 20px;
-    font-size: 0.8rem;
-    color: #aaa;
-    animation: vnBlink 1s infinite alternate;
-  }
-  @keyframes vnBlink {
-    from { opacity: 0.3; }
-    to { opacity: 1; }
-  }
+    /* 📥 視覺小說故事劇場專屬樣式 */
+    #story-layer {
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        z-index: 99999; 
+        background: rgba(15, 20, 26, 0.92); 
+        display: flex;
+        flex-direction: column;
+        justify-content: flex-end;
+        align-items: center;
+        padding-bottom: 50px;
+        box-sizing: border-box;
+        font-family: 'Microsoft JhengHei', 'Heiti TC', sans-serif;
+        opacity: 1;
+    }
+    .story-chapter-title {
+        position: absolute;
+        top: 30px;
+        color: #f1c40f;
+        font-size: 1.4rem;
+        font-weight: bold;
+        letter-spacing: 2px;
+        text-shadow: 0 2px 10px rgba(0,0,0,0.6);
+    }
+    .story-intro-panel {
+        position: absolute;
+        top: 90px;
+        width: 85%;
+        max-width: 720px;
+        background: rgba(0, 0, 0, 0.65);
+        border-left: 4px solid #f1c40f;
+        padding: 15px 20px;
+        color: #ddd;
+        font-size: 0.95rem;
+        line-height: 1.5;
+        border-radius: 0 8px 8px 0;
+        text-align: left;
+    }
+    .story-character-container {
+        position: absolute;
+        bottom: 190px;
+        width: 320px;
+        height: 520px;
+        display: flex;
+        justify-content: center;
+        align-items: flex-end;
+        pointer-events: none;
+    }
+    .story-character-img {
+        max-width: 100%;
+        max-height: 100%;
+        object-fit: contain;
+    }
+    .story-dialogue-box {
+        position: relative;
+        width: 85%;
+        max-width: 850px;
+        height: 160px;
+        background: rgba(5, 8, 12, 0.95);
+        border: 2px solid #f1c40f;
+        box-shadow: 0 0 20px rgba(241, 196, 15, 0.2);
+        border-radius: 12px;
+        padding: 25px 30px;
+        color: #fff;
+        cursor: pointer;
+        user-select: none;
+        box-sizing: border-box;
+    }
+    .story-name-tag {
+        position: absolute;
+        top: -32px;
+        left: 30px;
+        background: #f1c40f;
+        color: #000;
+        padding: 6px 25px;
+        font-weight: bold;
+        border-radius: 6px 6px 0 0;
+        font-size: 1.1rem;
+        box-shadow: 0 -3px 10px rgba(0,0,0,0.3);
+    }
+    .story-dialogue-text {
+        font-size: 1.2rem;
+        line-height: 1.6;
+        letter-spacing: 1px;
+        color: #f1f2f6;
+        text-align: left;
+    }
+    .story-condition-badge {
+        position: absolute;
+        top: 15px;
+        right: 20px;
+        background: rgba(231, 76, 60, 0.25);
+        border: 1px solid #e74c3c;
+        color: #ff7675;
+        padding: 4px 10px;
+        font-size: 0.8rem;
+        border-radius: 4px;
+    }
+    .story-click-hint {
+        position: absolute;
+        bottom: 12px;
+        right: 25px;
+        font-size: 0.85rem;
+        color: #f1c40f;
+        animation: storyArrowBlink 0.8s infinite alternate;
+    }
+    @keyframes storyArrowBlink {
+        from { opacity: 0.3; transform: translateY(0); }
+        to { opacity: 1; transform: translateY(-3px); }
+    }
 </style>
 </head>
 <body>
@@ -95,16 +144,20 @@
 <audio id="sfx-ach-expert" src="https://assets.mixkit.co/active_storage/sfx/2063/2063-preview.mp3"></audio>
 <audio id="sfx-ach-master" src="https://assets.mixkit.co/active_storage/sfx/2059/2059-preview.mp3"></audio>
 
-<div id="story-layer" style="position: fixed; inset: 0; width: 100%; height: 100%; z-index: 99999; display: none; background: rgba(14, 11, 9, 0.88); flex-direction: column; justify-content: flex-end; align-items: center; padding-bottom: 40px; pointer-events: all;">
-  <div class="character-container" id="vn-character">
-    <img class="character-img" id="vn-character-img" alt="角色立繪">
-  </div>
+<div id="story-layer" style="display: none;">
+    <div class="story-chapter-title" id="story-chapter-title">章節加載中...</div>
+    <div class="story-intro-panel" id="story-intro-panel">背景故事加載中...</div>
 
-  <div class="dialogue-box" id="vn-dialogue-box" onclick="window.vnNextDialogue()">
-    <div class="name-tag" id="vn-name-tag">???</div>
-    <div class="dialogue-text" id="vn-dialogue-text">...</div>
-    <div class="click-hint">▼ 點擊繼續</div>
-  </div>
+    <div class="story-character-container" id="story-character">
+        <img class="story-character-img" id="story-char-img" alt="角色立繪">
+    </div>
+
+    <div class="story-dialogue-box" id="story-dialogue-box" onclick="window.storyModule.nextDialogue()">
+        <div class="story-name-tag" id="story-name-tag">???</div>
+        <div class="story-condition-badge" id="story-condition-badge">通關條件</div>
+        <div class="story-dialogue-text" id="story-dialogue-text">...</div>
+        <div class="story-click-hint">▼ 點擊繼續</div>
+    </div>
 </div>
 
 <div class="shell">
@@ -121,10 +174,10 @@
     </div>
   </div>
 
-  <div class="achievement-banner" id="story-mission-banner" style="cursor: default;">
+  <div class="achievement-banner" id="dynamic-banner-zone" onclick="window.handleBannerZoneClick()">
     <div class="ach-latest-container" style="width: 100%;">
-      <span class="ach-badge-title" id="story-mission-badge">當前目標</span>
-      <div class="ach-latest-display" id="story-mission-field" style="color: #fff; font-size: 0.8rem; line-height: 1.3;">🏆 載入戰役中...</div>
+      <span class="ach-badge-title" id="dynamic-banner-badge">加載中</span>
+      <div class="ach-latest-display" id="dynamic-banner-text" style="color: #fff; font-size: 0.8rem; line-height: 1.3;">🏆 殿堂核心加載中...</div>
     </div>
   </div>
 
@@ -242,6 +295,8 @@
     <button class="btn-replay" onclick="playUniformSfx(); closeTalentPoolModal()">儲存並關閉</button>
   </div>
 </div>
+
+<div class="modal-overlay" id="story-map-modal"></div>
 
 <div class="modal-overlay" id="tutorial-start-modal">
   <div class="modal" style="max-width: 480px; max-height: 90vh; overflow-y: auto;">
