@@ -273,20 +273,20 @@ window.render = function() {
   document.getElementById('ai-dashboard-box').style.display = isvsAI ? 'block' : 'none';
   document.getElementById('player-dashboard-title').style.display = isvsAI ? 'block' : 'none';
   
-  // ─── 🛡️ 【解耦修復】：多功能動態橫幅（防範找不到節點引發卡死） ───
+  // ─── 🛡️ 【解耦安全修復】：多功能動態橫幅（防止因舊節點遺失導致 null 指針異常） ───
   const bannerZone = document.getElementById('dynamic-banner-zone');
   const bannerBadge = document.getElementById('dynamic-banner-badge');
   const bannerText = document.getElementById('dynamic-banner-text');
 
   if (bannerZone && bannerBadge && bannerText) {
     if (isvsAI) {
-      // 模式 2 (對戰模式)：完全隱藏成就欄位置，騰出垂直視野空間
+      // 狀態 2 (電腦對戰)：完全隱藏成就欄，騰出垂直視野
       bannerZone.style.display = 'none';
     } else {
       bannerZone.style.display = 'flex';
       
       if (isSingleMode) {
-        // 模式 1 (單人模式)：成就欄維持顯示已達成的成就，點入後顯示榮譽堂清單
+        // 狀態 1 (單人模式)：成就欄顯示最新已達成的成就入口
         bannerBadge.textContent = "榮譽成就";
         bannerBadge.style.backgroundColor = 'rgba(230, 126, 34, 0.2)';
         bannerBadge.style.borderColor = '#e67e22';
@@ -298,7 +298,7 @@ window.render = function() {
         bannerText.innerHTML = `🏆 當前已斬獲 <span style="color:#ffcc00; font-weight:800;">${unlCount} / 30</span> 項皇家勳章！<span style="color:var(--text-muted); font-size:0.55rem; margin-left:6px;">[ 💡 點此可開啟榮譽堂查看完整清單 ]</span>`;
         
       } else if (isStoryMode) {
-        // 模式 3 (故事模式)：改成關卡的條件與當前關卡顯示，點入後選擇已解鎖關卡遊玩
+        // 狀態 3 (故事模式)：改成當前關卡名稱與特殊條件顯示，點擊開啟選關地圖
         const currentLvl = fullState.storyProgress?.currentLevel || 1;
         const mission = window.STORY_MISSIONS ? window.STORY_MISSIONS[currentLvl - 1] : null;
         
@@ -310,12 +310,12 @@ window.render = function() {
           
           let conditionText = mission.dialogue || '';
           if (fullState.storyTracker && mission.winCondition.type === 'score_and_reserve_buy') {
-            conditionText += ` <span style="color:#2ecc71;">(契約收購: ${fullState.storyTracker.reservedBuys}/${mission.winCondition.minReservedBuys})</span>`;
+            conditionText += ` <span style="color:#2ecc71;">(契約收購進度: ${fullState.storyTracker.reservedBuys}/${mission.winCondition.minReservedBuys})</span>`;
           } else if (fullState.storyTracker && mission.winCondition.type === 'score_and_free_buys') {
-            conditionText += ` <span style="color:#2ecc71;">(免寶石收購: ${fullState.storyTracker.freeBuys}/${mission.winCondition.minFreeBuysRequired})</span>`;
+            conditionText += ` <span style="color:#2ecc71;">(免籌碼收購進度: ${fullState.storyTracker.freeBuys}/${mission.winCondition.minFreeBuysRequired})</span>`;
           } else if (fullState.storyTracker && mission.winCondition.type === 'high_score_and_tier3_count') {
             const highCards = fullState.storyTracker.highPointCards || 0;
-            conditionText += ` <span style="color:#2ecc71;">(高級物業: ${highCards}/${mission.winCondition.requiredTier3CardsWithPoints4})</span>`;
+            conditionText += ` <span style="color:#2ecc71;">(高階物業進度: ${highCards}/${mission.winCondition.requiredTier3CardsWithPoints4})</span>`;
           }
           
           bannerText.innerHTML = `<span style="color:#ffe099; font-weight:800;">⚔️【${mission.name}】</span> ${conditionText} <span style="color:#ffcc00; font-size:0.55rem; margin-left:6px;">[ 🗺️ 點此可自由切換戰役關卡 ]</span>`;
@@ -549,7 +549,7 @@ function setupIdleCardAnimations() {
   }
 }
 
-// ─── 【全域安全跨模組劇場對接派發】 ───
+// ─── 【安全跨模組全域點擊事件分發代理】 ───
 window.handleBannerZoneClick = function() {
   if (!CoreState) return;
   playUniformSfx();
