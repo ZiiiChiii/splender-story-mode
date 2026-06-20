@@ -72,7 +72,7 @@ export const StoryMode = {
           style="text-align:left; padding:6px; display:flex; flex-direction:column; justify-content:space-between; 
                  opacity:${isUnlocked ? 1 : 0.2}; pointer-events:${isUnlocked ? 'auto' : 'none'}; 
                  border-color:${isCurrent ? '#ffcc00' : '#4a3a30'}; background:${isCurrent ? '#2d2219' : 'rgba(0,0,0,0.2)'};" 
-          onclick="window.selectStoryLevel(${cfg.id}, true)">
+          onclick="window.selectStoryLevel(${cfg.id}, event)">
           <div style="font-weight:800; color:#ffe099; font-size:0.7rem; white-space:nowrap; text-overflow:ellipsis; overflow:hidden; width:100%;">第 ${cfg.id} 關 ${cfg.name} ${isCurrent ? '🎯' : ''}</div>
           <div style="font-size:0.58rem; color:#fff;">${scoreDisplay}分 / ${turnDisplay}回</div>
           <div style="font-size:0.52rem; color:#2ecc71; white-space:nowrap; text-overflow:ellipsis; overflow:hidden; width:100%;">🎁 獲取: ${astCfg ? astCfg.name.split(' ')[1] : ''}</div>
@@ -109,11 +109,17 @@ export const StoryMode = {
   }
 };
 
-window.selectStoryLevel = function(lvl, isFromModalClick = false) {
+window.selectStoryLevel = function(lvl, event) {
   if (typeof window.playUniformSfx === 'function') window.playUniformSfx();
   
-  // 如果是全域被污染引起的誤點擊（且地圖根本沒開），直接攔截防穿透
-  if (!isFromModalClick && !document.getElementById('story-map-modal')?.classList.contains('show')) {
+  // 核心雙重校驗安全閥：
+  // 1. 如果故事選關面板並未開啟（代表是在主畫面下的非預期點擊觸發），直接精準擊殺攔截。
+  // 2. 如果點擊的目標節點完全不在地圖彈窗（#story-map-modal）內部，視為污染性誤觸，不予響應。
+  const modalContainer = document.getElementById('story-map-modal');
+  if (!modalContainer || !modalContainer.classList.contains('show')) {
+    return;
+  }
+  if (event && event.target && !modalContainer.contains(event.target)) {
     return;
   }
 
