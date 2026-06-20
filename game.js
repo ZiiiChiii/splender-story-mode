@@ -47,7 +47,7 @@ async function loadCoreModules() {
   const actionMod = await import('./core/action.js');
   const storyMod = await import('./core/storyMode.js');
   const assistantMod = await import('./core/assistantData.js');
-  const levelsMod = await import('./core/levels.js'); // 新增明確導入
+  const levelsMod = await import('./core/missions/levelsData.js'); // 修改為新的資料路徑
 
   CoreState = stateMod.CoreState;
   GameEngine = engineMod.GameEngine;
@@ -57,7 +57,7 @@ async function loadCoreModules() {
 
   window.ActionDispatcher = ActionDispatcher;
   window.SingleMode = SingleMode;
-  window.STORY_MISSIONS = levelsMod.STORY_MISSIONS; // 掛載至 window 全域暫存
+  window.STORY_MISSIONS = levelsMod.STORY_MISSIONS; // 註冊到 window 讓各模組能全域唯讀
   
   storyMod.StoryMode.loadStoryProgress();
   assistantMod.AssistantManager.renderActiveAssistantUI();
