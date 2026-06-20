@@ -1,7 +1,7 @@
 // core/storyMode.js
 import { CoreState } from './state.js';
 import { ASSISTANTS_DATABASE } from './assistantData.js';
-import { STORY_MISSIONS } from './levels.js';
+import { STORY_MISSIONS } from './missions/levelsData.js';
 
 export const StoryMode = {
   loadStoryProgress() {
