@@ -72,7 +72,7 @@ export const StoryMode = {
           style="text-align:left; padding:6px; display:flex; flex-direction:column; justify-content:space-between; 
                  opacity:${isUnlocked ? 1 : 0.2}; pointer-events:${isUnlocked ? 'auto' : 'none'}; 
                  border-color:${isCurrent ? '#ffcc00' : '#4a3a30'}; background:${isCurrent ? '#2d2219' : 'rgba(0,0,0,0.2)'};" 
-          onclick="window.selectStoryLevel(${cfg.id})">
+          onclick="window.selectStoryLevel(${cfg.id}, true)">
           <div style="font-weight:800; color:#ffe099; font-size:0.7rem; white-space:nowrap; text-overflow:ellipsis; overflow:hidden; width:100%;">第 ${cfg.id} 關 ${cfg.name} ${isCurrent ? '🎯' : ''}</div>
           <div style="font-size:0.58rem; color:#fff;">${scoreDisplay}分 / ${turnDisplay}回</div>
           <div style="font-size:0.52rem; color:#2ecc71; white-space:nowrap; text-overflow:ellipsis; overflow:hidden; width:100%;">🎁 獲取: ${astCfg ? astCfg.name.split(' ')[1] : ''}</div>
@@ -109,11 +109,10 @@ export const StoryMode = {
   }
 };
 
-window.selectStoryLevel = function(lvl) {
+window.selectStoryLevel = function(lvl, isFromModalClick = false) {
   if (typeof window.playUniformSfx === 'function') window.playUniformSfx();
   
-  // 核心安全鎖：只有當故事關卡選擇地圖彈窗在螢幕上顯示時，才接受並處理此點選事件
-  if (!document.getElementById('story-map-modal')?.classList.contains('show')) {
+  if (!isFromModalClick && !document.getElementById('story-map-modal')?.classList.contains('show')) {
     return;
   }
 
