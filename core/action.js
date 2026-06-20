@@ -3,26 +3,7 @@ import { CoreState } from './state.js';
 import { GameEngine } from './gameEngine.js';
 import { SingleMode } from './singleMode.js';
 import { AiMode } from './aiMode.js';
-
-// ==========================================
-// 整合原本需要從外部 import 的故事模式常數
-// 防止瀏覽器引發 Module 導入層級的內部 SyntaxError
-// ==========================================
-const STORY_LEVELS_CONFIG = [
-  { level: 1, targetScore: 15, maxTurns: 26, rewardAssistantId: "ast1" },
-  { level: 2, targetScore: 15, maxTurns: 24, rewardAssistantId: "ast2" },
-  { level: 3, targetScore: 15, maxTurns: 22, rewardAssistantId: "ast3" },
-  { level: 4, targetScore: 16, maxTurns: 22, rewardAssistantId: "ast4" },
-  { level: 5, targetScore: 16, maxTurns: 20, rewardAssistantId: "ast5" }
-];
-
-const STORY_NOBLES_DATABASE = {
-  ast1: { id: "sn1", name: "風暴公爵 奧隆", gender: "male", points: 3, img: "https://i.ibb.co/zHGC8vsm/image.png", req: { r: 4, k: 4 } },
-  ast2: { id: "sn2", name: "寒冰女爵 希瓦", gender: "female", points: 3, img: "https://i.ibb.co/GQ2Yh0yH/image.png", req: { w: 4, u: 4 } },
-  ast3: { id: "sn3", name: "聖光主教 烏瑟", gender: "male", points: 3, img: "https://i.ibb.co/hzw3Vfm/image.png", req: { w: 3, u: 3, g: 3 } },
-  ast4: { id: "sn4", name: "暗夜刺客 迦羅娜", gender: "female", points: 3, img: "https://i.ibb.co/QvHvZZWc/image.png", req: { g: 3, r: 3, k: 3 } },
-  ast5: { id: "sn5", name: "至高皇帝 瓦里安", gender: "male", points: 4, img: "https://i.ibb.co/nNSjxvvd/image.png", req: { w: 4, g: 4, r: 4 } }
-};
+import { STORY_MISSIONS } from './levels.js';
 
 const RAW_CARDS = {
   lv1: [
@@ -120,6 +101,12 @@ export const ActionDispatcher = {
         p.bonus[card.provides]++;
         p.score += card.points;
         
+        // 故事追蹤：從牌庫購買
+        if (state.mode === 'storyMode' && state.storyTracker) {
+          if (totalGemsSpent === 0) state.storyTracker.freeBuys++;
+          if (card.points >= 4) state.storyTracker.highPointCards++;
+        }
+
         state.board[level][idx] = state.decks[level].length > 0 ? state.decks[level].pop() : null;
         SingleMode.auditInstantAchievements("buy", { card, level, totalGemsSpent, isReserved: false });
         
@@ -146,6 +133,13 @@ export const ActionDispatcher = {
         p.score += card.points;
         p.reserved.splice(idx, 1);
         
+        // 故事追蹤：從保留區購買
+        if (state.mode === 'storyMode' && state.storyTracker) {
+          state.storyTracker.reservedBuys++;
+          if (totalGemsSpent === 0) state.storyTracker.freeBuys++;
+          if (card.points >= 4) state.storyTracker.highPointCards++;
+        }
+
         SingleMode.auditInstantAchievements("buy", { card, level: 'reserved', totalGemsSpent, isReserved: true });
         this.finalizeTurn('player');
         break;
@@ -183,43 +177,137 @@ export const ActionDispatcher = {
   finalizeTurn(actor) {
     const state = CoreState.get();
     const currentBonus = actor === 'player' ? state.player.bonus : state.ai.bonus;
+    const initialScore = actor === 'player' ? state.player.score : state.ai.score;
     const earnedNobles = GameEngine.checkNoblesVisit(state.nobles, currentBonus);
     
+    let noblePointsGained = 0;
     earnedNobles.forEach(n => {
       n.completed = true;
       if (actor === 'player') { 
         state.player.score += n.points; 
+        noblePointsGained += n.points;
         window.playNobleSfx(n.gender); 
       }
       else state.ai.score += n.points;
     });
 
-    if (state.mode === 'storyMode') {
-      const currentLvl = (state.storyProgress && state.storyProgress.currentLevel) ? state.storyProgress.currentLevel : 1;
-      const cfg = STORY_LEVELS_CONFIG[currentLvl - 1] || { targetScore: 15, maxTurns: 28 };
+    // 判斷是否觸發 Combo (同回合內有卡片得分且有貴族拜訪)
+    if (actor === 'player' && state.mode === 'storyMode' && state.storyTracker) {
+      const cardPointsGained = state.player.score - initialScore - noblePointsGained;
+      if (cardPointsGained > 0 && noblePointsGained > 0) {
+        state.storyTracker.comboTriggered = true;
+      }
+    }
 
-      if (state.player.score >= cfg.targetScore || state.turn > cfg.maxTurns) {
+    if (state.mode === 'storyMode') {
+      const currentLvl = state.storyProgress?.currentLevel || 1;
+      const mission = STORY_MISSIONS[currentLvl - 1];
+      if (!mission) { state.turn++; window.render(); return; }
+
+      const cfg = mission.setup;
+      const win = mission.winCondition;
+      const p = state.player;
+      const turnLimit = cfg.turnLimit || 99;
+
+      // 判斷是否超時（turnLimit 為 99 時視為無限制）
+      const isTimeUp = (turnLimit < 99) && (state.turn > turnLimit);
+
+      // 判斷是否達成勝利條件
+      let isWin = false;
+      switch (win.type) {
+        case 'score_only':
+          isWin = p.score >= win.targetScore;
+          break;
+        case 'score_and_token_limit':
+          isWin = p.score >= win.targetScore;
+          break;
+        case 'score_and_reserve_buy':
+          isWin = p.score >= win.targetScore && (state.storyTracker?.reservedBuys || 0) >= win.minReservedBuys;
+          break;
+        case 'score_and_color_balance':
+          isWin = p.score >= win.targetScore &&
+            ['w','u','g','r','k'].every(c => (p.bonus[c] || 0) >= win.minCardsPerColor);
+          break;
+        case 'score_and_max_bag_limit':
+          isWin = p.score >= win.targetScore;
+          break;
+        case 'score_and_gold_reserve':
+          isWin = p.score >= win.targetScore && (p.tokens.o || 0) >= win.requiredGoldOnHand;
+          break;
+        case 'score_and_free_buys':
+          isWin = p.score >= win.targetScore && (state.storyTracker?.freeBuys || 0) >= win.minFreeBuysRequired;
+          break;
+        case 'nobles_count_only':
+          isWin = state.nobles.filter(n => n.completed).length >= win.targetNoblesCount;
+          break;
+        case 'exact_score':
+          isWin = p.score === win.targetScore;
+          break;
+        case 'beat_ai':
+          isWin = p.score >= win.targetScore && p.score > state.ai.score;
+          break;
+        case 'high_score_and_tier3_count': {
+          const highCards = state.storyTracker?.highPointCards || 0;
+          isWin = p.score >= win.targetScore && highCards >= win.requiredTier3CardsWithPoints4;
+          break;
+        }
+        case 'score_and_exclusive_colors':
+          isWin = p.score >= win.targetScore;
+          break;
+        case 'score_and_combo_trigger':
+          isWin = p.score >= win.targetScore && (state.storyTracker?.comboTriggered || false);
+          break;
+        case 'score_and_perfect_colors':
+          isWin = p.score >= win.targetScore &&
+            ['w','u','g','r','k'].every(c => (p.bonus[c] || 0) >= win.requiredMinBonusAllColors);
+          break;
+        case 'master_final_challenge':
+          isWin = p.score >= win.targetScore &&
+            state.nobles.filter(n => n.completed).length >= win.targetNoblesCount;
+          break;
+        default:
+          isWin = p.score >= (win.targetScore || 15);
+      }
+
+      if (isWin || isTimeUp) {
         window.render();
         const iconEl = document.getElementById('win-modal-icon');
-        const titleEl = document.getElementById('win-modal-title');  
+        const titleEl = document.getElementById('win-modal-title');
         const bodyEl = document.getElementById('modal-body-txt');
         const modalBox = document.getElementById('win-modal').querySelector('.modal');
 
-        if (state.player.score >= cfg.targetScore && state.turn <= cfg.maxTurns) {
+        if (isWin) {
           iconEl.textContent = '📜';
           titleEl.textContent = `戰役捷報：第 ${currentLvl} 關突破！`;
-          bodyEl.textContent = `精湛的商賈巨擘！您成功在 ${state.turn} 回合內取得 ${state.player.score} 分威望，成功收服下一關傳奇輔助官的追隨！`;
+          bodyEl.textContent = `精湛的商賈巨擘！您成功在 ${state.turn} 回合內完成挑戰！`;
           modalBox.style.borderColor = '#2ecc71';
           if (window.StoryMode) window.StoryMode.saveStoryProgress(currentLvl);
         } else {
           iconEl.textContent = '❌';
           titleEl.textContent = `戰役失敗：未能突破考驗！`;
-          bodyEl.textContent = `對局已消耗 ${state.turn} 回合（上限: ${cfg.maxTurns} 回合），得分為 ${state.player.score} 分（目標: ${cfg.targetScore} 分）。`;
+          bodyEl.textContent = `對局已消耗 ${state.turn} 回合（上限: ${turnLimit} 回合），得分為 ${p.score} 分。`;
           modalBox.style.borderColor = '#e74c3c';
         }
         document.getElementById('win-modal').classList.add('show');
         return;
       }
+      
+      // 第 20 關環境毒素功能：每 X 回合強制扣除籌碼手續費
+      if (actor === 'player' && cfg.tokenTaxInterval && (state.turn % cfg.tokenTaxInterval === 0)) {
+        let taxCount = 0;
+        const colors = ['w', 'u', 'g', 'r', 'k', 'o'];
+        for (let c of colors) {
+          if (p.tokens[c] > 0) {
+            const deduct = Math.min(p.tokens[c], cfg.tokenTaxAmount - taxCount);
+            p.tokens[c] -= deduct;
+            state.bank[c] += deduct;
+            taxCount += deduct;
+            if (taxCount >= cfg.tokenTaxAmount) break;
+          }
+        }
+        console.log(`⚠️ 命運詛咒：被充公了 ${taxCount} 枚籌碼。`);
+      }
+
       state.turn++;
       window.render();
       return;
@@ -301,14 +389,39 @@ export const ActionDispatcher = {
     state.board.lv3 = [state.decks.lv3.pop(), state.decks.lv3.pop(), state.decks.lv3.pop(), state.decks.lv3.pop()];
 
     if (state.mode === 'storyMode') {
-      const currentLvl = (state.storyProgress && state.storyProgress.currentLevel) ? state.storyProgress.currentLevel : 1;
-      const cfg = STORY_LEVELS_CONFIG[currentLvl - 1] || { rewardAssistantId: "ast1" };
-      
-      const targetNoble = JSON.parse(JSON.stringify(STORY_NOBLES_DATABASE[cfg.rewardAssistantId] || STORY_NOBLES_DATABASE["ast1"]));
-      
-      const subPool = JSON.parse(JSON.stringify(ALL_NOBLES_POOL));
-      GameEngine.shuffle(subPool);
-      state.nobles = [targetNoble, subPool[0], subPool[1]];
+      const currentLvl = state.storyProgress?.currentLevel || 1;
+      const mission = STORY_MISSIONS[currentLvl - 1];
+
+      // 套用關卡自訂初始銀行庫存
+      if (mission?.setup?.initBank) {
+        state.bank = { ...mission.setup.initBank };
+      }
+
+      // 套用自訂玩家起始分數 (例如莎士比亞第 20 關自帶 2 分)
+      if (mission?.setup?.initPlayerScore) {
+        state.player.score = mission.setup.initPlayerScore;
+      }
+
+      // 初始化關卡專屬任務計數器
+      state.storyTracker = {
+        reservedBuys: 0,
+        freeBuys: 0,
+        highPointCards: 0,
+        comboTriggered: false
+      };
+
+      // 殘局處理 (例如第 22 關先知殘局)
+      if (mission?.setup?.initAiScore) {
+        state.ai.score = mission.setup.initAiScore;
+      }
+      if (mission?.setup?.initAiTier2Bonus) {
+        // 分配 4 張中階產業減免資產給 AI
+        state.ai.bonus = { w: 1, u: 1, g: 1, r: 1, k: 0 };
+      }
+
+      const fullNoblesPool = JSON.parse(JSON.stringify(ALL_NOBLES_POOL));
+      GameEngine.shuffle(fullNoblesPool);
+      state.nobles = fullNoblesPool.slice(0, 3);
     } else {
       const fullNoblesPool = JSON.parse(JSON.stringify(ALL_NOBLES_POOL));
       GameEngine.shuffle(fullNoblesPool);
