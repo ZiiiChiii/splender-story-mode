@@ -604,14 +604,14 @@ html, body {
   .ach-modal { max-height: 85vh !important; width: 95% !important; }
 }
 
-/* ── 【劇場層外觀配置核心】 ── */
+/* ── 【展演層：最高級隔離配置】 ── */
 #story-layer {
   position: fixed;
   top: 0;
   left: 0;
   width: 100%;
   height: 100%;
-  z-index: 99999;
+  z-index: 999999; 
   background: rgba(15, 20, 26, 0.92);
   display: none;
   flex-direction: column;
@@ -621,7 +621,11 @@ html, body {
   box-sizing: border-box;
   font-family: 'Microsoft JhengHei', 'Heiti TC', sans-serif;
   opacity: 0;
-  pointer-events: none; /* 預設完全穿透不擋路 */
+  pointer-events: none; 
+}
+
+#story-layer.story-active {
+  pointer-events: auto !important;
 }
 
 .vault-bounce {
