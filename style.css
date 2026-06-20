@@ -148,7 +148,6 @@ html, body {
 
 .diff-setting-box { display: grid; grid-template-columns: repeat(2, 1fr); gap: 6px; margin: 10px 0; }
 
-/* ── 【隔離與滑鼠事件強制響應區】 ── */
 .diff-opt-btn { padding: 8px 4px; font-size: 0.75rem; font-weight: 700; background: #1a1410; border: 1px solid #4a3a30; color: var(--text-muted); border-radius: 4px; cursor: pointer; transition: all 0.2s ease; }
 #story-map-modal .diff-opt-btn { pointer-events: auto !important; }
 .action-panel .token-btn { pointer-events: auto !important; }
@@ -603,6 +602,26 @@ html, body {
   .reserved-section .card { min-height: 55px !important; }
 
   .ach-modal { max-height: 85vh !important; width: 95% !important; }
+}
+
+/* ── 【劇場層外觀配置核心】 ── */
+#story-layer {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  z-index: 99999;
+  background: rgba(15, 20, 26, 0.92);
+  display: none;
+  flex-direction: column;
+  justify-content: flex-end;
+  align-items: center;
+  padding-bottom: 50px;
+  box-sizing: border-box;
+  font-family: 'Microsoft JhengHei', 'Heiti TC', sans-serif;
+  opacity: 0;
+  pointer-events: none; /* 預設完全穿透不擋路 */
 }
 
 .vault-bounce {
