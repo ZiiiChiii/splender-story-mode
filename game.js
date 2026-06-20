@@ -644,7 +644,7 @@ window.storyModule = {
         16: { chapter: "⚜️ 第四章：翡翠首都的宮廷商戰（第 16 - 20 關）", title: "第 16 關：外交官的引薦信", bg: "想要進入皇家大會堂，必須拿到外交官麥特尼的引薦信。這位政客不看你的錢袋，他只看你名下吸引了多少位封建貴族的認可。", condition: "不限分數，率先獲得 3 位貴族拜訪即可通關", name: "帝國外交官 麥特尼", text: "在首都，滿手銅臭是最下等的。想要我的引薦信？去招攬 3 位貴族老爺來為你的商號背書吧，分數我不在乎。" },
         17: { chapter: "⚜️ 第四章：翡翠首都的宮廷商戰（第 16 - 20 關）", title: "第 17 關：伯爵夫人的晚宴", bg: "卡蜜拉夫人在她的奢華莊園舉辦了社交晚宴。她喜歡戲劇性的場面，要求前來競標的商賈必須在最後一刻端出令人震驚的龐大資產。", condition: "通關那一回合，必須同時獲得卡片分與貴族分", name: "宮廷伯爵夫人 卡蜜拉", text: "平淡的累積太無趣了。我要你在獲得最後勝利的那一回合，同時觸發卡片得分與貴族拜訪，那才是真正的璀璨藝術。" },
         18: { chapter: "⚜️ 第四章：翡翠首都的宮廷商戰（第 16 - 20 關）", title: "第 18 關：黑市刺客的截胡", bg: "首都商會的巨頭派出了黑市刺客澤德來暗殺你的商譽。澤德會派出一名「侵略型 AI」，瘋狂保留或搶走你下一手最想買的卡片。", condition: "擊敗侵略型 AI，且整局玩家獲得的貴族分必須為 0", name: "影刃刺客 澤德", text: "你的每一步都在我的陰影凝視之下。聽說你擅長外交？很遺憾，這一局貴族們被我恐嚇了，你拿不到任何貴族分！" },
-        19: { chapter: "⚜️ 第四章：翡翠首都的宮廷商戰（第 16 - 20 關）", title: "第 19 關：新大陸的黃金潮", bg: "大航海家麥哲倫帶著海外殖民地的巨額財富歸國，引發了新一輪的壟斷潮。市場風向大變，所有低階 Lv1 卡片全部被海外物資沖垮。", condition: "達20分，移除Lv1卡，且有名下至少3張>=4分的卡", name: "大航海家 麥哲倫", text: "海外财富超乎想像！小打小鬧的時代結束了，這局遊戲沒有 Lv1 卡片，且你必須拿下 3 張價值 4 分以上的頂級物業！" },
+        19: { chapter: "⚜️ 第四章：翡翠首都的宮廷商戰（第 16 - 20 關）", title: "第 19 關：新大陸的黃金潮", bg: "大航海家麥哲倫帶著海外殖民地的巨額財富歸國，引發了新一輪的壟斷潮。市場風向大變，所有低階 Lv1 卡片全部被海外物資充垮。", condition: "達20分，移除Lv1卡，且有名下至少3張>=4分的卡", name: "大航海家 麥哲倫", text: "海外财富超乎想像！小打小鬧的時代結束了，這局遊戲沒有 Lv1 卡片，且你必須拿下 3 張價值 4 分以上的頂級物業！" },
         20: { chapter: "⚜️ 第四章：翡翠首都的宮廷商戰（第 16 - 20 關）", title: "第 20 關：大文豪的末日劇本", bg: "莎士比亞正在撰寫一部名為《資本崩盤》的悲劇。為了尋找靈感，他對你的商號施加了「命運詛咒」，每過數個回合，你的實體財富就會憑空蒸發。", condition: "達到15分，且系統每過 5 個回合隨機扣2枚籌碼", name: "大文豪 莎士比亞", text: "悲劇才是永恆。商人，在每 5 回合就會隨機被國庫充公 2 枚籌碼的絕境下，寫出逆流而上的傳奇史詩吧！" },
         21: { chapter: "👑 第五章：皇家大會堂的璀璨至尊（第 21 - 25 關）", title: "第 21 關：聖殿騎士團的鐵腕", bg: "掌控帝國經濟命脈的聖殿騎士團長休擋在你的最終王座前。他用鐵腕政策實施了全面禁運，你無法再從銀行獲得任何普通籌碼。", condition: "達15分，且銀行普通籌碼初始庫存全為 0", name: "聖殿騎士團長 休", text: "聖殿金庫接管了市場！這一局，銀行不提供任何普通籌碼，你只能靠開局自帶的資金與保留卡牌獲得的黃金來運轉！" },
         22: { chapter: "👑 第五章：皇家大會堂的璀璨至尊（第 21 - 25 關）", title: "第 22 關：先知的絕地殘局", bg: "先知卡珊德拉看穿了未來的命運。她擺下了一個你已經陷入破產邊緣、對手卻已經全面領先的「命運殘局」，考驗你是否有扭轉乾坤的器量。", condition: "擊敗高級AI（開局AI自帶8分與4張隨機Lv2卡）", name: "預言者 卡珊德拉", text: "命運已定，你已步入絕地。電腦 AI 開局便擁有 8 分與 4 張高階產業。逆風翻盤吧，撕碎這注定的悲劇！" },
@@ -671,6 +671,8 @@ window.storyModule = {
         const layer = document.getElementById("story-layer");
         layer.style.opacity = 1;
         layer.style.display = "flex";
+        // ── 🎯 核心修正：開啟劇情展演時，強制開啟點擊鎖，使對話框與點擊可正常被響應 ──
+        layer.classList.add('story-active');
 
         const stageData = this.gameStages[stageId];
         document.getElementById("story-chapter-title").innerText = stageData.chapter + " - " + stageData.title;
@@ -734,6 +736,10 @@ window.storyModule = {
     },
 
     endStory() {
+        // ── 🎯 核心修正：點擊關閉完結時，立即解除外部 story-active 類名，徹底恢復底層 Token 與 UI 的原始點擊流 ──
+        const layer = document.getElementById("story-layer");
+        if (layer) layer.classList.remove('story-active');
+
         gsap.to("#story-layer", { 
             opacity: 0, 
             duration: 0.5, 
@@ -838,7 +844,7 @@ window.closeTalentPoolModal = () => {
 window.openAchievementHistory = () => SingleMode.openAchievementHistory();
 window.closeAchievementHistory = () => SingleMode.closeAchievementHistory();
 window.saveCurrentProgress = () => SingleMode.saveCurrentProgress();
-window.startFloatingTutorial = () => { document.getElementById('tutorial-start-modal').classList.remove('show'); hideWelcomeModal(); document.getElementById('floating-tutorial-widget').style.display = 'block'; showStepData(0); };
+window.startFloatingTutorial = () => { document.getElementById('tutorial-start-modal').classList.add('show'); hideWelcomeModal(); document.getElementById('floating-tutorial-widget').style.display = 'block'; showStepData(0); };
 window.hideWelcomeModal = () => { document.getElementById('welcome-back-modal').style.display = 'none'; if (!CoreState.get().settings.isMusicMuted && audioEl) audioEl.play().catch(() => {}); };
 
 function showStepData(stepIdx) {
