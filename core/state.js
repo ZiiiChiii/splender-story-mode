@@ -24,13 +24,19 @@ let globalState = {
   storyProgress: {
     currentLevel: 1,
     maxUnlockedLevel: 1,
-    unlockedAssistantIds: ['ast1'] // 預設解鎖第一個
+    unlockedAssistantIds: ['ast1']
+  },
+  storyTracker: {
+    reservedBuys: 0,
+    freeBuys: 0,
+    highPointCards: 0,
+    comboTriggered: false
   },
   settings: {
     isMusicMuted: false,
     isSfxMuted: false,
     talentPool: [],
-    selectedAssistant: 'ast1' // 預設選取
+    selectedAssistant: 'ast1'
   }
 };
 
