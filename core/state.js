@@ -39,6 +39,7 @@ let globalState = {
     selectedAssistant: 'ast1'
   }
 };
+
 export const CoreState = {
   get() { return globalState; },
   set(newState) { globalState = newState; },
