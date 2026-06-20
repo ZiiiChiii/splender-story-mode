@@ -272,33 +272,28 @@ window.render = function() {
   document.getElementById('ai-dashboard-box').style.display = isvsAI ? 'block' : 'none';
   document.getElementById('player-dashboard-title').style.display = isvsAI ? 'block' : 'none';
   
-  // ─── 【全新三模式成就欄狀態變更核心】 ───
   const bannerZone = document.getElementById('dynamic-banner-zone');
   const bannerBadge = document.getElementById('dynamic-banner-badge');
   const bannerText = document.getElementById('dynamic-banner-text');
 
   if (bannerZone && bannerBadge && bannerText) {
     if (isvsAI) {
-      // 狀態 2: 電腦對戰模式下，完全隱藏成就欄位
       bannerZone.style.display = 'none';
     } else {
       bannerZone.style.display = 'flex';
       
       if (isSingleMode) {
-        // 狀態 1: 單人成就大師模式下，維持原樣顯示最新成就進度，並提供手勢指引
         bannerBadge.textContent = "榮譽成就";
         bannerBadge.style.backgroundColor = 'rgba(230, 126, 34, 0.2)';
         bannerBadge.style.borderColor = '#e67e22';
         bannerZone.style.cursor = 'pointer';
         
-        // 讀取本地最新解鎖成就
         const archive = localStorage.getItem('splendor_achievements_v1');
         let unlCount = 0;
         if (archive) { try { unlCount = Object.keys(JSON.parse(archive)).length; } catch(e){} }
         bannerText.innerHTML = `🏆 當前已斬獲 <span style="color:#ffcc00; font-weight:800;">${unlCount} / 30</span> 項皇家勳章！<span style="color:var(--text-muted); font-size:0.55rem; margin-left:6px;">[ 💡 點此可開啟榮譽堂查看完整清單 ]</span>`;
         
       } else if (isStoryMode) {
-        // 狀態 3: 故事模式下，改成當前關卡名稱與特殊勝利條件追蹤
         const currentLvl = fullState.storyProgress?.currentLevel || 1;
         const mission = window.STORY_MISSIONS ? window.STORY_MISSIONS[currentLvl - 1] : null;
         
@@ -309,7 +304,7 @@ window.render = function() {
           bannerBadge.style.borderColor = '#d4af37';
           
           let conditionText = mission.dialogue || '';
-          // 實時追蹤故事動態計數
+          
           if (fullState.storyTracker && mission.winCondition.type === 'score_and_reserve_buy') {
             conditionText += ` <span style="color:#2ecc71;">(契約收購進度: ${fullState.storyTracker.reservedBuys}/${mission.winCondition.minReservedBuys})</span>`;
           } else if (fullState.storyTracker && mission.winCondition.type === 'score_and_free_buys') {
@@ -319,7 +314,7 @@ window.render = function() {
             conditionText += ` <span style="color:#2ecc71;">(高階物業進度: ${highCards}/${mission.winCondition.requiredTier3CardsWithPoints4})</span>`;
           }
           
-          bannerText.innerHTML = `<span style="color:#ffe099; font-weight:800;">⚔️【${mission.name}】</span> ${conditionText} <span style="color:#ffcc00; font-size:0.55rem; margin-left:6px;">[ 🗺️ 點此可自由切換戰役關卡 ]</span>`;
+          bannerText.innerHTML = `<span style="color:#ffe099; font-weight:800;">⚔️【${mission.name}】</span> ${conditionText} <span style="color:#ffcc00; font-size:0.55rem; margin-left:6px;">[ 🗺️ 點此可自選或重挑關卡 ]</span>`;
         } else {
           bannerText.textContent = "📜 皇家故事戰役檔案加載中...";
         }
@@ -418,7 +413,6 @@ window.render = function() {
 
   ['lv1', 'lv2', 'lv3'].forEach(l => fullState.board[l]?.forEach(c => { if(c) lastRenderedCardIds.add(c.id); }));
 
-  // ── 渲染貴族區 ──
   const noblesLayer = document.getElementById('nobles-layer');
   if (noblesLayer) {
     noblesLayer.innerHTML = fullState.nobles
@@ -443,7 +437,6 @@ window.render = function() {
       }).join('');
   }
 
-  // ── 渲染已拜訪貴族區 ──
   const earnedNoblesLayer = document.getElementById('earned-nobles-layer');
   if (earnedNoblesLayer) {
     const earned = fullState.nobles.filter(n => n.completed);
@@ -457,7 +450,6 @@ window.render = function() {
         `).join('');
   }
 
-  // ── 渲染銀行寶石 Token 選取區 ──
   const gemColors = ['w', 'u', 'g', 'r', 'k'];
   const diffLayer = document.getElementById('diff-selectors'); 
   const sameLayer = document.getElementById('same-selectors'); 
@@ -549,25 +541,19 @@ function setupIdleCardAnimations() {
   }
 }
 
-// ─── 【全新重塑：多功能橫幅點擊分發代理】 ───
 window.handleBannerZoneClick = function() {
   if (!CoreState) return;
   playUniformSfx();
   const m = CoreState.get().mode;
   if (m === 'singlePlayer') {
-    // 狀態 1 點擊：點入後顯示榮譽堂與所有成就
     window.openAchievementHistory();
   } else if (m === 'storyMode') {
-    // 狀態 3 點擊：點入後直接顯示關卡選擇地圖，可隨意切換已解鎖關卡
     import('./core/storyMode.js').then(mod => {
       mod.StoryMode.openStoryMapModal();
     });
   }
 };
 
-// ==========================================
-// 5. 其餘事件分發代理
-// ==========================================
 window.toggleSelectDiff = function(color) {
   if(CoreState.get().currentTurnOwner !== 'player') return;
   document.getElementById('error-msg').textContent = '';
