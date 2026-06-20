@@ -270,22 +270,50 @@ export const ActionDispatcher = {
         const titleEl = document.getElementById('win-modal-title');
         const bodyEl = document.getElementById('modal-body-txt');
         const modalBox = document.getElementById('win-modal').querySelector('.modal');
+        const restartBtn = document.getElementById('btn-restart');
 
         if (isWin) {
           iconEl.textContent = '📜';
           titleEl.textContent = `戰役捷報：第 ${currentLvl} 關突破！`;
-          bodyEl.textContent = `精湛的商賈巨擘！您成功在 ${state.turn} 回合內完成挑戰！`;
+          bodyEl.textContent = `精湛的商賈巨擘！您成功在 ${state.turn} 回合內完成挑戰！\n已成功收服此關卡劇情對應的首席輔助官能力！`;
           modalBox.style.borderColor = '#2ecc71';
           
-          // 【核心修復】：確保傳入的是任務定義的實體 .id
           if (window.StoryMode) {
             window.StoryMode.saveStoryProgress(mission.id);
           }
+
+          // ─── 【全新重塑：過關直接進行下一關繼續挑戰】 ───
+          if (currentLvl < 25) {
+            restartBtn.textContent = `📜 命運推進：挑戰第 ${currentLvl + 1} 關`;
+            restartBtn.className = "btn-primary";
+            restartBtn.onclick = () => {
+              playUniformSfx();
+              document.getElementById('win-modal').classList.remove('show');
+              // 進度自動切換到下一關並啟動
+              state.storyProgress.currentLevel = currentLvl + 1;
+              ActionDispatcher.dispatch('INIT_GAME');
+              alert(`💡 提醒：已為您自動載入下一關【第 ${currentLvl + 1} 關：${STORY_MISSIONS[currentLvl].name}】！`);
+            };
+          } else {
+            restartBtn.textContent = "🏆 完美通關全戰役！";
+            restartBtn.onclick = () => {
+              document.getElementById('win-modal').classList.remove('show');
+            };
+          }
         } else {
+          // 失敗分支
           iconEl.textContent = '❌';
           titleEl.textContent = `戰役失敗：未能突破考驗！`;
           bodyEl.textContent = `對局已消耗 ${state.turn} 回合（上限: ${turnLimit} 回合），得分為 ${p.score} 分。`;
           modalBox.style.borderColor = '#e74c3c';
+          
+          restartBtn.textContent = "🔄 再次挑戰本關";
+          restartBtn.className = "btn-replay";
+          restartBtn.onclick = () => {
+            playUniformSfx();
+            document.getElementById('win-modal').classList.remove('show');
+            ActionDispatcher.dispatch('INIT_GAME');
+          };
         }
         document.getElementById('win-modal').classList.add('show');
         return;
@@ -311,6 +339,7 @@ export const ActionDispatcher = {
       return;
     }
 
+    // 單人模式與對戰模式結算
     if (state.player.score >= 15 || state.ai.score >= 15 || state.turn > 28) {
       window.render();
       SingleMode.auditEndGameAchievements();
@@ -320,6 +349,11 @@ export const ActionDispatcher = {
       const bodyEl = document.getElementById('modal-body-txt');
       const modal = document.getElementById('win-modal');
       const modalBox = modal.querySelector('.modal');
+      const restartBtn = document.getElementById('btn-restart');
+
+      restartBtn.textContent = "重開新局";
+      restartBtn.className = "btn-replay";
+      restartBtn.onclick = () => { playUniformSfx(); restartGame(); };
 
       if (state.player.score >= 15 && (state.mode === 'singlePlayer' || state.player.score >= state.ai.score)) {
         iconEl.textContent = '🏆';
@@ -415,6 +449,9 @@ export const ActionDispatcher = {
       const fullNoblesPool = JSON.parse(JSON.stringify(ALL_NOBLES_POOL));
       GameEngine.shuffle(fullNoblesPool);
       state.nobles = fullNoblesPool.slice(0, 3);
+      
+      // 故事模式下，強制將當前選擇關卡對應的輔助官設為隨行
+      state.settings.selectedAssistant = `ast${currentLvl}`;
     } else {
       const fullNoblesPool = JSON.parse(JSON.stringify(ALL_NOBLES_POOL));
       GameEngine.shuffle(fullNoblesPool);
