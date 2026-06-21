@@ -272,7 +272,6 @@ window.render = function() {
 
   document.getElementById('ai-dashboard-box').style.display = isvsAI ? 'block' : 'none';
   
-  // 完全使用動態橫幅對接，防範 null 報錯
   const bannerZone = document.getElementById('dynamic-banner-zone');
   const bannerBadge = document.getElementById('dynamic-banner-badge');
   const bannerText = document.getElementById('dynamic-banner-text');
@@ -384,8 +383,9 @@ window.render = function() {
       const afford = GameEngine.canAffordCard(player.bonus, player.tokens, card.cost);
       let imgUrl = CUSTOM_CARD_IMAGES[card.provides][parseInt(card.id) % CUSTOM_CARD_IMAGES[card.provides].length];
 
+      // 修改位置（原第 389 行）：將 style 縮放替換為真正寬度比例設定
       return `
-        <div class="card ${!lastRenderedCardIds.has(card.id) ? 'animate-deal' : ''}" id="dom-card-${card.id}" data-affordable="${afford.affordable}" style="background-image: url('${imgUrl}');">
+        <div class="card ${!lastRenderedCardIds.has(card.id) ? 'animate-deal' : ''}" id="dom-card-${card.id}" data-affordable="${afford.affordable}" style="background-image: url('${imgUrl}'); width: 100%; aspect-ratio: 1 / 1; transform: none;">
           <div class="card-content-wrapper">
             <div class="card-top"><span class="card-pts">${card.points > 0 ? card.points : ''}</span><div class="card-gem-icon ${GEM_CLASSES[card.provides]}"></div></div>
             <div>
@@ -419,8 +419,9 @@ window.render = function() {
           </div>`;
       }
 
+      // 修改位置（原第 425 行）：將 style 縮放替換為真正寬度比例設定
       return `
-        <div class="card" id="dom-card-${card.id}" style="background-image: url('${imgUrl}');">
+        <div class="card" id="dom-card-${card.id}" style="background-image: url('${imgUrl}'); width: 100%; aspect-ratio: 1 / 1; transform: none;">
           <div class="card-content-wrapper">
             <div class="card-top"><span class="card-pts">${card.points > 0 ? card.points : ''}</span><div class="card-gem-icon ${GEM_CLASSES[card.provides]}"></div></div>
             <div class="card-costs">${resCostHtml}</div>
