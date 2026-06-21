@@ -28,6 +28,38 @@ const TUTORIAL_STEPS_DATA = [
 let audioEl, sfxGemEl, sfxBuyEl, sfxReserveEl, sfxSelectEl, sfxUnselectEl, sfxNobleMale, sfxNobleFemale;
 let sfxAchievementsMap = {};
 
+window.playUniformSfx = function() {
+  if (!CoreState) return; 
+  if (sfxSelectEl && !CoreState.get().settings.isSfxMuted) {
+    sfxSelectEl.currentTime = 0; sfxSelectEl.play().catch(() => {});
+  }
+}
+
+window.playActionGemSfx = function() {
+  if (!CoreState) return; 
+  if (sfxGemEl && !CoreState.get().settings.isSfxMuted) {
+    sfxGemEl.currentTime = 0; sfxGemEl.play().catch(() => {});
+  }
+}
+
+window.playNobleSfx = function(gender) {
+  if (!CoreState) return; 
+  if (CoreState.get().settings.isSfxMuted) return;
+  if (gender === 'female' && sfxNobleFemale) {
+    sfxNobleFemale.currentTime = 0; sfxNobleFemale.play().catch(() => {});
+  } else if (gender === 'male' && sfxNobleMale) {
+    sfxNobleMale.currentTime = 0; sfxNobleMale.play().catch(() => {});
+  }
+}
+
+window.playAchievementSfx = function(tier) {
+  if (!CoreState) return; 
+  const targetSFX = sfxAchievementsMap[tier] || sfxAchievementsMap['easy'];
+  if (targetSFX && !CoreState.get().settings.isSfxMuted) {
+    targetSFX.currentTime = 0; targetSFX.play().catch(() => {});
+  }
+}
+
 let lastRenderedCardIds = new Set();
 let lastPlayerState = null;
 let currentTutorialStep = 0;
@@ -62,38 +94,6 @@ async function loadCoreModules() {
   
   storyMod.StoryMode.loadStoryProgress();
   assistantMod.AssistantManager.renderActiveAssistantUI();
-}
-
-window.playUniformSfx = function() {
-  if (!CoreState) return; 
-  if (sfxSelectEl && !CoreState.get().settings.isSfxMuted) {
-    sfxSelectEl.currentTime = 0; sfxSelectEl.play().catch(() => {});
-  }
-}
-
-window.playActionGemSfx = function() {
-  if (!CoreState) return; 
-  if (sfxGemEl && !CoreState.get().settings.isSfxMuted) {
-    sfxGemEl.currentTime = 0; sfxGemEl.play().catch(() => {});
-  }
-}
-
-window.playNobleSfx = function(gender) {
-  if (!CoreState) return; 
-  if (CoreState.get().settings.isSfxMuted) return;
-  if (gender === 'female' && sfxNobleFemale) {
-    sfxNobleFemale.currentTime = 0; sfxNobleFemale.play().catch(() => {});
-  } else if (gender === 'male' && sfxNobleMale) {
-    sfxNobleMale.currentTime = 0; sfxNobleMale.play().catch(() => {});
-  }
-}
-
-window.playAchievementSfx = function(tier) {
-  if (!CoreState) return; 
-  const targetSFX = sfxAchievementsMap[tier] || sfxAchievementsMap['easy'];
-  if (targetSFX && !CoreState.get().settings.isSfxMuted) {
-    targetSFX.currentTime = 0; targetSFX.play().catch(() => {});
-  }
 }
 
 function deepClone(obj) {
@@ -345,7 +345,7 @@ window.render = function() {
     capTxtEl.classList.add('bag-warning-yellow');
   }
 
-  // ── 🎯 任務修正：內部發展卡卡牌大小全面微縮四分之一 (scale 由 0.96 調降至 0.75) ──
+  // 內部發展卡卡牌大小全面微縮四分之一 (scale 由 0.96 調降至 0.75)
   ['lv1', 'lv2', 'lv3'].forEach(level => {
     document.getElementById(`deck-${level}-txt`).textContent = `剩餘: ${fullState.decks[level].length}`;
     document.getElementById(`row-${level}`).innerHTML = fullState.board[level].map((card, idx) => {
@@ -377,7 +377,7 @@ window.render = function() {
     }).join('');
   });
 
-  // ── 🎯 任務修正：放大保留契約牌手牌區比例，使其可以100%豐滿呈現大小 (scale 由 0.92 修正為 1.0) ──
+  // 放大保留契約牌手牌區比例，使其可以100%呈現大小 (scale 為 1.0)
   const resLayerReserved = document.getElementById('reserved-layer');
   if (player.reserved.length === 0) {
     resLayerReserved.innerHTML = `<div class="card empty" style="grid-column: span 4; font-size:0.6rem; height: 75px;">🔒 暫無契約手牌</div>`;
@@ -427,7 +427,6 @@ window.render = function() {
       }).join('');
   }
 
-  // ── 🎯 任務修正：到訪進駐貴族隨行頭像卡微縮縮小 ──
   const earnedNoblesLayer = document.getElementById('earned-nobles-layer');
   if (earnedNoblesLayer) {
     const earned = fullState.nobles.filter(n => n.completed);
@@ -613,8 +612,10 @@ window.nextFloatingStep = () => {
   }
 };
 
+// ── 🎯 按照原始框架重新添加音效綁定與初始化的 DOMContentLoaded 區塊 ──
 window.addEventListener('DOMContentLoaded', async () => {
   setDynamicVh();
+  
   audioEl = document.getElementById('bg-music');
   sfxGemEl = document.getElementById('sfx-gem');
   sfxBuyEl = document.getElementById('sfx-buy');
