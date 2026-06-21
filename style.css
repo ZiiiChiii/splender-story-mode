@@ -391,10 +391,13 @@ html, body {
 .rule-box { text-align: left; background: rgba(0,0,0,0.4); border: 1px solid rgba(212,175,55,0.15); padding: 12px; border-radius: 6px; margin: 12px 0; font-size: 0.85rem; line-height: 1.6; }
 .btn-replay { width: 100%; padding: 10px; background: linear-gradient(180deg, #d4af37, #8a6418); color: #FFF; border: none; border-radius: 4px; font-weight: 700; cursor: pointer; margin-top: 12px; font-size:0.85rem; }
 
-.tutorial-highlight { border: 3px solid #ffcc00 !important; box-shadow: 0 0 30px rgba(255, 204, 0, 0.6) !important; transition: all 0.3s ease; }
+/* ── 🎯 核心修正：確保新手教學高亮區與懸浮盒具備最高點擊權限與層級 ── */
+.tutorial-highlight { border: 3px solid #ffcc00 !important; box-shadow: 0 0 30px rgba(255, 204, 0, 0.6) !important; transition: all 0.3s ease; position: relative !important; z-index: 9999999 !important; pointer-events: auto !important; }
+#floating-tutorial-widget { position: fixed !important; z-index: 99999999 !important; pointer-events: auto !important; }
+.btn-tutorial-next { padding: 6px 16px; background: linear-gradient(180deg, #ffe680, #ffcc00, #b38600); color: #110e0c; border: none; border-radius: 4px; font-size: 0.78rem; font-weight: 800; cursor: pointer; box-shadow: 0 2px 6px rgba(0,0,0,0.5); pointer-events: auto !important; }
+
 .t-dot { width: 8px; height: 8px; border-radius: 50%; background: rgba(255, 204, 0, 0.2); }
 .t-dot.active { background: #ffcc00; box-shadow: 0 0 10px #ffcc00; }
-.btn-tutorial-next { padding: 6px 16px; background: linear-gradient(180deg, #ffe680, #ffcc00, #b38600); color: #110e0c; border: none; border-radius: 4px; font-size: 0.78rem; font-weight: 800; cursor: pointer; box-shadow: 0 2px 6px rgba(0,0,0,0.5); }
 
 #effects-layer {
   position: fixed;
