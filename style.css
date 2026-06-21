@@ -28,7 +28,6 @@
   --diff-master:  #9b59b6; 
 }
 
-/* 01 規格：鎖定單頁高度，禁止全域拉長與捲動 */
 html, body {
   height: calc(var(--vh, 1vh) * 100);
   min-height: calc(var(--vh, 1vh) * 100);
@@ -44,7 +43,6 @@ html, body {
   box-shadow: inset 0 0 150px rgba(0,0,0,0.95);
 }
 
-/* 02 寬度規格優化：充份運用橫向寬度 */
 .shell {
   max-width: 1160px; 
   margin: 0 auto;
@@ -52,7 +50,7 @@ html, body {
   display: flex;
   flex-direction: column;
   position: relative;
-  gap: 3px;
+  gap: 2px; /* Part A 修改: gap 3px -> 2px */
 }
 
 .top-meta-wrap {
@@ -142,6 +140,9 @@ html, body {
 
 .diff-setting-box { display: grid; grid-template-columns: repeat(2, 1fr); gap: 6px; margin: 10px 0; }
 .diff-opt-btn { padding: 8px 4px; font-size: 0.75rem; font-weight: 700; background: #1a1410; border: 1px solid #4a3a30; color: #968a7f; border-radius: 4px; cursor: pointer; transition: all 0.2s ease; }
+#story-map-modal .diff-opt-btn { pointer-events: auto !important; }
+.action-panel .token-btn { pointer-events: auto !important; }
+
 .diff-opt-btn.active[data-diff="easy"] { background: var(--diff-easy); color: #000; border-color: #fff; }
 .diff-opt-btn.active[data-diff="normal"] { background: var(--diff-normal); color: #000; border-color: #fff; }
 .diff-opt-btn.active[data-diff="hard"] { background: var(--diff-hard); color: #000; border-color: #fff; }
@@ -177,7 +178,8 @@ html, body {
 .noble-pts { font-family: 'Cinzel', serif; font-size: 0.8rem; font-weight: 900; color: #fff; text-shadow: 0 0 6px #d4af37, 0 1px 3px #000; }
 .noble-reqs { display: flex; flex-direction: row; gap: 2px; font-size: 0.45rem; font-weight: bold; background: rgba(0,0,0,0.6); padding: 1px; border-radius: 2px; max-width: fit-content; }
 
-.dashboard-container { display: flex; gap: 6px; flex-shrink: 0; width: 100%; }
+/* Part A 修改: .dashboard-container 間距調整 gap: 6px -> 4px */
+.dashboard-container { display: flex; gap: 4px; flex-shrink: 0; width: 100%; }
 .dashboard {
   background: rgba(10, 24, 18, 0.85);
   border: 2px solid #2a221b;
@@ -206,7 +208,6 @@ html, body {
 .earned-noble-mini img { width: 14px; height: 14px; object-fit: cover; border-radius: 2px; }
 .earned-noble-mini span { font-size: 0.52rem; color: #ffe099; white-space: nowrap; }
 
-/* 長條直排面板樣式 */
 .action-panel { background: rgba(0, 0, 0, 0.45); border: 1px solid rgba(212, 175, 55, 0.2); border-radius: var(--radius); box-shadow: 0 4px 15px rgba(0,0,0,0.5); }
 .act-group { width: 100%; background: #1a1512; padding: 4px; border-radius: var(--radius-sm); border: 1px solid #2d241f; }
 
@@ -217,15 +218,24 @@ html, body {
 
 .btn-primary { width: 100%; padding: 6px; border: 1px solid #8a6418; border-radius: 3px; background: linear-gradient(180deg, #a67c2e, #6e4e13); color: #f4f0ea; font-weight: 700; cursor: pointer; text-shadow: 0 1px 2px rgba(0,0,0,0.8); }
 
-.board-matrix { display: flex; flex-direction: column; }
-.board-row { display: flex; flex-direction: column; }
-.row-header { display: flex; justify-content: space-between; align-items: baseline; border-left: 3px solid #b89742; padding-left: 6px; flex-shrink: 0; }
-.deck-count { color: #968a7f; font-family: 'Orbitron', sans-serif; }
-.grid-4 { display: grid; grid-template-columns: repeat(4, 1fr); }
+/* Part A 修改: 新增桌機版 .matrix-reserved-wrapper 間距控制 */
+/* 主遊戲橫向排版容器：收緊左側鑄幣局與卡牌矩陣的間距 */
+.matrix-reserved-wrapper {
+  gap: 6px;
+}
 
-/* 卡片與核心動畫發光 */
+/* Part A 修改: .board-matrix 行距收緊新增 gap: 2px */
+.board-matrix { display: flex; flex-direction: column; gap: 2px; }
+/* Part A 修改: .board-row 內距收緊新增 gap: 1px */
+.board-row { display: flex; flex-direction: column; gap: 1px; }
+/* Part A 修改: .grid-4 網格間距新增 gap: 3px */
+.grid-4 { display: grid; grid-template-columns: repeat(4, 1fr); gap: 3px; }
+
+/* Part B 修改: .card 新增雙重防護預設為 none / unset */
 .card {
   background: var(--card-bg); background-size: cover; background-position: center; border: 1px solid var(--card-border); border-radius: var(--radius-sm); display: flex; flex-direction: column; justify-content: space-between; height: 100%; position: relative; box-shadow: 0 4px 8px rgba(0,0,0,0.5); overflow: hidden;
+  transform: none;
+  transform-origin: unset;
 }
 .card-content-wrapper { display: flex; flex-direction: column; justify-content: space-between; width: 100%; height: 100%; flex: 1; padding: 3px; background: linear-gradient(180deg, rgba(16, 12, 10, 0.75) 0%, rgba(16, 12, 10, 0.2) 50%, rgba(16, 12, 10, 0.85) 100%); }
 
@@ -301,17 +311,17 @@ html, body {
 .bg-k { background-image: var(--c-onyx); }
 .bg-o { background-image: var(--c-gold); }
 
+/* Part C 驗證: 完美保留原生滑入與淡入動畫 */
 @keyframes cardDealIn { from { opacity: 0; transform: translateY(-10px); } to { opacity: 1; transform: translateY(0); } }
 .animate-deal { animation: cardDealIn 0.35s cubic-bezier(0.25, 1, 0.5, 1) forwards !important; }
 .modal-overlay:not(.show) { opacity: 0 !important; visibility: hidden !important; pointer-events: none !important; display: none !important; }
 
-/* ── 🎯 新手教學浮動層置頂 ── */
 .modal-overlay[id*="tutorial"], .modal-overlay[id*="start"] { z-index: 10000000 !important; pointer-events: auto !important; }
 .tutorial-highlight { position: relative !important; z-index: 10000001 !important; pointer-events: auto !important; }
 #floating-tutorial-widget { position: fixed !important; z-index: 10000002 !important; pointer-events: auto !important; }
 
 /* ═══════════════════════════════════════════════
-   📱 手機滿版極致單頁配置 (由 01 的精粹完美整合)
+   Part D 修改: 完整替換 @media (max-width: 430px) 區塊
    ═══════════════════════════════════════════════ */
 @media (max-width: 430px) {
   html, body {
@@ -344,7 +354,7 @@ html, body {
   .noble-card { min-width: 52px; height: 52px; flex-shrink: 0; }
   .noble-pts { font-size: 0.62rem; }
 
-  /* 雙欄縮放對應 */
+  /* 鑄幣交易局縮小 */
   #guide-actions {
     width: 65px !important;
     padding: 4px 2px !important;
@@ -353,6 +363,7 @@ html, body {
   .token-btn { width: 16px !important; height: 16px !important; background-size: 12px 12px !important; }
   .token-count-label { font-size: 0.45rem !important; }
 
+  /* 主遊戲橫向排版 */
   .matrix-reserved-wrapper {
     display: flex !important;
     flex-direction: row !important;
@@ -362,20 +373,69 @@ html, body {
     gap: 3px !important;
   }
 
-  .board-matrix { flex: 1 !important; display: flex !important; flex-direction: column !important; min-height: 0 !important; overflow: hidden !important; }
-  .board-row { flex: 1 !important; display: flex !important; flex-direction: column !important; min-height: 0 !important; margin-bottom: 2px !important; }
-  .grid-4 { display: flex !important; flex-direction: row !important; flex: 1 !important; gap: 2px !important; }
+  .board-matrix {
+    flex: 1 !important;
+    display: flex !important;
+    flex-direction: column !important;
+    min-height: 0 !important;
+    overflow: hidden !important;
+    gap: 1px !important;
+  }
 
-  .card { flex: 1 !important; min-height: 0 !important; display: flex !important; flex-direction: column !important; }
-  .card-content-wrapper { padding: 3px !important; flex: 1 !important; display: flex !important; flex-direction: column !important; justify-content: space-between !important; }
+  .board-row {
+    flex: 1 !important;
+    display: flex !important;
+    flex-direction: column !important;
+    min-height: 0 !important;
+    margin-bottom: 1px !important;
+    gap: 0 !important;
+  }
+
+  .grid-4 {
+    display: flex !important;
+    flex-direction: row !important;
+    flex: 1 !important;
+    gap: 2px !important;
+  }
+
+  /* ✅ 手機卡牌：強制 transform none，覆蓋 game.js 已刪除的 inline style */
+  /* （game.js 已移除 inline transform，此條作為雙重防護保留）*/
+  .card {
+    flex: 1 !important;
+    min-height: 0 !important;
+    display: flex !important;
+    flex-direction: column !important;
+    transform: none !important;
+    transform-origin: unset !important;
+  }
+
+  .card-content-wrapper {
+    padding: 2px !important;
+    flex: 1 !important;
+    display: flex !important;
+    flex-direction: column !important;
+    justify-content: space-between !important;
+  }
   .card-pts { font-size: 0.72rem; }
-  .cost-dot { font-size: 0.45rem; }
+  .cost-dot { font-size: 0.42rem !important; padding: 1px !important; }
+  .cost-dot-circle { width: 5px !important; height: 5px !important; }
   .btn-card { font-size: 0.42rem; padding: 1px 0 !important; }
+  .row-header { padding-left: 3px !important; }
+  .section-title { font-size: 0.55rem !important; }
+  .deck-count { font-size: 0.5rem !important; }
 
-  /* 置底高度適應 */
-  .dashboard-container { gap: 4px !important; margin-bottom: 2px !important; flex-shrink: 0 !important; height: 75px !important; }
+  /* 底部金庫 */
+  .dashboard-container {
+    gap: 3px !important;
+    margin-bottom: 2px !important;
+    flex-shrink: 0 !important;
+    height: 75px !important;
+  }
   .res-circle { width: 13px; height: 13px; }
   .res-count { font-size: 0.68rem; }
-  .reserved-section { width: 140px !important; }
+
+  /* 保留區 */
+  .reserved-section { width: 130px !important; flex-shrink: 0 !important; }
   .reserved-section .card { min-height: 40px !important; }
+  .reserved-section .grid-4 { display: grid !important; grid-template-columns: repeat(2, 1fr) !important; flex-direction: unset !important; flex: unset !important; }
 }
