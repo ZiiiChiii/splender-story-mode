@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover" />
-<title>璀璨寶石 — 皇家大會堂 (核心分離擴充版)</title>
+<title>璀璨寶石 — 皇家大會堂</title>
 <link rel="preconnect" href="https://fonts.googleapis.com" />
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
 <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@700;900&family=Orbitron:wght@700;900&family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
@@ -12,7 +12,7 @@
 
 <script src="https://cdn.jsdelivr.net/npm/gsap@3.12.5/dist/gsap.min.js"></script>
 <style>
-    /* ── 📥 視覺小說故事劇場專屬樣式（調降至與模式同階層 z-index: 500） ── */
+    /* ── 📥 視覺小說故事劇場專專屬樣式 ── */
     #story-layer {
         position: fixed;
         top: 0;
@@ -64,19 +64,7 @@
 <audio id="sfx-ach-expert" src="https://assets.mixkit.co/active_storage/sfx/2063/2063-preview.mp3"></audio>
 <audio id="sfx-ach-master" src="https://assets.mixkit.co/active_storage/sfx/2059/2059-preview.mp3"></audio>
 
-<div id="story-layer">
-    <div class="story-chapter-title" id="story-chapter-title">章節加載中...</div>
-    <div class="story-intro-panel" id="story-intro-panel">背景故事加載中...</div>
-    <div class="story-character-container" id="story-character">
-        <img class="story-character-img" id="story-char-img" alt="角色立繪">
-    </div>
-    <div class="story-dialogue-box" id="story-dialogue-box" onclick="window.storyModule.nextDialogue()">
-        <div class="story-name-tag" id="story-name-tag">???</div>
-        <div class="story-condition-badge" id="story-condition-badge">通關條件</div>
-        <div class="story-dialogue-text" id="story-dialogue-text">...</div>
-        <div class="story-click-hint">▼ 點擊繼續</div>
-    </div>
-</div>
+<div id="effects-layer"></div>
 
 <div class="shell">
   <div class="top-meta-wrap">
@@ -100,10 +88,6 @@
     </div>
   </div>
 
-  <section class="nobles-section" id="guide-nobles">
-    <div class="nobles-grid" id="nobles-layer"></div>
-  </section>
-
   <div style="display: flex; gap: 12px; flex: 1; min-height: 0; margin-bottom: 6px; align-items: stretch;">
     
     <section class="action-panel" id="guide-actions" style="width: 150px; flex-shrink: 0; display: flex; flex-direction: column; justify-content: space-between; padding: 8px; margin-bottom: 0;">
@@ -118,15 +102,23 @@
       <div class="msg-box" id="error-msg" style="min-height:0; margin-top:2px; line-height:1.1; font-size:0.55rem;"></div>
     </section>
 
-    <div class="board-matrix" id="guide-matrix" style="flex: 1; min-height: 0; display: flex; flex-direction: column; justify-content: space-between; gap: 2px;">
+    <div class="board-matrix" id="guide-matrix" style="flex: 1; min-height: 0; display: flex; flex-direction: column; gap: 2px;">
+      
+      <section class="nobles-section" id="guide-nobles" style="margin-bottom: 4px; padding: 2px 0; border-bottom: 1px dashed rgba(212,175,55,0.2);">
+        <div style="font-size: 0.6rem; color: #ffe099; font-weight: 700; margin-bottom: 2px; text-transform: uppercase; padding-left: 6px;">⚜️ 議事堂出席覲見貴族</div>
+        <div class="nobles-grid" id="nobles-layer" style="gap: 8px;"></div>
+      </section>
+
       <div class="board-row" style="flex: 1; min-height: 0; display: flex; flex-direction: column;">
         <div class="row-header lv3" style="margin-bottom: 2px;"><span class="section-title" style="color:#d4af37; font-weight:700; font-size:0.65rem;">頂級物業 (Lv3)</span><span class="deck-count" id="deck-lv3-txt">剩餘: 0</span></div>
         <div class="grid-4" id="row-lv3" style="flex: 1; min-height: 0; gap: 4px;"></div>
       </div>
+      
       <div class="board-row" style="flex: 1; min-height: 0; display: flex; flex-direction: column;">
         <div class="row-header lv2" style="margin-bottom: 2px;"><span class="section-title" style="color:#b0b5b8; font-weight:700; font-size:0.65rem;">中階產業 (Lv2)</span><span class="deck-count" id="deck-lv2-txt">剩餘: 0</span></div>
         <div class="grid-4" id="row-lv2" style="flex: 1; min-height: 0; gap: 4px;"></div>
       </div>
+      
       <div class="board-row" style="flex: 1; min-height: 0; display: flex; flex-direction: column;">
         <div class="row-header lv1" style="margin-bottom: 2px;"><span class="section-title" style="color:#a1704a; font-weight:700; font-size:0.65rem;">基礎礦脈 (Lv1)</span><span class="deck-count" id="deck-lv1-txt">剩餘: 0</span></div>
         <div class="grid-4" id="row-lv1" style="flex: 1; min-height: 0; gap: 4px;"></div>
@@ -256,8 +248,6 @@
     </div>
   </div>
 </div>
-
-<div id="effects-layer" style="position:fixed; inset:0; pointer-events:none; z-index:9999;"></div>
 
 <script src="game.js" type="module"></script>
 </body>
