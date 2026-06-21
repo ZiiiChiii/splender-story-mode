@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover" />
-<title>璀璨寶石 — 皇家大會堂 (核心分離擴充版)</title>
+<title>璀璨寶石 — 皇家大會堂</title>
 <link rel="preconnect" href="https://fonts.googleapis.com" />
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
 <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@700;900&family=Orbitron:wght@700;900&family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
@@ -12,7 +12,6 @@
 
 <script src="https://cdn.jsdelivr.net/npm/gsap@3.12.5/dist/gsap.min.js"></script>
 <style>
-    /* 📥 視覺小說故事劇場專屬樣式 */
     #story-layer {
         position: fixed;
         top: 0;
@@ -29,149 +28,21 @@
         box-sizing: border-box;
         font-family: 'Microsoft JhengHei', 'Heiti TC', sans-serif;
         opacity: 1;
-        /* ── 🎯 任務修正：新增最高防禦點擊捕獲，阻斷所有穿透 ── */
         pointer-events: all;
     }
-    
-    .story-main-box {
-        display: flex;
-        width: 920px;
-        max-width: 95%;
-        height: 320px;
-        align-items: flex-end;
-        position: relative;
-        gap: 20px;
-    }
-    
-    .story-char-box {
-        width: 240px;
-        height: 100%;
-        display: flex;
-        align-items: flex-end;
-        justify-content: center;
-        flex-shrink: 0;
-    }
-    
-    .story-char-box img {
-        max-height: 110%;
-        max-width: 100%;
-        object-fit: contain;
-        filter: drop-shadow(0 10px 20px rgba(0,0,0,0.6));
-    }
-    
-    .story-dialogue-box {
-        flex: 1;
-        background: linear-gradient(135deg, rgba(28, 22, 18, 0.96), rgba(16, 12, 10, 0.98));
-        border: 2px solid #d4af37;
-        box-shadow: 0 12px 40px rgba(0,0,0,0.85), inset 0 0 20px rgba(212,175,55,0.1);
-        border-radius: 8px;
-        padding: 20px 24px;
-        display: flex;
-        flex-direction: column;
-        justify-content: space-between;
-        height: 150px;
-        position: relative;
-        cursor: pointer;
-        transition: all 0.2s ease;
-    }
-    
-    .story-dialogue-box:hover {
-        border-color: #ffe099;
-        box-shadow: 0 12px 45px rgba(0,0,0,0.95), 0 0 15px rgba(255,204,0,0.15);
-    }
-    
-    .story-name-tag {
-        position: absolute;
-        top: -16px;
-        left: 20px;
-        background: linear-gradient(180deg, #d4af37, #aa7c11);
-        color: #110e0c;
-        padding: 4px 16px;
-        font-weight: 800;
-        font-size: 0.85rem;
-        border-radius: 4px;
-        border: 1px solid #ffe099;
-        box-shadow: 0 4px 8px rgba(0,0,0,0.5);
-        letter-spacing: 0.05em;
-    }
-    
-    .story-text-field {
-        color: #f4f0ea;
-        font-size: 0.95rem;
-        line-height: 1.6;
-        font-weight: 500;
-        letter-spacing: 0.03em;
-        flex: 1;
-        margin-top: 8px;
-        overflow-y: auto;
-    }
-    
-    .story-footer-meta {
-        display: flex;
-        justify-content: space-between;
-        align-items: center;
-        border-top: 1px solid rgba(212,175,55,0.15);
-        padding-top: 8px;
-        margin-top: 8px;
-        flex-shrink: 0;
-    }
-    
-    .story-condition-badge {
-        font-size: 0.65rem;
-        background: rgba(212, 175, 55, 0.15);
-        color: #ffe099;
-        padding: 2px 8px;
-        border-radius: 4px;
-        border: 1px solid rgba(212, 175, 55, 0.3);
-        font-weight: 700;
-    }
-    
-    .story-click-tip {
-        font-size: 0.7rem;
-        color: #968a7f;
-        animation: storyPulseText 1.5s infinite ease-in-out;
-        font-weight: 600;
-    }
-    
-    @keyframes storyPulseText {
-        0% { opacity: 0.4; transform: translateX(0); }
-        50% { opacity: 1; transform: translateX(3px); }
-        100% { opacity: 0.4; transform: translateX(0); }
-    }
-    
-    #story-chapter-title {
-        position: absolute;
-        top: -120px;
-        left: 240px;
-        font-family: 'Cinzel', serif;
-        font-size: 1.3rem;
-        font-weight: 900;
-        color: #fff;
-        text-shadow: 0 2px 8px rgba(0,0,0,0.9), 0 0 10px rgba(212,175,55,0.5);
-        letter-spacing: 0.05em;
-    }
-    
-    #story-intro-panel {
-        position: absolute;
-        top: -80px;
-        left: 240px;
-        right: 0;
-        font-size: 0.78rem;
-        color: #968a7f;
-        line-height: 1.5;
-        text-shadow: 0 1px 3px rgba(0,0,0,0.9);
-        display: -webkit-box;
-        -webkit-line-clamp: 2;
-        -webkit-box-orient: vertical;
-        overflow: hidden;
-    }
-    
-    @media (max-width: 768px) {
-        #story-chapter-title { left: 20px; top: -160px; font-size: 1.1rem; }
-        #story-intro-panel { left: 20px; top: -120px; right: 20px; }
-        .story-char-box { display: none; }
-        .story-main-box { height: 180px; }
-    }
+    .story-main-box { display: flex; width: 920px; max-width: 95%; height: 320px; align-items: flex-end; position: relative; gap: 20px; }
+    .story-char-box { width: 240px; height: 100%; display: flex; align-items: flex-end; justify-content: center; flex-shrink: 0; }
+    .story-char-box img { max-height: 110%; max-width: 100%; object-fit: contain; filter: drop-shadow(0 10px 20px rgba(0,0,0,0.6)); }
+    .story-dialogue-box { flex: 1; background: linear-gradient(135deg, rgba(28, 22, 18, 0.96), rgba(16, 12, 10, 0.98)); border: 2px solid #d4af37; box-shadow: 0 12px 40px rgba(0,0,0,0.85), inset 0 0 20px rgba(212,175,55,0.1); border-radius: 8px; padding: 20px 24px; display: flex; flex-direction: column; justify-content: space-between; height: 150px; position: relative; cursor: pointer; transition: all 0.2s ease; }
+    .story-name-tag { position: absolute; top: -16px; left: 20px; background: linear-gradient(180deg, #d4af37, #aa7c11); color: #110e0c; padding: 4px 16px; font-weight: 800; font-size: 0.85rem; border-radius: 4px; border: 1px solid #ffe099; box-shadow: 0 4px 8px rgba(0,0,0,0.5); letter-spacing: 0.05em; }
+    .story-text-field { color: #f4f0ea; font-size: 0.95rem; line-height: 1.6; font-weight: 500; letter-spacing: 0.03em; flex: 1; margin-top: 8px; overflow-y: auto; }
+    .story-footer-meta { display: flex; justify-content: space-between; align-items: center; border-top: 1px solid rgba(212,175,55,0.15); padding-top: 8px; margin-top: 8px; flex-shrink: 0; }
+    .story-condition-badge { font-size: 0.65rem; background: rgba(212, 175, 55, 0.15); color: #ffe099; padding: 2px 8px; border-radius: 4px; border: 1px solid rgba(212, 175, 55, 0.3); font-weight: 700; }
+    .story-click-tip { font-size: 0.7rem; color: #968a7f; animation: storyPulseText 1.5s infinite ease-in-out; font-weight: 600; }
+    @keyframes storyPulseText { 0% { opacity: 0.4; transform: translateX(0); } 50% { opacity: 1; transform: translateX(3px); } 100% { opacity: 0.4; transform: translateX(0); } }
+    #story-chapter-title { position: absolute; top: -120px; left: 240px; font-family: 'Cinzel', serif; font-size: 1.3rem; font-weight: 900; color: #fff; text-shadow: 0 2px 8px rgba(0,0,0,0.9), 0 0 10px rgba(212,175,55,0.5); letter-spacing: 0.05em; }
+    #story-intro-panel { position: absolute; top: -80px; left: 240px; right: 0; font-size: 0.78rem; color: #968a7f; line-height: 1.5; text-shadow: 0 1px 3px rgba(0,0,0,0.9); display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
+    @media (max-width: 768px) { #story-chapter-title { left: 20px; top: -160px; font-size: 1.1rem; } #story-intro-panel { left: 20px; top: -120px; right: 20px; } .story-char-box { display: none; } .story-main-box { height: 180px; } }
 </style>
 </head>
 <body>
@@ -199,20 +70,29 @@
       <h1 class="game-title">SPLENDOR</h1>
     </div>
     <div class="status-bar">
-      <button class="music-btn" onclick="handleMusicToggle()" id="btn-music-state">🎵 音樂</button>
-      <button class="music-btn" onclick="handleSfxToggle()" id="btn-sfx-state">🔊 音效</button>
+      <button class="music-btn" onclick="openGameOptionsModal()">⚙️ 模式與選項切換</button>
+      <button class="music-btn" onclick="handleMusicToggle()" id="btn-music-state">🎵 音樂: 開啟</button>
+      <button class="music-btn" onclick="handleSfxToggle()" id="btn-sfx-state">🔊 音效: 開啟</button>
+      <button class="music-btn" onclick="startFloatingTutorial()">📖 遊戲教學</button>
+      <button class="music-btn" id="story-top-save-btn" style="display:none; background:rgba(46,204,113,0.25); border-color:#2ecc71;" onclick="saveCurrentProgress()">💾 存檔進度</button>
       <div class="status-pill">回合: <strong id="turn-txt">1</strong></div>
       <div class="status-pill">威望分數: <strong id="score-txt">0</strong></div>
-      <button class="music-btn" style="background: linear-gradient(180deg, #2d2219, #150f0b);" onclick="openGameOptionsModal()">⚙️ 系統選單</button>
     </div>
   </div>
 
-  <div class="achievement-banner" id="dynamic-banner-zone" onclick="handleBannerZoneClick()">
+  <div class="achievement-banner" id="single-achievement-zone" onclick="window.openAchievementHistory()">
     <div class="ach-latest-container">
-      <span class="ach-badge-title" id="dynamic-banner-badge">榮譽成就</span>
-      <span class="ach-latest-display" id="dynamic-banner-text">🏆 當前已斬獲 0 / 30 項皇家勳章！</span>
+      <span class="ach-badge-title">榮譽成就</span>
+      <span class="ach-latest-display" id="single-ach-text">🏆 當前已斬獲 0 / 30 項皇家勳章！ [點擊查看完整狀態]</span>
     </div>
-    <div class="ach-stats-summary" id="assistant-display-layer"></div>
+  </div>
+
+  <div class="achievement-banner" id="story-meta-zone" style="display:none; background:linear-gradient(90deg, #1c150e, #2d2219); border-color:#d4af37;">
+    <div class="ach-latest-container" onclick="window.StoryMode.openStoryMapModal()">
+      <span class="ach-badge-title" style="background:rgba(212,175,55,0.2); border-color:#d4af37;">當前關卡</span>
+      <span class="ach-latest-display" id="story-mission-text" style="color:#ffe099;">⚔️ 加載中... [點擊自選關卡]</span>
+    </div>
+    <div class="ach-stats-summary" id="assistant-display-layer" style="cursor:pointer;" onclick="window.openTalentPoolModal()"></div>
   </div>
 
   <div class="nobles-section" id="guide-nobles">
@@ -220,100 +100,77 @@
   </div>
 
   <div class="dashboard-container">
-    <div class="dashboard" id="guide-dashboard">
+    <div class="dashboard" id="guide-dashboard" style="flex:2.5;">
+      <div style="font-size:0.6rem; color:#ffe099; font-weight:bold; margin-bottom:4px; text-transform:uppercase;">🎒 玩家物業金庫資產背包</div>
       <div class="res-grid" id="res-layer"></div>
-      <div class="cap-bar">
-        <span id="cap-txt">背包筹碼: 0 / 10</span>
-      </div>
+      <div class="cap-bar"><span id="cap-txt">背包筹碼: 0 / 10</span></div>
     </div>
     
-    <div class="earned-nobles-panel" id="ai-dashboard-box" style="display:none; background:rgba(40,20,20,0.5); border-color:#e74c3c;">
+    <div class="earned-nobles-panel" id="ai-dashboard-box" style="display:none; flex:2; background:rgba(40,20,20,0.5); border-color:#e74c3c;">
       <div class="earned-nobles-title" style="color:#e74c3c;" id="player-dashboard-title">🤖 敵對 AI 資產庫欄 (<span id="ai-score-txt">0</span>分)</div>
       <div class="res-grid" id="ai-res-layer" style="padding-top:4px;"></div>
     </div>
 
-    <div class="earned-nobles-panel">
-      <div class="earned-nobles-title">⚜️ 已進駐貴族 / 隨行官員</div>
+    <div class="earned-nobles-panel" style="flex:1.5;">
+      <div class="earned-nobles-title">⚜️ 進駐貴族</div>
       <div class="earned-nobles-list" id="earned-nobles-layer"></div>
+    </div>
+    <div class="reserved-section" id="guide-reserved" style="flex:1.8;">
+      <div class="earned-nobles-title" style="margin-bottom:4px; text-align:center;">🔒 保密契約手牌</div>
+      <div class="grid-4" id="reserved-layer"></div>
     </div>
   </div>
 
   <div class="action-panel" id="guide-actions">
-    <div class="action-row">
-      <div class="act-group">
-        <div class="action-title">🟢 執行：拿取 3 顆不同顏色籌碼</div>
-        <div class="token-selectors" id="diff-selectors"></div>
-        <button class="btn-primary" id="btn-do-diff" onclick="handleDoDiffClick()">確認拿取異色籌碼</button>
+    <div style="font-size:0.75rem; color:#ffe099; font-weight:800; margin-bottom:6px;">🪙 皇家鑄幣局 — 可執行交易拿取籌碼中心</div>
+    <div class="action-row" style="gap:12px;">
+      <div class="act-group" style="flex:2.5;">
+        <div class="token-selectors" id="unified-bank-selectors" style="grid-template-columns: repeat(6, 1fr); margin-bottom:4px;"></div>
       </div>
-      <div class="act-group">
-        <div class="action-title">🔵 執行：拿取 2 顆相同顏色籌碼</div>
-        <div class="token-selectors" id="same-selectors"></div>
-        <button class="btn-primary" id="btn-do-same" onclick="handleDoSameClick()">確認拿取同色籌碼</button>
+      <div class="act-group" style="flex:1.5; display:flex; flex-direction:column; justify-content:center; gap:6px;">
+        <button class="btn-primary" id="btn-do-diff" onclick="handleDoDiffClick()" disabled>拿取三個不同顏色寶石</button>
+        <button class="btn-primary" id="btn-do-same" onclick="handleDoSameClick()" disabled>拿取兩個相同顏色寶石</button>
       </div>
     </div>
     <div class="msg-box" id="error-msg"></div>
   </div>
 
-  <div class="matrix-reserved-wrapper">
-    <div class="board-matrix" id="guide-matrix">
-      <div class="board-row">
-        <div class="row-header">
-          <span class="deck-count">👑 皇家階級 III 物業發展矩陣</span>
-          <span class="deck-count" id="deck-lv3-txt">剩餘: 0</span>
-        </div>
-        <div class="grid-4" id="row-lv3"></div>
-      </div>
-
-      <div class="board-row">
-        <div class="row-header">
-          <span class="deck-count">🏛️ 商賈階級 II 物業發展矩陣</span>
-          <span class="deck-count" id="deck-lv2-txt">剩餘: 0</span>
-        </div>
-        <div class="grid-4" id="row-lv2"></div>
-      </div>
-
-      <div class="board-row">
-        <div class="row-header">
-          <span class="deck-count">⛏️ 採礦階級 I 物業發展矩陣</span>
-          <span class="deck-count" id="deck-lv1-txt">剩餘: 0</span>
-        </div>
-        <div class="grid-4" id="row-lv1"></div>
-      </div>
+  <div class="board-matrix" id="guide-matrix" style="flex:1; min-height:0;">
+    <div class="board-row">
+      <div class="row-header"><span class="deck-count">👑 階級 III 高級物業發展矩陣</span><span class="deck-count" id="deck-lv3-txt">剩餘: 0</span></div>
+      <div class="grid-4" id="row-lv3"></div>
     </div>
-
-    <div class="reserved-section" id="guide-reserved">
-      <div class="earned-nobles-title" style="margin-bottom:4px; text-align:center;">🔒 保密契約手牌</div>
-      <div class="grid-4" id="reserved-layer"></div>
+    <div class="board-row">
+      <div class="row-header"><span class="deck-count">🏛️ 階級 II 中級物業發展矩陣</span><span class="deck-count" id="deck-lv2-txt">剩餘: 0</span></div>
+      <div class="grid-4" id="row-lv2"></div>
+    </div>
+    <div class="board-row">
+      <div class="row-header"><span class="deck-count">⛏️ 階級 I 初級物業發展矩陣</span><span class="deck-count" id="deck-lv1-txt">剩餘: 0</span></div>
+      <div class="grid-4" id="row-lv1"></div>
     </div>
   </div>
 </div>
 
 <div class="modal-overlay" id="game-options-modal">
   <div class="modal">
-    <h2 class="modal-title">⚙️ 皇家大會堂系統選單</h2>
+    <h2 class="modal-title">⚙️ 皇家大會堂模式切換與控制</h2>
     <div class="menu-grid-layout">
-      <button class="menu-row-btn" id="menu-toggle-music" onclick="handleMusicToggle()">🎵 背景音樂：開啟</button>
-      <button class="menu-row-btn" id="menu-toggle-sfx" onclick="handleSfxToggle()">🔊 遊戲音效：開啟</button>
-      <hr style="border:0; border-top:1px dashed rgba(212,175,55,0.3); margin:6px 0;">
-      <div style="font-size:0.7rem; color:var(--text-muted); margin-bottom:4px; text-align:left;">🎯 切換當前遊戲玩法模式 (將重置新局):</div>
-      <div style="display:grid; grid-template-columns:repeat(3,1fr); gap:6px; margin-bottom:8px;">
-        <button class="diff-opt-btn" id="mode-btn-single" onclick="playUniformSfx(); closeGameOptionsModal(); window.ActionDispatcher.dispatch('SWITCH_MODE', {mode:'singlePlayer'})">成就模式</button>
+      <div style="font-size:0.75rem; color:var(--text-muted); margin-bottom:6px; text-align:left;">🎯 切換玩法模式 (將重置局數):</div>
+      <div style="display:grid; grid-template-columns:repeat(3,1fr); gap:6px; margin-bottom:12px;">
+        <button class="diff-opt-btn" id="mode-btn-single" onclick="playUniformSfx(); closeGameOptionsModal(); window.ActionDispatcher.dispatch('SWITCH_MODE', {mode:'singlePlayer'})">單機成就</button>
         <button class="diff-opt-btn" id="mode-btn-ai" onclick="playUniformSfx(); closeGameOptionsModal(); window.ActionDispatcher.dispatch('SWITCH_MODE', {mode:'vsAI'})">對戰AI</button>
-        <button class="diff-opt-btn" id="mode-btn-story" onclick="playUniformSfx(); closeGameOptionsModal(); window.StoryMode.openStoryMapModal()">戰役故事</button>
+        <button class="diff-opt-btn" id="mode-btn-story" onclick="playUniformSfx(); closeGameOptionsModal(); window.StoryMode.openStoryMapModal()">故事戰役</button>
       </div>
-      <button class="menu-row-btn" style="background:rgba(212,175,55,0.1); border-color:#ffe099;" onclick="playUniformSfx(); closeGameOptionsModal(); openTalentPoolModal();">👥 調遣隨行文官助理</button>
-      <button class="menu-row-btn" style="background:rgba(46,204,113,0.15); border-color:#2ecc71;" onclick="playUniformSfx(); closeGameOptionsModal(); saveCurrentProgress();">💾 儲存當前遊戲進度</button>
     </div>
-    <button class="btn-replay" style="margin-top:0;" onclick="closeGameOptionsModal()">返回大會堂</button>
+    <button class="btn-replay" style="margin-top:0;" onclick="closeGameOptionsModal()">重返大會堂</button>
   </div>
 </div>
 
 <div class="modal-overlay" id="talent-pool-modal">
   <div class="modal" style="max-width: 460px;">
-    <h2 class="modal-title">👥 內閣文官幕僚調遣所</h2>
-    <p style="font-size:0.7rem; color:var(--text-muted); margin-bottom:8px;">故事模式中通關特定戰役可永久解鎖對應助理，非劇情模式開局可自由派遣隨行助理為您提供被動加成特技！</p>
+    <h2 class="modal-title">👥 內閣文官幕僚幕僚調遣所</h2>
     <div class="talent-pool-modal-grid" id="talent-pool-injector"></div>
-    <button class="btn-replay" onclick="closeTalentPoolModal()">任用並重返牌局</button>
+    <button class="btn-replay" onclick="closeTalentPoolModal()">任用重返牌局</button>
   </div>
 </div>
 
@@ -337,11 +194,10 @@
   </div>
 </div>
 
-<div class="modal-overlay" id="ach-history-modal-container" onclick="if(event.target===this){ playUniformSfx(); closeAchievementHistory(); }\">
+<div class="modal-overlay" id="ach-history-modal-container" onclick="if(event.target===this){ playUniformSfx(); closeAchievementHistory(); }">
   <div class="modal ach-modal">
     <div class="ach-modal-header">
       <h2 class="modal-title">⚜️ 皇家榮譽堂</h2>
-      <div class="ach-stats-summary" id="ach-stats-field" style="display:none;"></div>
       <button class="music-btn" onclick="playUniformSfx(); closeAchievementHistory();">✕ 關閉</button>
     </div>
     <div class="ach-scroll-body" id="ach-matrix-injector"></div>
@@ -351,10 +207,10 @@
 <div class="modal-overlay" id="win-modal">
   <div class="modal">
     <span style="font-size:2.5rem;" id="win-modal-icon">🏆</span>
-    <h2 class="modal-title" id="win-modal-title">璀璨大師，實至名歸！</h2>
-    <p style="font-size:0.85rem; color:var(--text-muted); line-height:1.6; margin-bottom:8px;" id=\"modal-body-txt\"></p>
+    <h2 class="modal-title" id="win-modal-title">戰局完結</h2>
+    <p style="font-size:0.85rem; color:var(--text-muted); line-height:1.6; margin-bottom:8px;" id="modal-body-txt"></p>
     <p style="font-size:0.8rem; color:#ffe099; line-height:1.4;" id="modal-condition-txt"></p>
-    <button class="btn-replay" onclick="restartGame()">開啟下一局新賽挑戰</button>
+    <button class="btn-replay" onclick="restartGame()">再啟一局新賽挑戰</button>
   </div>
 </div>
 
@@ -363,12 +219,10 @@
     <span style="font-size:2.5rem;">📜</span>
     <h2 class="modal-title">皇家大會堂貿易法則</h2>
     <div class="rule-box">
-      <p style="margin-bottom:6px; font-weight:700; color:#d4af37;">歡迎來到《璀璨寶石》皇家分離架構版！</p>
-      <p style="margin-bottom:4px;">1. 您的目標是透過收購卡牌、累積資產減免，吸引貴族來訪，率先獲得 15 分威望者獲勝。</p>
-      <p style="margin-bottom:4px;">2. 點選右側選單可切換<b>單人成就挑戰、對戰AI、25關小說劇情戰役模式</b>。</p>
+      <p style="margin-bottom:4px;">歡迎重返璀璨寶石大會堂。古老的計演矩陣與英才官員們已準備就緒。</p>
     </div>
     <button class="btn-replay" style="margin-top:4px;" onclick="startFloatingTutorial()">開始新手指引導覽</button>
-    <button class="btn-replay" style="background:#3a2e22; border:1px solid #d4af37; margin-top:6px;" onclick="hideWelcomeModal(); localStorage.setItem('splendor_tutorial_completed_2026', 'true');">直接跳過導覽進入遊戲</button>
+    <button class="btn-replay" style="background:#3a2e22; border:1px solid #d4af37; margin-top:6px;" onclick="hideWelcomeModal(); localStorage.setItem('splendor_tutorial_completed_2026', 'true');">跳過導覽進入遊戲</button>
   </div>
 </div>
 
@@ -376,7 +230,6 @@
   <div class="modal">
     <span style="font-size:2.5rem;">⚜️</span>
     <h2 class="modal-title">大會堂群賢畢至</h2>
-    <p style="font-size:0.85rem; color:var(--text-muted); margin-bottom:12px; line-height:1.5;">歡迎重返璀璨寶石大會堂。古老的計演矩陣與英才官員們已準備就緒。</p>
     <button class="btn-replay" onclick="hideWelcomeModal()">踏入皇家堂</button>
   </div>
 </div>
