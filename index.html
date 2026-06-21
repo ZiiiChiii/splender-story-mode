@@ -99,55 +99,57 @@
     <div class="nobles-grid" id="nobles-layer"></div>
   </div>
 
-  <div class="action-panel" id="guide-actions">
-    <div style="font-size:0.75rem; color:#ffe099; font-weight:800; margin-bottom:6px;">🪙 皇家鑄幣局 — 可執行交易拿取籌碼中心</div>
-    <div class="action-row" style="gap:12px;">
-      <div class="act-group" style="flex:2.5;">
-        <div class="token-selectors" id="unified-bank-selectors" style="grid-template-columns: repeat(6, 1fr); margin-bottom:4px;"></div>
+  <div style="display: flex; gap: 10px; flex: 1; min-height: 0; margin-bottom: 8px;">
+    
+    <div class="action-panel" id="guide-actions" style="width: 140px; flex-shrink: 0; display: flex; flex-direction: column; justify-content: space-between; padding: 6px; margin-bottom: 0;">
+      <div style="font-size:0.6rem; color:#ffe099; font-weight:800; line-height:1.2; text-align:center; border-bottom: 1px dashed rgba(212,175,55,0.2); padding-bottom: 4px;">🪙 鑄幣局交易面板</div>
+      
+      <div id="unified-bank-selectors" style="display: grid; grid-template-columns: 1fr; gap: 4px; overflow-y: auto; max-height: 220px; padding: 2px;"></div>
+      
+      <div style="display: flex; flex-direction: column; gap: 4px; margin-top: auto; padding-top: 4px; border-top: 1px dashed rgba(212,175,55,0.2);">
+        <button class="btn-primary" id="btn-do-diff" style="font-size: 0.55rem; padding: 4px 2px; line-height: 1.2;" onclick="handleDoDiffClick()" disabled>拿取三種異色</button>
+        <button class="btn-primary" id="btn-do-same" style="font-size: 0.55rem; padding: 4px 2px; line-height: 1.2;" onclick="handleDoSameClick()" disabled>拿取兩顆同色</button>
       </div>
-      <div class="act-group" style="flex:1.5; display:flex; flex-direction:column; justify-content:center; gap:6px;">
-        <button class="btn-primary" id="btn-do-diff" onclick="handleDoDiffClick()" disabled>拿取三個不同顏色寶石</button>
-        <button class="btn-primary" id="btn-do-same" onclick="handleDoSameClick()" disabled>拿取兩個相同顏色寶石</button>
+      <div class="msg-box" id="error-msg" style="min-height: 0; font-size: 0.5rem; line-height: 1.1;"></div>
+    </div>
+
+    <div class="board-matrix" id="guide-matrix" style="flex: 1; min-height: 0; display: flex; flex-direction: column; justify-content: space-between;">
+      <div class="board-row" style="flex: 1; min-height: 0; margin-bottom: 2px;">
+        <div class="row-header" style="margin-bottom: 2px;"><span class="deck-count" style="font-size:0.58rem;">👑 階級 III 高級物業發展矩陣</span><span class="deck-count" id="deck-lv3-txt" style="font-size:0.58rem;">剩餘: 0</span></div>
+        <div class="grid-4" id="row-lv3" style="gap: 2px;"></div>
+      </div>
+      <div class="board-row" style="flex: 1; min-height: 0; margin-bottom: 2px;">
+        <div class="row-header" style="margin-bottom: 2px;"><span class="deck-count" style="font-size:0.58rem;">🏛️ 階級 II 中級物業發展矩陣</span><span class="deck-count" id="deck-lv2-txt" style="font-size:0.58rem;">剩餘: 0</span></div>
+        <div class="grid-4" id="row-lv2" style="gap: 2px;"></div>
+      </div>
+      <div class="board-row" style="flex: 1; min-height: 0; margin-bottom: 0;">
+        <div class="row-header" style="margin-bottom: 2px;"><span class="deck-count" style="font-size:0.58rem;">⛏️ 階級 I 初級物業發展矩陣</span><span class="deck-count" id="deck-lv1-txt" style="font-size:0.58rem;">剩餘: 0</span></div>
+        <div class="grid-4" id="row-lv1" style="gap: 2px;"></div>
       </div>
     </div>
-    <div class="msg-box" id="error-msg"></div>
+
   </div>
 
-  <div class="board-matrix" id="guide-matrix" style="flex:1; min-height:0; margin-bottom: 8px;">
-    <div class="board-row">
-      <div class="row-header"><span class="deck-count">👑 階級 III 高級物業發展矩陣</span><span class="deck-count" id="deck-lv3-txt">剩餘: 0</span></div>
-      <div class="grid-4" id="row-lv3"></div>
-    </div>
-    <div class="board-row">
-      <div class="row-header"><span class="deck-count">🏛️ 階級 II 中級物業發展矩陣</span><span class="deck-count" id="deck-lv2-txt">剩餘: 0</span></div>
-      <div class="grid-4" id="row-lv2"></div>
-    </div>
-    <div class="board-row">
-      <div class="row-header"><span class="deck-count">⛏️ 階級 I 初級物業發展矩陣</span><span class="deck-count" id="deck-lv1-txt">剩餘: 0</span></div>
-      <div class="grid-4" id="row-lv1"></div>
-    </div>
-  </div>
-
-  <div class="dashboard-container" style="margin-top: auto; padding-top: 4px; border-top: 1px dashed rgba(212,175,55,0.15);">
-    <div class="dashboard" id="guide-dashboard" style="flex:2.5;">
-      <div style="font-size:0.6rem; color:#ffe099; font-weight:bold; margin-bottom:4px; text-transform:uppercase;">🎒 玩家物業金庫資產背包</div>
+  <div class="dashboard-container" style="margin-top: auto; padding-top: 4px; border-top: 1px dashed rgba(212,175,55,0.15); display: flex; gap: 8px;">
+    <div class="dashboard" id="guide-dashboard" style="flex: 2.2;">
+      <div style="font-size:0.55rem; color:#ffe099; font-weight:bold; margin-bottom:4px; text-transform:uppercase;">🎒 玩家物業金庫資產背包</div>
       <div class="res-grid" id="res-layer"></div>
       <div class="cap-bar"><span id="cap-txt">背包筹碼: 0 / 10</span></div>
     </div>
     
-    <div class="earned-nobles-panel" id="ai-dashboard-box" style="display:none; flex:2; background:rgba(40,20,20,0.5); border-color:#e74c3c;">
-      <div class="earned-nobles-title" style="color:#e74c3c;" id="player-dashboard-title">🤖 敵對 AI 資產庫欄 (<span id="ai-score-txt">0</span>分)</div>
+    <div class="earned-nobles-panel" id="ai-dashboard-box" style="display:none; flex: 1.8; background:rgba(40,20,20,0.5); border-color:#e74c3c;">
+      <div class="earned-nobles-title" style="color:#e74c3c; font-size:0.55rem;" id="player-dashboard-title">🤖 敵對 AI 資產庫欄 (<span id="ai-score-txt">0</span>分)</div>
       <div class="res-grid" id="ai-res-layer" style="padding-top:4px;"></div>
     </div>
 
-    <div class="earned-nobles-panel" style="flex:1.5;">
-      <div class="earned-nobles-title">⚜️ 進駐貴族</div>
+    <div class="earned-nobles-panel" style="flex: 1.1; min-width: 100px;">
+      <div class="earned-nobles-title" style="font-size:0.55rem;">⚜️ 進駐貴族</div>
       <div class="earned-nobles-list" id="earned-nobles-layer"></div>
     </div>
 
-    <div class="reserved-section" id="guide-reserved" style="flex:1.8;">
-      <div class="earned-nobles-title" style="margin-bottom:4px; text-align:center;">🔒 保密契約手牌</div>
-      <div class="grid-4" id="reserved-layer"></div>
+    <div class="reserved-section" id="guide-reserved" style="flex: 3.2; width: auto; min-width: 290px;">
+      <div class="earned-nobles-title" style="margin-bottom:4px; text-align:center; font-size:0.55rem;">🔒 保密契約完整手牌區</div>
+      <div class="grid-4" id="reserved-layer" style="display: grid; grid-template-columns: repeat(4, 1fr); gap: 4px;"></div>
     </div>
   </div>
 </div>
