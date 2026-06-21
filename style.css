@@ -391,11 +391,16 @@ html, body {
 .rule-box { text-align: left; background: rgba(0,0,0,0.4); border: 1px solid rgba(212,175,55,0.15); padding: 12px; border-radius: 6px; margin: 12px 0; font-size: 0.85rem; line-height: 1.6; }
 .btn-replay { width: 100%; padding: 10px; background: linear-gradient(180deg, #d4af37, #8a6418); color: #FFF; border: none; border-radius: 4px; font-weight: 700; cursor: pointer; margin-top: 12px; font-size:0.85rem; }
 
-/* ── 🎯 核心修正：解除新手教學專屬的遮罩、懸浮元件以及下一步按鈕的所有點擊封鎖 ── */
-.modal-overlay[id*="tutorial"], 
-.modal-overlay[id*="guide"] {
-  pointer-events: auto !important;
-  z-index: 9999998 !important;
+/* ── 🎯 終極修復：當大overlay不具有.show類名時，物理級強制使其消失，釋放所有滑鼠點擊穿透 ── */
+.modal-overlay {
+  transition: opacity 0.3s ease, visibility 0.3s ease;
+}
+
+.modal-overlay:not(.show) {
+  opacity: 0 !important;
+  visibility: hidden !important;
+  pointer-events: none !important;
+  display: none !important; /* 物理級抹除，確保絕對不擋路 */
 }
 
 .tutorial-highlight { 
