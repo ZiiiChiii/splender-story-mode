@@ -577,6 +577,10 @@ window.handleBannerZoneClick = function() {
 
 window.toggleSelectDiff = function(color) {
   if(CoreState.get().currentTurnOwner !== 'player') return;
+  // ── 🎯 任務修正：新增故事動畫層顯式守衛 ──
+  const storyLayerEl = document.getElementById('story-layer');
+  if (storyLayerEl && storyLayerEl.style.display !== 'none') return;
+
   document.getElementById('error-msg').textContent = '';
   const state = CoreState.get();
   
@@ -601,6 +605,10 @@ window.toggleSelectDiff = function(color) {
 
 window.toggleSelectSame = function(color) {
   if(CoreState.get().currentTurnOwner !== 'player') return;
+  // ── 🎯 任務修正：新增故事動畫層顯式守衛 ──
+  const storyLayerEl = document.getElementById('story-layer');
+  if (storyLayerEl && storyLayerEl.style.display !== 'none') return;
+
   document.getElementById('error-msg').textContent = '';
   const state = CoreState.get();
   
@@ -637,7 +645,7 @@ window.storyModule = {
         9: { chapter: "🦁 第二章：橡木鎮的崛起商賈（第 6 - 10 關）", title: "第 9 關：雙色協奏曲", bg: "宮廷樂長塞巴斯蒂安來到鎮上尋找靈感。他認為經商就如同拉琴，講究雙音的和諧，他要求你的資產必須呈現完美的雙色極致。", condition: "達到15分，且最終名下只能有黑與白卡", name: "大提琴家 塞巴斯蒂安", text: "雜亂的顏色是噪音。這局遊戲，我只要看到你發展黑與白（k 與 w）的產業，其餘顏色的卡片不准出現在你的名下。" },
         10: { chapter: "🦁 第二章：橡木鎮的崛起商賈（第 6 - 10 關）", title: "第 10 關：沙漠商隊的門檻", bg: "來自遙遠絲路的阿里帶著巨大的駱駝商隊駐紮在鎮外。他見過無數大風大浪，普通的財富根本打動不了他，只有金光閃閃的黃金能讓他多看一眼。", condition: "達到15分，且通關時手上持有至少4枚黃金籌碼", name: "異域商賈 阿里", text: "我的駱駝馱滿了香料與翡翠。年輕人，聽說你最近很風光？如果你能不靠那些花花綠綠的石頭，光靠黃金鋪路拿下 15 分，我就與你簽約。" },
         11: { chapter: "🌲 第三章：巨石要塞的邊境商戰（第 11 - 15 關）", title: "第 11 關：占星師的金融風暴", bg: "巨石要塞遭遇了星象異變，引發了強烈的信用通膨。占星師露娜封鎖了銀行的實體籌碼，你必須學會「空手套白狼」的永續鏈。", condition: "25回合內達到15分（銀行普通籌碼初始全為2顆）", name: "皇家占星師 露娜", text: "星辰預示著匱乏。這一局，銀行的每種普通籌碼庫存都只有 2 顆！你必須依賴你以前累積的產業減免，才能活下去。" },
-        12: { chapter: "🌲 第三章：巨石要塞的邊境商戰（第 11 - 15 關）", title: "第 12 關：鍊金術的對決", bg: "要塞裡的科學家帕拉塞爾斯不相信凡人的經商手段，他研發了一個能自動計算最優解的「鍊金傀儡 AI」。你必須在商戰中擊敗他的造物。", condition: "與初階 AI 對決並獲得勝利（比AI先達15分）", name: "鍊金術師 帕拉塞爾斯", text: "真理只存在於算式中。我的自動傀儡會搶走所有高價值的卡牌。來吧，在它將你吞噬之前，先拿到 15 分！" },
+        12: { chapter: "🌲 第三章：巨石要塞的邊境商戰（第 11 - 15 關）", title: "第 12 關：鍊金術的對決", bg: "要塞裡的科學家帕拉塞爾斯不相信凡人的經商手段，他研發了一個能自動計算最優解的「鍊金傀儡 AI」。你必須在商戰中擊敗 his 造物。", condition: "與初階 AI 對決並獲得勝利（比AI先達15分）", name: "鍊金術師 帕拉塞爾斯", text: "真理只存在於算式中。我的自動傀儡會搶走所有高價值的卡牌。來吧，在它將你吞噬之前，先拿到 15 分！" },
         13: { chapter: "🌲 第三章：巨石要塞的邊境商戰（第 11 - 15 關）", title: "第 13 關：地下領主的黃金稅", bg: "矮人國王索林統治著要塞底部的金庫。他是一個不折不扣的守財奴，他宣布所有買卡的交易都必須支付昂貴的黃金手續費。", condition: "最終分數必須「剛好等於 15 分」，超過直接算輸", name: "地下領主 索林", text: "想在我的地盤買卡？沒問題！但每張卡你都必須額外支付黃金，除非你能展現驚人的精算，讓最終分數剛好完美符合我的幸運數字！" },
         14: { chapter: "🌲 第三章：巨石要塞的邊境商戰（第 11 - 15 關）", title: "第 14 關：遊俠的森林限速", bg: "邊境森林遭遇敵襲，精靈遊俠萊戈拉斯奉命戒嚴。他封鎖了林道，留給物資商人的時間轉瞬即逝，你必須發動一場閃電戰。", condition: "極限挑戰！16 回合內威望達到 15 分", name: "精靈遊俠 萊戈拉斯", text: "戰爭不等人，人類。我只給你 16 個回合的時間。如果 16 回合內你無法湊齊軍需（15分），我的箭不會留情。" },
         15: { chapter: "🌲 第三章：巨石要塞的邊境商戰（第 11 - 15 關）", title: "第 15 關：聖女的奇蹟信譽", bg: "戰火逼近要塞，人心惶惶。聖女貞德在前線振臂高呼，她要求你展現大商賈的氣魄——不消耗任何一枚實體籌碼，光靠你之前累積的產業信用買下卡牌。", condition: "達到15分，且至少3次買卡是「完全沒消耗籌碼」", name: "聖女 貞德", text: "戰士們需要實體寶石當作重鑄武器的原料！商人，證明你的名譽吧，光靠你名下的實業減免，免費收購 3 張卡片給我看！" },
@@ -671,8 +679,6 @@ window.storyModule = {
         const layer = document.getElementById("story-layer");
         layer.style.opacity = 1;
         layer.style.display = "flex";
-        // ── 🎯 核心修正：開啟劇情展演時，強制開啟點擊鎖，使對話框與點擊可正常被響應 ──
-        layer.classList.add('story-active');
 
         const stageData = this.gameStages[stageId];
         document.getElementById("story-chapter-title").innerText = stageData.chapter + " - " + stageData.title;
@@ -736,10 +742,6 @@ window.storyModule = {
     },
 
     endStory() {
-        // ── 🎯 核心修正：點擊關閉完結時，立即解除外部 story-active 類名，徹底恢復底層 Token 與 UI 的原始點擊流 ──
-        const layer = document.getElementById("story-layer");
-        if (layer) layer.classList.remove('story-active');
-
         gsap.to("#story-layer", { 
             opacity: 0, 
             duration: 0.5, 
@@ -844,7 +846,7 @@ window.closeTalentPoolModal = () => {
 window.openAchievementHistory = () => SingleMode.openAchievementHistory();
 window.closeAchievementHistory = () => SingleMode.closeAchievementHistory();
 window.saveCurrentProgress = () => SingleMode.saveCurrentProgress();
-window.startFloatingTutorial = () => { document.getElementById('tutorial-start-modal').classList.add('show'); hideWelcomeModal(); document.getElementById('floating-tutorial-widget').style.display = 'block'; showStepData(0); };
+window.startFloatingTutorial = () => { document.getElementById('tutorial-start-modal').classList.remove('show'); hideWelcomeModal(); document.getElementById('floating-tutorial-widget').style.display = 'block'; showStepData(0); };
 window.hideWelcomeModal = () => { document.getElementById('welcome-back-modal').style.display = 'none'; if (!CoreState.get().settings.isMusicMuted && audioEl) audioEl.play().catch(() => {}); };
 
 function showStepData(stepIdx) {
