@@ -270,50 +270,72 @@ window.render = function() {
   const isStoryMode = fullState.mode === 'storyMode';
   const isPlayerTurn = fullState.currentTurnOwner === 'player';
 
-  document.getElementById('single-achievement-zone').style.display = isSingleMode ? 'flex' : 'none';
-  document.getElementById('story-meta-zone').style.display = isStoryMode ? 'flex' : 'none';
-  document.getElementById('story-top-save-btn').style.display = isStoryMode ? 'inline-block' : 'none';
   document.getElementById('ai-dashboard-box').style.display = isvsAI ? 'block' : 'none';
+  
+  // 完全使用動態橫幅對接，防範 null 報錯
+  const bannerZone = document.getElementById('dynamic-banner-zone');
+  const bannerBadge = document.getElementById('dynamic-banner-badge');
+  const bannerText = document.getElementById('dynamic-banner-text');
 
-  document.getElementById('btn-music-state').textContent = fullState.settings.isMusicMuted ? "🔇 音樂: 靜音" : "🎵 音樂: 開啟";
-  document.getElementById('btn-sfx-state').textContent = fullState.settings.isSfxMuted ? "🔇 音效: 靜音" : "🔊 音效: 開啟";
+  if (bannerZone && bannerBadge && bannerText) {
+    if (isvsAI) {
+      bannerZone.style.display = 'none';
+    } else {
+      bannerZone.style.display = 'flex';
+      
+      if (isSingleMode) {
+        bannerBadge.textContent = "榮譽成就";
+        bannerBadge.style.backgroundColor = 'rgba(230, 126, 34, 0.2)';
+        bannerBadge.style.borderColor = '#e67e22';
+        bannerZone.style.cursor = 'pointer';
+        
+        const archive = localStorage.getItem('splendor_achievements_v1');
+        let unlCount = 0;
+        if (archive) { try { unlCount = Object.keys(JSON.parse(archive)).length; } catch(e){} }
+        bannerText.innerHTML = `🏆 當前已斬獲 <span style="color:#ffcc00; font-weight:800;">${unlCount} / 30</span> 項皇家勳章！<span style="color:var(--text-muted); font-size:0.55rem; margin-left:6px;">[ 💡 點此可開啟榮譽堂查看完整清單 ]</span>`;
+        
+      } else if (isStoryMode) {
+        const currentLvl = fullState.storyProgress?.currentLevel || 1;
+        const mission = window.STORY_MISSIONS ? window.STORY_MISSIONS[currentLvl - 1] : null;
+        
+        bannerZone.style.cursor = 'pointer';
+        if (mission) {
+          bannerBadge.textContent = `第 ${currentLvl} 關 任務`;
+          bannerBadge.style.backgroundColor = 'rgba(212, 175, 55, 0.2)';
+          bannerBadge.style.borderColor = '#d4af37';
+          
+          let conditionText = mission.winCondition.targetScore ? `威望達到 ${mission.winCondition.targetScore} 分` : '特定條件';
+          if (mission.id === 2) conditionText = "達到15分，且紅寶石限制少於8顆";
+          if (mission.id === 3) conditionText = "達到15分，且保留並買下卡片達3次";
+          if (mission.id === 4) conditionText = "達到15分，且整局禁止使用黃金籌碼";
+          if (mission.id === 5) conditionText = "達到15分，且通關時5色卡片數量皆 >= 2張";
+          if (mission.id === 7) conditionText = "達到15分，且任何回合結束時背包籌碼不超過6顆";
+          if (mission.id === 8) conditionText = "達到15分，且整局禁止購買任何Lv1發展卡";
+          if (mission.id === 9) conditionText = "達到15分，且最終名下只能有黑與白卡";
+          if (mission.id === 10) conditionText = "達到15分，且通關時手上持有至少4枚黃金籌碼";
+          if (mission.id === 13) conditionText = "最終分數必須「剛好等於 15 分」，超分算輸";
+          if (mission.id === 15) conditionText = "達到15分，且至少3次買卡是「完全沒消耗籌碼」";
+          if (mission.id === 16) conditionText = "不限分數，率先獲得 3 位貴族拜訪即可通關";
+          if (mission.id === 17) conditionText = "通關那一回合，必須同時獲得卡片分與貴族分";
+          if (mission.id === 18) conditionText = "擊敗侵略型 AI，且整局玩家獲得的貴族分必須為 0";
+          if (mission.id === 19) conditionText = "達20分，移除Lv1卡，且有名下至少3張>=4分的卡";
+          if (mission.id === 20) conditionText = "達到15分，且系統每過 5 個回合隨機扣2枚籌碼";
+          if (mission.id === 21) conditionText = "達15分，且銀行普通籌碼初始庫存全為 0";
+          if (mission.id === 22) conditionText = "擊敗高級AI（開局AI自帶8分與4張隨機Lv2卡）";
+          if (mission.id === 23) conditionText = "威望達20分，且通關時5種顏色永久減免皆 >= 3";
+          if (mission.id === 25) conditionText = "威望達到 25 分，且成功吸引至少 2 位貴族進駐";
 
-  if (isSingleMode) {
-    const archive = localStorage.getItem('splendor_achievements_v1');
-    let unlCount = 0;
-    if (archive) { try { unlCount = Object.keys(JSON.parse(archive)).length; } catch(e){} }
-    document.getElementById('single-ach-text').innerHTML = `🏆 當前已斬獲 <span style="color:#ffcc00; font-weight:800;">${unlCount} / 30</span> 項皇家勳章！ <span style="color:var(--text-muted); font-size:0.55rem; margin-left:6px;">[點擊開啟榮譽堂]</span>`;
-  } else if (isStoryMode) {
-    const currentLvl = fullState.storyProgress?.currentLevel || 1;
-    const mission = window.STORY_MISSIONS ? window.STORY_MISSIONS[currentLvl - 1] : null;
-    if (mission) {
-      let conditionText = mission.winCondition.targetScore ? `威望達到 ${mission.winCondition.targetScore} 分` : '特定條件';
-      if (mission.id === 2) conditionText = "達到15分，且紅寶石限制少於8顆";
-      if (mission.id === 3) conditionText = "達到15分，且保留並買下卡片達3次";
-      if (mission.id === 4) conditionText = "達到15分，且整局禁止使用黃金籌碼";
-      if (mission.id === 5) conditionText = "達到15分，且通關時5色卡片數量皆 >= 2張";
-      if (mission.id === 7) conditionText = "達到15分，且任何回合結束時背包籌碼不超過6顆";
-      if (mission.id === 8) conditionText = "達到15分，且整局禁止購買任何Lv1發展卡";
-      if (mission.id === 9) conditionText = "達到15分，且最終名下只能有黑與白卡";
-      if (mission.id === 10) conditionText = "達到15分，且通關時手上持有至少4枚黃金籌碼";
-      if (mission.id === 13) conditionText = "最終分數必須「剛好等於 15 分」，超分算輸";
-      if (mission.id === 15) conditionText = "達到15分，且至少3次買卡是「完全沒消耗籌碼」";
-      if (mission.id === 16) conditionText = "不限分數，率先獲得 3 位貴族拜訪即可通關";
-      if (mission.id === 17) conditionText = "通關那一回合，必須同時獲得卡片分與貴族分";
-      if (mission.id === 18) conditionText = "擊敗侵略型 AI，且整局玩家獲得的貴族分必須為 0";
-      if (mission.id === 19) conditionText = "達20分，移除Lv1卡，且有名下至少3張>=4分的卡";
-      if (mission.id === 20) conditionText = "達到15分，且系統每過 5 個回合隨機扣2枚籌碼";
-      if (mission.id === 21) conditionText = "達15分，且銀行普通籌碼初始庫存全為 0";
-      if (mission.id === 22) conditionText = "擊敗高級AI（開局AI自帶8分與4張隨機Lv2卡）";
-      if (mission.id === 23) conditionText = "威望達20分，且通關時5種顏色永久減免皆 >= 3";
-      if (mission.id === 25) conditionText = "威望達到 25 分，且成功吸引至少 2 位貴族進駐";
-
-      if (fullState.storyTracker && mission.id === 3) {
-        conditionText += ` <span style="color:#2ecc71;">(當前進度: ${fullState.storyTracker.reservedBuys}/3)</span>`;
-      } else if (fullState.storyTracker && mission.id === 15) {
-        conditionText += ` <span style="color:#2ecc71;">(當前進度: ${fullState.storyTracker.freeBuys}/3)</span>`;
+          if (fullState.storyTracker && mission.id === 3) {
+            conditionText += ` <span style="color:#2ecc71;">(當前進度: ${fullState.storyTracker.reservedBuys}/3)</span>`;
+          } else if (fullState.storyTracker && mission.id === 15) {
+            conditionText += ` <span style="color:#2ecc71;">(當前進度: ${fullState.storyTracker.freeBuys}/3)</span>`;
+          }
+          
+          bannerText.innerHTML = `<span style="color:#ffe099; font-weight:800;">⚔️【${mission.name}】</span> 目標：${conditionText} <span style="color:#ffcc00; font-size:0.55rem; margin-left:6px;">[ 🗺️ 點此可自選或重挑關卡 ]</span>`;
+        } else {
+          bannerText.textContent = "📜 故事戰役檔案加載中...";
+        }
       }
-      document.getElementById('story-mission-text').innerHTML = `<span style="color:#ffe099; font-weight:800;">⚔️【第 ${currentLvl} 關 ${mission.name}】</span> 目標：${conditionText}`;
     }
   }
 
@@ -336,20 +358,22 @@ window.render = function() {
   const isAst6Active = (fullState.settings.selectedAssistant === 'ast6');
   const currentBagCap = isAst6Active ? 12 : 10;
   const capTxtEl = document.getElementById('cap-txt');
-  capTxtEl.textContent = `背包筹碼: ${totalTokens} / ${currentBagCap}`;
+  capTxtEl.textContent = `背包: ${totalTokens} / ${currentBagCap}`;
   
   capTxtEl.classList.remove('bag-warning-yellow', 'bag-danger-red');
-  if (totalTokens === currentBagCap) {
+  if (totalTokens === 10) {
     capTxtEl.classList.add('bag-danger-red');
-  } else if (totalTokens > currentBagCap - 3) {
+  } else if (totalTokens > 7) {
     capTxtEl.classList.add('bag-warning-yellow');
   }
 
-  // 內部發展卡卡牌大小全面微縮四分之一 (scale 由 0.96 調降至 0.75)
+  // ── 🎯 任務優化：卡牌矩陣內部卡牌縮小四分之一 (在樣式上 scale 為 0.75) ──
   ['lv1', 'lv2', 'lv3'].forEach(level => {
     document.getElementById(`deck-${level}-txt`).textContent = `剩餘: ${fullState.decks[level].length}`;
+    
     document.getElementById(`row-${level}`).innerHTML = fullState.board[level].map((card, idx) => {
       if (!card) return `<div class="card empty">已全數售罄</div>`;
+      
       let costHtml = '';
       for (let k in card.cost) {
         costHtml += `
@@ -357,11 +381,12 @@ window.render = function() {
             <span class="cost-dot-circle ${GEM_CLASSES[k]}"></span><span>${card.cost[k]}</span>
           </div>`;
       }
+      
       const afford = GameEngine.canAffordCard(player.bonus, player.tokens, card.cost);
       let imgUrl = CUSTOM_CARD_IMAGES[card.provides][parseInt(card.id) % CUSTOM_CARD_IMAGES[card.provides].length];
 
       return `
-        <div class="card ${!lastRenderedCardIds.has(card.id) ? 'animate-deal' : ''}" id="dom-card-${card.id}" data-affordable="${afford.affordable}" style="background-image: url('${imgUrl}'); transform: scale(0.75); margin: -10px -6px;">
+        <div class="card ${!lastRenderedCardIds.has(card.id) ? 'animate-deal' : ''}" id="dom-card-${card.id}" data-affordable="${afford.affordable}" style="background-image: url('${imgUrl}'); transform: scale(0.75); transform-origin: top left;">
           <div class="card-content-wrapper">
             <div class="card-top"><span class="card-pts">${card.points > 0 ? card.points : ''}</span><div class="card-gem-icon ${GEM_CLASSES[card.provides]}"></div></div>
             <div>
@@ -377,26 +402,31 @@ window.render = function() {
     }).join('');
   });
 
-  // 放大保留區比例 (scale 設為 1.0)
+  // 保留牌放置區放大至 1.0 完美呈現完整卡牌
   const resLayerReserved = document.getElementById('reserved-layer');
   if (player.reserved.length === 0) {
-    resLayerReserved.innerHTML = `<div class="card empty" style="grid-column: span 4; font-size:0.6rem; height: 75px;">🔒 暫無契約手牌</div>`;
+    resLayerReserved.innerHTML = `<div class="card empty" style="grid-column: span 4; height:100%;">🔒 暫無契約手牌</div>`;
   } else {
     resLayerReserved.innerHTML = [0, 1, 2, 3].map(i => {
       const card = player.reserved[i];
       if (!card) return i < (fullState.settings.selectedAssistant === 'ast7' ? 4 : 3) ? `<div class="card empty">空位</div>` : '';
       const afford = GameEngine.canAffordCard(player.bonus, player.tokens, card.cost);
       let imgUrl = CUSTOM_CARD_IMAGES[card.provides][parseInt(card.id) % CUSTOM_CARD_IMAGES[card.provides].length];
+      
       let resCostHtml = '';
       for (let k in card.cost) {
-        resCostHtml += `<div class="cost-dot"><span class="cost-dot-circle ${GEM_CLASSES[k]}"></span><span>${card.cost[k]}</span></div>`;
+        resCostHtml += `
+          <div class="cost-dot ${(player.bonus[k] || 0) >= card.cost[k] ? 'free' : ''}">
+            <span class="cost-dot-circle ${GEM_CLASSES[k]}"></span><span>${card.cost[k]}</span>
+          </div>`;
       }
+
       return `
-        <div class="card" id="dom-card-${card.id}" style="background-image: url('${imgUrl}'); transform: scale(1.0); height: 75px;">
-          <div class="card-content-wrapper" style="padding: 3px;">
-            <div class="card-top"><span class="card-pts" style="font-size:0.8rem;">${card.points > 0 ? card.points : ''}</span><div class="card-gem-icon ${GEM_CLASSES[card.provides]}" style="width:11px; height:11px;"></div></div>
-            <div class="card-costs" style="gap:1px;">${resCostHtml}</div>
-            <div class="card-actions"><button class="btn-card" style="font-size:0.48rem; padding:1px 0;" ${!isPlayerTurn || !afford.affordable ? 'disabled' : ''} onclick="buyReservedCard(${i})">收購</button></div>
+        <div class="card" id="dom-card-${card.id}" style="background-image: url('${imgUrl}'); transform: scale(1.0);">
+          <div class="card-content-wrapper">
+            <div class="card-top"><span class="card-pts">${card.points > 0 ? card.points : ''}</span><div class="card-gem-icon ${GEM_CLASSES[card.provides]}"></div></div>
+            <div class="card-costs">${resCostHtml}</div>
+            <div class="card-actions"><button class="btn-card" ${!isPlayerTurn || !afford.affordable ? 'disabled' : ''} onclick="buyReservedCard(${i})">收購</button></div>
           </div>
         </div>
       `;
@@ -405,7 +435,6 @@ window.render = function() {
 
   ['lv1', 'lv2', 'lv3'].forEach(l => fullState.board[l]?.forEach(c => { if(c) lastRenderedCardIds.add(c.id); }));
 
-  // 貴族卡牌與到訪進駐貴族微縮優化
   const noblesLayer = document.getElementById('nobles-layer');
   if (noblesLayer) {
     noblesLayer.innerHTML = fullState.nobles
@@ -416,11 +445,14 @@ window.render = function() {
           reqHtml += `<div class="cost-dot"><span class="cost-dot-circle ${GEM_CLASSES[k]}"></span><span>${n.req[k]}</span></div>`;
         }
         return `
-          <div class="noble-card" style="height: 65px; min-width: 65px;">
+          <div class="noble-card">
             <img src="${n.img}" alt="${n.name}" class="noble-img">
-            <div class="noble-overlay" style="padding: 3px;">
-              <div class="card-top"><span class="noble-pts" style="font-size:0.75rem;">${n.points}</span></div>
-              <div class="noble-reqs" style="flex-direction: row; gap:2px; font-size:0.45rem;">${reqHtml}</div>
+            <div class="noble-overlay">
+              <div class="card-top">
+                <span class="noble-pts">${n.points}</span>
+                <span class="noble-name">${n.name}</span>
+              </div>
+              <div class="noble-reqs">${reqHtml}</div>
             </div>
           </div>
         `;
@@ -431,11 +463,16 @@ window.render = function() {
   if (earnedNoblesLayer) {
     const earned = fullState.nobles.filter(n => n.completed);
     earnedNoblesLayer.innerHTML = earned.length === 0
-      ? `<p style="font-size:0.5rem; color:var(--text-muted); padding: 2px 0; text-align:center;">無</p>`
-      : earned.map(n => `<div class="earned-noble-mini" style="padding:1px 3px; gap:2px;"><img src="${n.img}" style="width:13px; height:13px;"><span>${n.name.split(' ')[1] || n.name}</span></div>`).join('');
+      ? `<p style="font-size:0.52rem; color:var(--text-muted); padding: 2px 0; text-align:center;">無</p>`
+      : earned.map(n => `
+          <div class="earned-noble-mini" style="padding:1px 3px;">
+            <img src="${n.img}" style="width:14px; height:14px;">
+            <span style="font-size:0.52rem;">${n.name}</span>
+          </div>
+        `).join('');
   }
 
-  // 5種顏色寶石與黃金在直排面板中垂直渲染
+  // ── 🎯 任務優化：5種顏色寶石與1個黃金統一整合直排渲染區 ──
   const allBankColors = ['w', 'u', 'g', 'r', 'k', 'o'];
   const unifiedBankLayer = document.getElementById('unified-bank-selectors');
   if (unifiedBankLayer) {
@@ -443,20 +480,22 @@ window.render = function() {
       const isGold = (k === 'o');
       const alreadySelected = isGold ? false : fullState.selectedDiff?.includes(k) || fullState.selectedSame === k;
       const inBank = fullState.bank[k] > 0;
+      
       const clickAttr = isGold ? '' : `onclick="handleBankGemClick('${k}')"`;
       const disabledStyle = (!isGold && !inBank) ? 'style="opacity:0.12; cursor:not-allowed;"' : '';
 
       return `
-        <div class="token-container-cell" style="flex-direction: row; justify-content: space-between; width: 100%; padding: 1px 4px; background: rgba(0,0,0,0.15); border-radius: 4px;">
-          <button class="token-btn ${GEM_BTN_CLASSES[k]} ${alreadySelected ? 'selected' : ''}" style="width:20px; height:20px; background-size:16px 16px; margin:0;"
+        <div class="token-container-cell" style="flex-direction: row; justify-content: space-between; width: 100%; padding: 2px 6px; background: rgba(0,0,0,0.2); border-radius: 4px;">
+          <button class="token-btn ${GEM_BTN_CLASSES[k]} ${alreadySelected ? 'selected' : ''}" style="width:22px; height:22px; background-size:16px 16px; margin:0;"
             ${isGold ? 'disabled' : ''} ${disabledStyle} ${clickAttr}>
           </button>
-          <span class="token-count-label" style="font-size:0.58rem; color:#ffe099; text-align: right; line-height: 20px;">${isGold ? '金' : '庫'}:${fullState.bank[k]}</span>
+          <span class="token-count-label" style="font-size:0.6rem; color:#ffe099; text-align: right; line-height: 22px;">${isGold ? '金' : '庫'}:${fullState.bank[k]}</span>
         </div>
       `;
     }).join('');
   }
 
+  // 決策雙按鈕連動邏輯核心
   let selectedCount = 0;
   if (fullState.selectedDiff && fullState.selectedDiff.length > 0) {
     selectedCount = fullState.selectedDiff.length;
@@ -478,6 +517,9 @@ window.render = function() {
     btnSame.disabled = true;
   }
 
+  // 同步調遣助理頭像渲染
+  import('./core/assistantData.js').then(m => m.AssistantManager.renderActiveAssistantUI());
+
   requestAnimationFrame(() => setupIdleCardAnimations());
 }
 
@@ -486,6 +528,7 @@ window.handleBankGemClick = function(color) {
   const state = CoreState.get();
   document.getElementById('error-msg').textContent = '';
   if (state.selectedSame && state.selectedSame !== color) { state.selectedSame = null; }
+  
   const diffIdx = state.selectedDiff.indexOf(color);
   if (diffIdx > -1) {
     state.selectedDiff.splice(diffIdx, 1);
@@ -505,71 +548,130 @@ window.handleBankGemClick = function(color) {
 
 function setupIdleCardAnimations() {
   const currentCardIds = new Set();
+  
   document.querySelectorAll('.board-matrix .card[data-affordable="true"]').forEach((el, i) => {
-    const cardId = el.id || ''; if (!cardId) return;
+    const cardId = el.id || '';
+    if (!cardId) return;
+    
     const pureId = cardId.replace('dom-card-', '');
     if (activeFlyingCardIds.has(pureId)) return; 
+    
     currentCardIds.add(cardId);
+    
     if (window._idleTweensMap.has(cardId)) {
       const existingTween = window._idleTweensMap.get(cardId);
-      if (existingTween && !existingTween.killed) return; 
+      if (existingTween && !existingTween.killed) {
+        return; 
+      }
       window._idleTweensMap.delete(cardId); 
     }
+    
     gsap.killTweensOf(el);
     gsap.set(el, { y: 0, rotation: 0 });
-    const tween = gsap.to(el, { y: -4, rotation: 0.5, duration: 1.5 + (i % 4) * 0.15, repeat: -1, yoyo: true, ease: "sine.inOut", delay: (i % 4) * 0.2 });
+    
+    const tween = gsap.to(el, {
+      y: -6,
+      rotation: 0.8,
+      duration: 1.6 + (i % 4) * 0.18,
+      repeat: -1,
+      yoyo: true,
+      ease: "sine.inOut",
+      delay: (i % 4) * 0.3
+    });
     window._idleTweensMap.set(cardId, tween);
   });
+
   for (const [id, tween] of window._idleTweensMap.entries()) {
-    if (!currentCardIds.has(id)) { tween.kill(); window._idleTweensMap.delete(id); const el = document.getElementById(id); if (el) gsap.set(el, { y: 0, rotation: 0 }); }
+    if (!currentCardIds.has(id)) {
+      tween.kill();
+      window._idleTweensMap.delete(id);
+      
+      const el = document.getElementById(id);
+      if (el) gsap.set(el, { y: 0, rotation: 0 });
+    }
   }
 }
 
-window.handleMusicToggle = () => ActionDispatcher.dispatch('TOGGLE_MUSIC');
-window.handleSfxToggle = () => ActionDispatcher.dispatch('TOGGLE_SFX');
+window.handleBannerZoneClick = function() {
+  if (!CoreState) return;
+  playUniformSfx();
+  const m = CoreState.get().mode;
+  if (m === 'singlePlayer') {
+    window.openAchievementHistory();
+  } else if (m === 'storyMode') {
+    if (window.StoryMode) {
+      window.StoryMode.openStoryMapModal();
+    }
+  }
+};
 
 window.handleDoDiffClick = function() {
-  const state = CoreState.get(); if (!state.selectedDiff || state.selectedDiff.length === 0) return;
-  playActionGemSfx(); const colors = [...state.selectedDiff];
-  state.selectedDiff = []; state.selectedSame = null;
+  const state = CoreState.get();
+  if (state.selectedDiff.length === 0) return;
+  playActionGemSfx();
+  const colors = [...state.selectedDiff];
+  state.selectedDiff = [];      
+  state.selectedSame = null;
   ActionDispatcher.dispatch('TAKE_DIFF', { colors });
 };
 
 window.handleDoSameClick = function() {
-  const state = CoreState.get(); if (!state.selectedSame) return;
-  playActionGemSfx(); const color = state.selectedSame;
-  state.selectedSame = null; state.selectedDiff = [];
+  const state = CoreState.get();
+  if (!state.selectedSame) return;
+  playActionGemSfx();
+  const color = state.selectedSame;
+  state.selectedSame = null;    
+  state.selectedDiff = [];
   ActionDispatcher.dispatch('TAKE_SAME', { color });
 };
 
 window.buyBoardCard = function(level, idx) {
-  const card = CoreState.get().board[level][idx]; if (!card) return;
-  const cardId = String(card.id); if (activeFlyingCardIds.has(cardId)) return;
+  const card = CoreState.get().board[level][idx];
+  if (!card) return;
+
+  const cardId = String(card.id);
+  if (activeFlyingCardIds.has(cardId)) return;
+
   animateCardFlightToGoldVault(cardId, card.provides, () => {
-    if (sfxBuyEl && !CoreState.get().settings.isSfxMuted) { sfxBuyEl.currentTime = 0; sfxBuyEl.play().catch(() => {}); }
+    if (sfxBuyEl && !CoreState.get().settings.isSfxMuted) {
+      sfxBuyEl.currentTime = 0; sfxBuyEl.play().catch(() => {});
+    }
     ActionDispatcher.dispatch('BUY_BOARD', { level, idx });
   });
 };
 
 window.buyReservedCard = function(idx) {
-  const card = CoreState.get().player.reserved[idx]; if (!card) return;
-  const cardId = String(card.id); if (activeFlyingCardIds.has(cardId)) return;
+  const card = CoreState.get().player.reserved[idx];
+  if (!card) return;
+
+  const cardId = String(card.id);
+  if (activeFlyingCardIds.has(cardId)) return;
+
   animateCardFlightToGoldVault(cardId, card.provides, () => {
-    if (sfxBuyEl && !CoreState.get().settings.isSfxMuted) { sfxBuyEl.currentTime = 0; sfxBuyEl.play().catch(() => {}); }
+    if (sfxBuyEl && !CoreState.get().settings.isSfxMuted) {
+      sfxBuyEl.currentTime = 0; sfxBuyEl.play().catch(() => {});
+    }
     ActionDispatcher.dispatch('BUY_RESERVED', { idx });
   });
 };
 
 window.reserveBoardCard = function(level, idx) {
-  if (sfxReserveEl && !CoreState.get().settings.isSfxMuted) { sfxReserveEl.currentTime = 0; sfxReserveEl.play().catch(() => {}); }
+  if (sfxReserveEl && !CoreState.get().settings.isSfxMuted) {
+    sfxReserveEl.currentTime = 0; sfxReserveEl.play().catch(() => {});
+  }
   ActionDispatcher.dispatch('RESERVE_CARD', { level, idx });
 };
 
 window.openGameOptionsModal = () => {
-  const s = CoreState.get().settings; const m = CoreState.get().mode;
+  const s = CoreState.get().settings;
+  const m = CoreState.get().mode;
+  document.getElementById('menu-toggle-music').textContent = s.isMusicMuted ? "🔇 背景音樂：靜音" : "🎵 背景音樂：開啟";
+  document.getElementById('menu-toggle-sfx').textContent = s.isSfxMuted ? "🔇 遊戲音效：靜音" : "🔊 遊戲音效：開啟";
+  
   document.getElementById('mode-btn-single').classList.toggle('active', m === 'singlePlayer');
   document.getElementById('mode-btn-ai').classList.toggle('active', m === 'vsAI');
   document.getElementById('mode-btn-story').classList.toggle('active', m === 'storyMode');
+  
   document.getElementById('game-options-modal').classList.add('show');
 };
 
@@ -578,10 +680,15 @@ window.closeWinModal = () => { document.getElementById('win-modal').classList.re
 window.restartGame = () => { document.getElementById('win-modal').classList.remove('show'); ActionDispatcher.dispatch('INIT_GAME'); };
 
 window.openTalentPoolModal = () => { 
-  import('./core/assistantData.js').then(m => { m.AssistantManager.renderTalentPoolModalUI(); document.getElementById('talent-pool-modal').classList.add('show'); });
+  import('./core/assistantData.js').then(m => {
+    m.AssistantManager.renderTalentPoolModalUI(); 
+    document.getElementById('talent-pool-modal').classList.add('show'); 
+  });
 };
+
 window.closeTalentPoolModal = () => { 
-  document.getElementById('talent-pool-modal').classList.remove('show'); import('./core/assistantData.js').then(m => m.AssistantManager.renderActiveAssistantUI()); 
+  document.getElementById('talent-pool-modal').classList.remove('show'); 
+  import('./core/assistantData.js').then(m => m.AssistantManager.renderActiveAssistantUI()); 
 };
 
 window.openAchievementHistory = () => SingleMode.openAchievementHistory();
@@ -599,7 +706,7 @@ function showStepData(stepIdx) {
     document.getElementById('floating-tutorial-widget-header').textContent = step.title;
     document.getElementById('floating-tutorial-text').textContent = step.text;
   }
-  document.getElementById('floating-tutorial-dots').innerHTML = TUTORIAL_STEPS_DATA.map((_, i) => `<div class="t-dot ${i === stepIdx ? 'active' : ''}"></div>`).join('');
+  document.getElementById('floating-tutorial-dots').innerHTML = TUTORIAL_STEPS_DATA.map((_, i) => `<div class="t-dot ${i === stepIdx ? 'active' : ''}\"></div>`).join('');
   document.getElementById('floating-tutorial-next-btn').textContent = stepIdx === TUTORIAL_STEPS_DATA.length - 1 ? "進入大會堂" : "下一步";
 }
 
@@ -612,7 +719,7 @@ window.nextFloatingStep = () => {
   }
 };
 
-// ── 🎯 按照新現有音效與音樂對應框架載入添加代碼 ──
+// ── 🎯 按照新音效對應框架載入添加代碼 ──
 window.addEventListener('DOMContentLoaded', async () => {
   setDynamicVh();
   
@@ -647,8 +754,8 @@ window.addEventListener('resize', setDynamicVh);
 
 window.storyModule = {
     gameStages: {
-        1: { chapter: "👑 第一章", title: "第 1 關", bg: "微光村礦床", condition: "15分", name: "傑洛米", text: "合格學徒" },
-        2: { chapter: "👑 第一章", title: "第 2 關", bg: "鎮公所發愁", condition: "少於8顆紅寶石", name: "薇多莉亞", text: "課重稅" }
+        1: { chapter: "👑 第一章：微光村的石匠（第 1 - 5 關）", title: "第 1 關：初入礦脈", bg: "微光村的後山藏著廢棄的紅岩礦床。老內政官傑洛米提著油燈攔住你，不屑地看著你手中的劣質鑿子，要你證明基本的經商手段。", condition: "25回合內威望達到15分（無AI）", name: "內政官 傑洛米", text: "年輕人，這片紅岩礦不歡迎空有熱血的傻瓜。在 25 回合內拿到 15 分，我就承認你是個合格的學徒。" },
+        2: { chapter: "👑 第一章：微光村的石匠（第 1 - 5 關）", title: "第 2 關：稅率與翡翠", bg: "你帶著紅寶石敲開了鎮公所的大門。刻薄的財政卿薇多莉亞正為當季的綠寶石稅收發愁，她決定用高額的稅率刁難你這個外來者。", condition: "達到15分，且紅寶石籌碼拿取/使用少於8顆", name: "財政卿 薇多莉亞", text: "噢？聽說傑洛米看好你？但我的帳本只認實力。這局你的紅寶石籌碼被課了重稅，少用點紅寶石，拿到 15 分給我看！" }
     },
     currentStageId: 1, dialogueStep: 0, isTyping: false, currentTween: null, textObj: { charCount: 0 }, onStoryCompleteCallback: null,
     loadStage(stageId, callback) {
