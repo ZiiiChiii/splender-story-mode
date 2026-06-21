@@ -270,13 +270,11 @@ window.render = function() {
   const isStoryMode = fullState.mode === 'storyMode';
   const isPlayerTurn = fullState.currentTurnOwner === 'player';
 
-  // ── 🎯 任務優化：動態隱顯三大模式獨立版面區塊 ──
   document.getElementById('single-achievement-zone').style.display = isSingleMode ? 'flex' : 'none';
   document.getElementById('story-meta-zone').style.display = isStoryMode ? 'flex' : 'none';
   document.getElementById('story-top-save-btn').style.display = isStoryMode ? 'inline-block' : 'none';
   document.getElementById('ai-dashboard-box').style.display = isvsAI ? 'block' : 'none';
 
-  // 設置按鈕的開關狀態文字顯示
   document.getElementById('btn-music-state').textContent = fullState.settings.isMusicMuted ? "🔇 音樂: 靜音" : "🎵 音樂: 開啟";
   document.getElementById('btn-sfx-state').textContent = fullState.settings.isSfxMuted ? "🔇 音效: 靜音" : "🔊 音效: 開啟";
 
@@ -347,7 +345,7 @@ window.render = function() {
     capTxtEl.classList.add('bag-warning-yellow');
   }
 
-  // 渲染發展卡矩陣 (微縮優化與懸浮觸發)
+  // ── 🎯 任務修正：內部發展卡卡牌大小全面微縮四分之一 (scale 由 0.96 調降至 0.75) ──
   ['lv1', 'lv2', 'lv3'].forEach(level => {
     document.getElementById(`deck-${level}-txt`).textContent = `剩餘: ${fullState.decks[level].length}`;
     document.getElementById(`row-${level}`).innerHTML = fullState.board[level].map((card, idx) => {
@@ -363,7 +361,7 @@ window.render = function() {
       let imgUrl = CUSTOM_CARD_IMAGES[card.provides][parseInt(card.id) % CUSTOM_CARD_IMAGES[card.provides].length];
 
       return `
-        <div class="card ${!lastRenderedCardIds.has(card.id) ? 'animate-deal' : ''}" id="dom-card-${card.id}" data-affordable="${afford.affordable}" style="background-image: url('${imgUrl}'); transform: scale(0.96);">
+        <div class="card ${!lastRenderedCardIds.has(card.id) ? 'animate-deal' : ''}" id="dom-card-${card.id}" data-affordable="${afford.affordable}" style="background-image: url('${imgUrl}'); transform: scale(0.75); margin: -10px -6px;">
           <div class="card-content-wrapper">
             <div class="card-top"><span class="card-pts">${card.points > 0 ? card.points : ''}</span><div class="card-gem-icon ${GEM_CLASSES[card.provides]}"></div></div>
             <div>
@@ -379,9 +377,10 @@ window.render = function() {
     }).join('');
   });
 
+  // ── 🎯 任務修正：放大保留契約牌手牌區比例，使其可以100%豐滿呈現大小 (scale 由 0.92 修正為 1.0) ──
   const resLayerReserved = document.getElementById('reserved-layer');
   if (player.reserved.length === 0) {
-    resLayerReserved.innerHTML = `<div class="card empty" style="grid-column: span 4; font-size:0.6rem;">🔒 暫無契約手牌</div>`;
+    resLayerReserved.innerHTML = `<div class="card empty" style="grid-column: span 4; font-size:0.6rem; height: 75px;">🔒 暫無契約手牌</div>`;
   } else {
     resLayerReserved.innerHTML = [0, 1, 2, 3].map(i => {
       const card = player.reserved[i];
@@ -393,11 +392,11 @@ window.render = function() {
         resCostHtml += `<div class="cost-dot"><span class="cost-dot-circle ${GEM_CLASSES[k]}"></span><span>${card.cost[k]}</span></div>`;
       }
       return `
-        <div class="card" id="dom-card-${card.id}" style="background-image: url('${imgUrl}'); transform: scale(0.92);">
-          <div class="card-content-wrapper">
-            <div class="card-top"><span class="card-pts">${card.points > 0 ? card.points : ''}</span><div class="card-gem-icon ${GEM_CLASSES[card.provides]}"></div></div>
-            <div class="card-costs">${resCostHtml}</div>
-            <div class="card-actions"><button class="btn-card" ${!isPlayerTurn || !afford.affordable ? 'disabled' : ''} onclick="buyReservedCard(${i})">收購</button></div>
+        <div class="card" id="dom-card-${card.id}" style="background-image: url('${imgUrl}'); transform: scale(1.0); height: 75px;">
+          <div class="card-content-wrapper" style="padding: 3px;">
+            <div class="card-top"><span class="card-pts" style="font-size:0.8rem;">${card.points > 0 ? card.points : ''}</span><div class="card-gem-icon ${GEM_CLASSES[card.provides]}" style="width:11px; height:11px;"></div></div>
+            <div class="card-costs" style="gap:1px;">${resCostHtml}</div>
+            <div class="card-actions"><button class="btn-card" style="font-size:0.48rem; padding:1px 0;" ${!isPlayerTurn || !afford.affordable ? 'disabled' : ''} onclick="buyReservedCard(${i})">收購</button></div>
           </div>
         </div>
       `;
@@ -406,7 +405,7 @@ window.render = function() {
 
   ['lv1', 'lv2', 'lv3'].forEach(l => fullState.board[l]?.forEach(c => { if(c) lastRenderedCardIds.add(c.id); }));
 
-  // 貴族卡牌渲染
+  // 貴族卡牌與到訪進駐貴族微縮優化
   const noblesLayer = document.getElementById('nobles-layer');
   if (noblesLayer) {
     noblesLayer.innerHTML = fullState.nobles
@@ -417,26 +416,27 @@ window.render = function() {
           reqHtml += `<div class="cost-dot"><span class="cost-dot-circle ${GEM_CLASSES[k]}"></span><span>${n.req[k]}</span></div>`;
         }
         return `
-          <div class="noble-card" style="height: 80px; min-width: 80px;">
+          <div class="noble-card" style="height: 65px; min-width: 65px;">
             <img src="${n.img}" alt="${n.name}" class="noble-img">
-            <div class="noble-overlay">
-              <div class="card-top"><span class="noble-pts">${n.points}</span></div>
-              <div class="noble-reqs" style="flex-direction: row; gap:4px; font-size:0.5rem;">${reqHtml}</div>
+            <div class="noble-overlay" style="padding: 3px;">
+              <div class="card-top"><span class="noble-pts" style="font-size:0.75rem;">${n.points}</span></div>
+              <div class="noble-reqs" style="flex-direction: row; gap:2px; font-size:0.45rem;">${reqHtml}</div>
             </div>
           </div>
         `;
       }).join('');
   }
 
+  // ── 🎯 任務修正：到訪進駐貴族隨行頭像卡微縮縮小 ──
   const earnedNoblesLayer = document.getElementById('earned-nobles-layer');
   if (earnedNoblesLayer) {
     const earned = fullState.nobles.filter(n => n.completed);
     earnedNoblesLayer.innerHTML = earned.length === 0
-      ? `<p style="font-size:0.55rem; color:var(--text-muted); padding: 4px 0;">無</p>`
-      : earned.map(n => `<div class="earned-noble-mini"><img src="${n.img}"><span>${n.name}</span></div>`).join('');
+      ? `<p style="font-size:0.5rem; color:var(--text-muted); padding: 2px 0; text-align:center;">無</p>`
+      : earned.map(n => `<div class="earned-noble-mini" style="padding:1px 3px; gap:2px;"><img src="${n.img}" style="width:13px; height:13px;"><span>${n.name.split(' ')[1] || n.name}</span></div>`).join('');
   }
 
-  // ── 🎯 任務優化：5種顏色寶石與1個黃金統一在同一個欄位內渲染 ──
+  // 5種顏色寶石與黃金在直排面板中垂直渲染
   const allBankColors = ['w', 'u', 'g', 'r', 'k', 'o'];
   const unifiedBankLayer = document.getElementById('unified-bank-selectors');
   if (unifiedBankLayer) {
@@ -444,23 +444,20 @@ window.render = function() {
       const isGold = (k === 'o');
       const alreadySelected = isGold ? false : fullState.selectedDiff?.includes(k) || fullState.selectedSame === k;
       const inBank = fullState.bank[k] > 0;
-      
-      // 黃金不可以點擊只用來顯示數字，普通寶石可點擊
       const clickAttr = isGold ? '' : `onclick="handleBankGemClick('${k}')"`;
       const disabledStyle = (!isGold && !inBank) ? 'style="opacity:0.12; cursor:not-allowed;"' : '';
 
       return `
-        <div class="token-container-cell">
-          <button class="token-btn ${GEM_BTN_CLASSES[k]} ${alreadySelected ? 'selected' : ''}"
+        <div class="token-container-cell" style="flex-direction: row; justify-content: space-between; width: 100%; padding: 1px 4px; background: rgba(0,0,0,0.15); border-radius: 4px;">
+          <button class="token-btn ${GEM_BTN_CLASSES[k]} ${alreadySelected ? 'selected' : ''}" style="width:20px; height:20px; background-size:16px 16px; margin:0;"
             ${isGold ? 'disabled' : ''} ${disabledStyle} ${clickAttr}>
           </button>
-          <span class="token-count-label" style="font-size:0.6rem; color:#ffe099;">${isGold ? '黃金' : '庫存'}:${fullState.bank[k]}</span>
+          <span class="token-count-label" style="font-size:0.58rem; color:#ffe099; text-align: right; line-height: 20px;">${isGold ? '金' : '庫'}:${fullState.bank[k]}</span>
         </div>
       `;
     }).join('');
   }
 
-  // ── 🎯 任務優化：動態按鈕決策亮起連動控制組 ──
   let selectedCount = 0;
   if (fullState.selectedDiff && fullState.selectedDiff.length > 0) {
     selectedCount = fullState.selectedDiff.length;
@@ -472,15 +469,12 @@ window.render = function() {
   const btnSame = document.getElementById('btn-do-same');
 
   if (selectedCount === 1) {
-    // 點擊 1 個寶石時，異色拿3個與同色拿2個按鈕都會亮起可觸發
     btnDiff.disabled = !isPlayerTurn;
     btnSame.disabled = !isPlayerTurn;
   } else if (selectedCount === 2 || selectedCount === 3) {
-    // 點擊 2 個或 3 個顏色時，僅亮起「拿取三個不同顏色寶石」
     btnDiff.disabled = !isPlayerTurn;
     btnSame.disabled = true;
   } else {
-    // 未選擇時全部灰化
     btnDiff.disabled = true;
     btnSame.disabled = true;
   }
@@ -488,37 +482,23 @@ window.render = function() {
   requestAnimationFrame(() => setupIdleCardAnimations());
 }
 
-// ── 🎯 任務優化：按鈕連動的智慧點擊分流控制器 ──
 window.handleBankGemClick = function(color) {
   if (CoreState.get().currentTurnOwner !== 'player') return;
   const state = CoreState.get();
   document.getElementById('error-msg').textContent = '';
-
-  // 如果原本是用同色拿取狀態，先清空
-  if (state.selectedSame && state.selectedSame !== color) {
-    state.selectedSame = null;
-  }
-
+  if (state.selectedSame && state.selectedSame !== color) { state.selectedSame = null; }
   const diffIdx = state.selectedDiff.indexOf(color);
   if (diffIdx > -1) {
-    // 重複點選則取消選取
     state.selectedDiff.splice(diffIdx, 1);
     if (document.getElementById('sfx-unselect') && !state.settings.isSfxMuted) document.getElementById('sfx-unselect').play();
   } else {
-    // 如果之前是亮起同色的按鈕，此時改為多選累加
     if (state.selectedDiff.length === 0 && state.selectedSame === color) {
-      state.selectedDiff.push(color);
-      state.selectedSame = null;
+      state.selectedDiff.push(color); state.selectedSame = null;
     } else {
       if (state.selectedDiff.length >= 3) state.selectedDiff.shift();
       state.selectedDiff.push(color);
     }
-    // 同步把選取單色投射到同色備選器，達成1個寶石雙按鈕皆亮起的架構
-    if (state.selectedDiff.length === 1) {
-      state.selectedSame = color;
-    } else {
-      state.selectedSame = null;
-    }
+    if (state.selectedDiff.length === 1) { state.selectedSame = color; } else { state.selectedSame = null; }
     playUniformSfx();
   }
   render();
@@ -538,7 +518,7 @@ function setupIdleCardAnimations() {
     }
     gsap.killTweensOf(el);
     gsap.set(el, { y: 0, rotation: 0 });
-    const tween = gsap.to(el, { y: -5, rotation: 0.6, duration: 1.5 + (i % 4) * 0.15, repeat: -1, yoyo: true, ease: "sine.inOut", delay: (i % 4) * 0.2 });
+    const tween = gsap.to(el, { y: -4, rotation: 0.5, duration: 1.5 + (i % 4) * 0.15, repeat: -1, yoyo: true, ease: "sine.inOut", delay: (i % 4) * 0.2 });
     window._idleTweensMap.set(cardId, tween);
   });
   for (const [id, tween] of window._idleTweensMap.entries()) {
@@ -550,19 +530,15 @@ window.handleMusicToggle = () => ActionDispatcher.dispatch('TOGGLE_MUSIC');
 window.handleSfxToggle = () => ActionDispatcher.dispatch('TOGGLE_SFX');
 
 window.handleDoDiffClick = function() {
-  const state = CoreState.get();
-  if (!state.selectedDiff || state.selectedDiff.length === 0) return;
-  playActionGemSfx();
-  const colors = [...state.selectedDiff];
+  const state = CoreState.get(); if (!state.selectedDiff || state.selectedDiff.length === 0) return;
+  playActionGemSfx(); const colors = [...state.selectedDiff];
   state.selectedDiff = []; state.selectedSame = null;
   ActionDispatcher.dispatch('TAKE_DIFF', { colors });
 };
 
 window.handleDoSameClick = function() {
-  const state = CoreState.get();
-  if (!state.selectedSame) return;
-  playActionGemSfx();
-  const color = state.selectedSame;
+  const state = CoreState.get(); if (!state.selectedSame) return;
+  playActionGemSfx(); const color = state.selectedSame;
   state.selectedSame = null; state.selectedDiff = [];
   ActionDispatcher.dispatch('TAKE_SAME', { color });
 };
@@ -668,7 +644,6 @@ window.addEventListener('DOMContentLoaded', async () => {
 
 window.addEventListener('resize', setDynamicVh);
 
-// 封裝 25 關視覺小說模組 (保持原代碼完全不動)
 window.storyModule = {
     gameStages: {
         1: { chapter: "👑 第一章", title: "第 1 關", bg: "微光村礦床", condition: "15分", name: "傑洛米", text: "合格學徒" },
@@ -694,5 +669,5 @@ window.storyModule = {
         this.currentTween = gsap.to(this.textObj, { charCount: targetText.length, duration: targetText.length * 0.04, ease: "none", onUpdate: () => { textElement.innerText = targetText.substr(0, Math.ceil(this.textObj.charCount)); }, onComplete: () => { this.isTyping = false; } });
     },
     nextDialogue() { if (this.isTyping) { if (this.currentTween) this.currentTween.progress(1); return; } if (this.dialogueStep === 0) { this.dialogueStep = 1; this.renderDialogue(); } else { this.endStory(); } },
-    endStory() { gsap.to("#story-layer", { opacity: 0, duration: 0.5, onComplete: () => { document.getElementById("story-layer").style.display = "none"; if (typeof this.onStoryCompleteCallback === "function") this.onStoryCompleteCallback(); } }); }
+    endStory() { gsap.to("#story-layer", { opacity: 0, duration: 0.5, onComplete: () => { document.getElementById("story-layer").style.display = "none"; if (typeof this.onStoryCompleteCallback === "function") { this.onStoryCompleteCallback(); } } }); }
 };
