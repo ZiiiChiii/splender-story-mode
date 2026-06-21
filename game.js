@@ -28,6 +28,38 @@ const TUTORIAL_STEPS_DATA = [
 let audioEl, sfxGemEl, sfxBuyEl, sfxReserveEl, sfxSelectEl, sfxUnselectEl, sfxNobleMale, sfxNobleFemale;
 let sfxAchievementsMap = {};
 
+window.playUniformSfx = function() {
+  if (!CoreState) return; 
+  if (sfxSelectEl && !CoreState.get().settings.isSfxMuted) {
+    sfxSelectEl.currentTime = 0; sfxSelectEl.play().catch(() => {});
+  }
+}
+
+window.playActionGemSfx = function() {
+  if (!CoreState) return; 
+  if (sfxGemEl && !CoreState.get().settings.isSfxMuted) {
+    sfxGemEl.currentTime = 0; sfxGemEl.play().catch(() => {});
+  }
+}
+
+window.playNobleSfx = function(gender) {
+  if (!CoreState) return; 
+  if (CoreState.get().settings.isSfxMuted) return;
+  if (gender === 'female' && sfxNobleFemale) {
+    sfxNobleFemale.currentTime = 0; sfxNobleFemale.play().catch(() => {});
+  } else if (gender === 'male' && sfxNobleMale) {
+    sfxNobleMale.currentTime = 0; sfxNobleMale.play().catch(() => {});
+  }
+}
+
+window.playAchievementSfx = function(tier) {
+  if (!CoreState) return; 
+  const targetSFX = sfxAchievementsMap[tier] || sfxAchievementsMap['easy'];
+  if (targetSFX && !CoreState.get().settings.isSfxMuted) {
+    targetSFX.currentTime = 0; targetSFX.play().catch(() => {});
+  }
+}
+
 let lastRenderedCardIds = new Set();
 let lastPlayerState = null;
 let currentTutorialStep = 0;
@@ -62,38 +94,6 @@ async function loadCoreModules() {
   
   storyMod.StoryMode.loadStoryProgress();
   assistantMod.AssistantManager.renderActiveAssistantUI();
-}
-
-window.playUniformSfx = function() {
-  if (!CoreState) return; 
-  if (sfxSelectEl && !CoreState.get().settings.isSfxMuted) {
-    sfxSelectEl.currentTime = 0; sfxSelectEl.play().catch(() => {});
-  }
-}
-
-window.playActionGemSfx = function() {
-  if (!CoreState) return; 
-  if (sfxGemEl && !CoreState.get().settings.isSfxMuted) {
-    sfxGemEl.currentTime = 0; sfxGemEl.play().catch(() => {});
-  }
-}
-
-window.playNobleSfx = function(gender) {
-  if (!CoreState) return; 
-  if (CoreState.get().settings.isSfxMuted) return;
-  if (gender === 'female' && sfxNobleFemale) {
-    sfxNobleFemale.currentTime = 0; sfxNobleFemale.play().catch(() => {});
-  } else if (gender === 'male' && sfxNobleMale) {
-    sfxNobleMale.currentTime = 0; sfxNobleMale.play().catch(() => {});
-  }
-}
-
-window.playAchievementSfx = function(tier) {
-  if (!CoreState) return; 
-  const targetSFX = sfxAchievementsMap[tier] || sfxAchievementsMap['easy'];
-  if (targetSFX && !CoreState.get().settings.isSfxMuted) {
-    targetSFX.currentTime = 0; targetSFX.play().catch(() => {});
-  }
 }
 
 function deepClone(obj) {
@@ -255,7 +255,7 @@ function renderDashboardGems(targetElementId, actorData, diffs) {
 }
 
 // ==========================================
-// 4. 全域 Render 控制器 (01 + 02 完美融合版)
+// 4. 全域 Render 控制器 (版面模式完全分離)
 // ==========================================
 window.render = function() {
   if (!CoreState) return;
@@ -367,7 +367,6 @@ window.render = function() {
     capTxtEl.classList.add('bag-warning-yellow');
   }
 
-  // 02 樣式對接：卡牌縮小以達成 01 單頁滿版
   ['lv1', 'lv2', 'lv3'].forEach(level => {
     document.getElementById(`deck-${level}-txt`).textContent = `剩餘: ${fullState.decks[level].length}`;
     
@@ -386,7 +385,7 @@ window.render = function() {
       let imgUrl = CUSTOM_CARD_IMAGES[card.provides][parseInt(card.id) % CUSTOM_CARD_IMAGES[card.provides].length];
 
       return `
-        <div class="card ${!lastRenderedCardIds.has(card.id) ? 'animate-deal' : ''}" id="dom-card-${card.id}" data-affordable="${afford.affordable}" style="background-image: url('${imgUrl}'); transform: scale(0.75); transform-origin: top left;">
+        <div class="card ${!lastRenderedCardIds.has(card.id) ? 'animate-deal' : ''}" id="dom-card-${card.id}" data-affordable="${afford.affordable}" style="background-image: url('${imgUrl}');">
           <div class="card-content-wrapper">
             <div class="card-top"><span class="card-pts">${card.points > 0 ? card.points : ''}</span><div class="card-gem-icon ${GEM_CLASSES[card.provides]}"></div></div>
             <div>
@@ -402,7 +401,6 @@ window.render = function() {
     }).join('');
   });
 
-  // 保留契約區放大 1.0 完美呈现
   const resLayerReserved = document.getElementById('reserved-layer');
   if (player.reserved.length === 0) {
     resLayerReserved.innerHTML = `<div class="card empty" style="grid-column: span 4; height:100%;">🔒 暫無契約手牌</div>`;
@@ -422,7 +420,7 @@ window.render = function() {
       }
 
       return `
-        <div class="card" id="dom-card-${card.id}" style="background-image: url('${imgUrl}'); transform: scale(1.0);">
+        <div class="card" id="dom-card-${card.id}" style="background-image: url('${imgUrl}');">
           <div class="card-content-wrapper">
             <div class="card-top"><span class="card-pts">${card.points > 0 ? card.points : ''}</span><div class="card-gem-icon ${GEM_CLASSES[card.provides]}"></div></div>
             <div class="card-costs">${resCostHtml}</div>
@@ -472,7 +470,6 @@ window.render = function() {
         `).join('');
   }
 
-  // 02 整合直排渲染邏輯
   const allBankColors = ['w', 'u', 'g', 'r', 'k', 'o'];
   const unifiedBankLayer = document.getElementById('unified-bank-selectors');
   if (unifiedBankLayer) {
@@ -749,7 +746,6 @@ window.addEventListener('DOMContentLoaded', async () => {
 
 window.addEventListener('resize', setDynamicVh);
 
-// 視覺小說故事劇場模組 完整對接與模式限制守衛
 window.storyModule = {
     gameStages: {
         1: { chapter: "👑 第一章：微光村的石匠（第 1 - 5 關）", title: "第 1 關：初入礦脈", bg: "微光村的後山藏著廢棄的紅岩礦床。老內政官傑洛米提著油燈攔住你，不屑地看著你手中的劣質鑿子，要你證明基本的經商手段。", condition: "25回合內威望達到15分（無AI）", name: "內政官 傑洛米", text: "年輕人，這片紅岩礦不歡迎空有熱血的傻瓜。在 25 回合內拿到 15 分，我就承認你是個合格的學徒。" },
