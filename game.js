@@ -377,7 +377,7 @@ window.render = function() {
     }).join('');
   });
 
-  // 放大保留契約牌手牌區比例，使其可以100%呈現大小 (scale 為 1.0)
+  // 放大保留區比例 (scale 設為 1.0)
   const resLayerReserved = document.getElementById('reserved-layer');
   if (player.reserved.length === 0) {
     resLayerReserved.innerHTML = `<div class="card empty" style="grid-column: span 4; font-size:0.6rem; height: 75px;">🔒 暫無契約手牌</div>`;
@@ -612,7 +612,7 @@ window.nextFloatingStep = () => {
   }
 };
 
-// ── 🎯 按照原始框架重新添加音效綁定與初始化的 DOMContentLoaded 區塊 ──
+// ── 🎯 按照新現有音效與音樂對應框架載入添加代碼 ──
 window.addEventListener('DOMContentLoaded', async () => {
   setDynamicVh();
   
@@ -652,9 +652,18 @@ window.storyModule = {
     },
     currentStageId: 1, dialogueStep: 0, isTyping: false, currentTween: null, textObj: { charCount: 0 }, onStoryCompleteCallback: null,
     loadStage(stageId, callback) {
+        // ── 🎯 任務修正：限定故事劇情動畫「只在故事模式」中允許播放展演 ──
+        if (CoreState && CoreState.get().mode !== 'storyMode') {
+            if (callback) callback();
+            return;
+        }
+
         if (!this.gameStages[stageId]) { if (callback) callback(); return; }
         this.currentStageId = stageId; this.dialogueStep = 0; this.onStoryCompleteCallback = callback;
-        const layer = document.getElementById("story-layer"); layer.style.opacity = 1; layer.style.display = "flex";
+        
+        const layer = document.getElementById("story-layer"); 
+        if (layer) layer.classList.add('story-active');
+        
         const stageData = this.gameStages[stageId];
         document.getElementById("story-chapter-title").innerText = stageData.chapter + " - " + stageData.title;
         document.getElementById("story-intro-panel").innerText = stageData.bg;
@@ -670,5 +679,12 @@ window.storyModule = {
         this.currentTween = gsap.to(this.textObj, { charCount: targetText.length, duration: targetText.length * 0.04, ease: "none", onUpdate: () => { textElement.innerText = targetText.substr(0, Math.ceil(this.textObj.charCount)); }, onComplete: () => { this.isTyping = false; } });
     },
     nextDialogue() { if (this.isTyping) { if (this.currentTween) this.currentTween.progress(1); return; } if (this.dialogueStep === 0) { this.dialogueStep = 1; this.renderDialogue(); } else { this.endStory(); } },
-    endStory() { gsap.to("#story-layer", { opacity: 0, duration: 0.5, onComplete: () => { document.getElementById("story-layer").style.display = "none"; if (typeof this.onStoryCompleteCallback === "function") { this.onStoryCompleteCallback(); } } }); }
+    endStory() { 
+        const layer = document.getElementById("story-layer");
+        if (layer) layer.classList.remove('story-active');
+        
+        if (typeof this.onStoryCompleteCallback === "function") {
+            this.onStoryCompleteCallback();
+        }
+    }
 };
