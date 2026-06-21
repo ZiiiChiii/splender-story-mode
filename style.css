@@ -8,7 +8,8 @@
   --card-bg:     rgba(24, 20, 18, 0.88);
   --card-border: rgba(212, 175, 55, 0.18);
   --text:        #f4f0ea;
-  --text-muted:  --radius:      8px;
+  --text-muted:  #968a7f;
+  --radius:      8px;
   --radius-sm:   4px;
   
   --c-diamond:   url('https://i.ibb.co/ZpJqvt5d/white.png');
@@ -268,3 +269,377 @@ html, body {
 .tutorial-highlight { position: relative !important; z-index: 10000001 !important; pointer-events: auto !important; }
 #floating-tutorial-widget { position: fixed !important; z-index: 10000002 !important; pointer-events: auto !important; }
 .btn-tutorial-next { pointer-events: auto !important; }
+
+/* ═══════════════════════════════════════════════
+   📱 手機版面優化 (max-width: 767px)
+   所有桌機版樣式完全保留，僅在此斷點內覆蓋
+═══════════════════════════════════════════════ */
+@media (max-width: 767px) {
+
+  /* ── 全域 body 調整：手機允許垂直捲動 ── */
+  html, body {
+    overflow-y: auto;
+    overflow-x: hidden;
+    padding: 4px;
+    height: auto;
+    min-height: 100dvh;
+  }
+
+  .shell {
+    height: auto;
+    gap: 4px;
+  }
+
+  /* ── 頂部 Header：標題縮小，按鈕換行 ── */
+  .top-meta-wrap {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 4px;
+    padding: 6px 8px;
+  }
+
+  .game-title {
+    font-size: 0.9rem;
+  }
+
+  .status-bar {
+    width: 100%;
+    flex-wrap: wrap;
+    gap: 4px;
+  }
+
+  .status-pill {
+    font-size: 0.65rem;
+    padding: 2px 6px;
+  }
+
+  .music-btn {
+    font-size: 0.65rem;
+    padding: 3px 7px;
+  }
+
+  /* ── 成就橫幅：文字縮小單行 ── */
+  .achievement-banner {
+    padding: 4px 8px;
+  }
+
+  .ach-latest-display {
+    font-size: 0.7rem;
+  }
+
+  .ach-badge-title {
+    font-size: 0.55rem;
+    white-space: nowrap;
+  }
+
+  /* ── 貴族列：水平捲動，不換行 ── */
+  .nobles-grid {
+    flex-wrap: nowrap;
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+    gap: 4px;
+    padding-bottom: 2px;
+  }
+
+  .noble-card {
+    min-width: 52px;
+    height: 52px;
+    flex-shrink: 0;
+  }
+
+  .noble-pts {
+    font-size: 0.65rem;
+  }
+
+  .noble-reqs {
+    font-size: 0.38rem;
+  }
+
+  /* ── 主要遊戲區（鑄幣局 + 卡牌矩陣）：改成上下排列 ── */
+  div[style*="display: flex; gap: 12px; flex: 1"] {
+    flex-direction: column !important;
+    gap: 6px !important;
+    height: auto !important;
+    min-height: 0 !important;
+  }
+
+  /* ── 鑄幣交易局：手機改為橫排，固定高度 ── */
+  #guide-actions {
+    width: 100% !important;
+    flex-shrink: unset !important;
+    flex-direction: row !important;
+    align-items: center !important;
+    padding: 6px 8px !important;
+    gap: 6px !important;
+    height: auto !important;
+  }
+
+  #guide-actions > div:first-child {
+    display: none; /* 隱藏「🪙 鑄幣交易局」標題，省空間 */
+  }
+
+  #unified-bank-selectors {
+    grid-template-columns: repeat(6, 1fr) !important;
+    gap: 3px !important;
+    flex: 1 !important;
+    overflow-y: visible !important;
+  }
+
+  .token-container-cell {
+    flex-direction: column !important;
+    align-items: center !important;
+    justify-content: center !important;
+    padding: 2px 3px !important;
+    gap: 2px !important;
+  }
+
+  .token-btn {
+    width: 28px !important;
+    height: 28px !important;
+    background-size: 20px 20px !important;
+  }
+
+  .token-count-label {
+    font-size: 0.5rem !important;
+    line-height: 1 !important;
+  }
+
+  #guide-actions > div:last-child {
+    /* 「收下」按鈕群：垂直排列在右側 */
+    display: flex !important;
+    flex-direction: column !important;
+    gap: 4px !important;
+    margin-top: 0 !important;
+    padding-top: 0 !important;
+    border-top: none !important;
+    width: 56px !important;
+    flex-shrink: 0 !important;
+  }
+
+  #btn-do-diff, #btn-do-same {
+    font-size: 0.55rem !important;
+    padding: 5px 2px !important;
+    white-space: nowrap !important;
+  }
+
+  /* ── 卡牌矩陣：撐滿寬度，卡片放大 ── */
+  #guide-matrix {
+    flex: unset !important;
+    width: 100% !important;
+    gap: 4px !important;
+  }
+
+  .board-row {
+    flex: unset !important;
+  }
+
+  .grid-4 {
+    gap: 4px !important;
+    grid-template-columns: repeat(4, 1fr) !important;
+  }
+
+  /* 卡片：取消 scale(0.75) 縮小，直接填格子 */
+  .card {
+    transform: none !important;
+    transform-origin: unset !important;
+  }
+
+  .card-pts {
+    font-size: 0.85rem !important;
+  }
+
+  .card-gem-icon {
+    width: 12px !important;
+    height: 12px !important;
+  }
+
+  .cost-dot {
+    font-size: 0.48rem !important;
+    padding: 1px 1px !important;
+  }
+
+  .cost-dot-circle {
+    width: 5px !important;
+    height: 5px !important;
+  }
+
+  .btn-card {
+    font-size: 0.5rem !important;
+    padding: 2px 0 !important;
+  }
+
+  .section-title, .deck-count {
+    font-size: 0.58rem !important;
+  }
+
+  /* ── 底部 Dashboard：手機改成垂直堆疊 ── */
+  #guide-dashboard {
+    flex-direction: column !important;
+    height: auto !important;
+    gap: 6px !important;
+    padding-top: 4px !important;
+  }
+
+  /* 玩家金庫 */
+  #guide-dashboard > section.dashboard {
+    flex: unset !important;
+    width: 100% !important;
+    height: auto !important;
+  }
+
+  .res-grid {
+    gap: 6px !important;
+    justify-content: flex-start !important;
+    flex-wrap: wrap !important;
+  }
+
+  .res-circle {
+    width: 18px !important;
+    height: 18px !important;
+  }
+
+  .res-count {
+    font-size: 0.85rem !important;
+  }
+
+  .res-bonus {
+    font-size: 0.52rem !important;
+  }
+
+  .cap-bar {
+    font-size: 0.52rem !important;
+  }
+
+  /* 輔助官＋已拜訪貴族面板 */
+  #guide-dashboard > section.earned-nobles-panel {
+    flex: unset !important;
+    width: 100% !important;
+    height: auto !important;
+    min-width: unset !important;
+    flex-direction: row !important;
+    gap: 8px !important;
+  }
+
+  #guide-dashboard > section.earned-nobles-panel > div {
+    flex: 1 !important;
+  }
+
+  /* 保留區：撐滿寬，高度固定可捲動 */
+  #guide-reserved {
+    flex: unset !important;
+    width: 100% !important;
+    min-width: unset !important;
+    height: auto !important;
+  }
+
+  #reserved-layer {
+    grid-template-columns: repeat(4, 1fr) !important;
+    min-height: 70px !important;
+  }
+
+  /* ── Modal 視窗：全寬，高度可捲動 ── */
+  .modal-overlay {
+    padding: 8px !important;
+    align-items: flex-start !important;
+    padding-top: 20px !important;
+  }
+
+  .modal {
+    max-width: 100% !important;
+    width: 100% !important;
+    padding: 16px !important;
+    max-height: 90dvh !important;
+    overflow-y: auto !important;
+  }
+
+  .modal-title {
+    font-size: 1.0rem !important;
+  }
+
+  /* 故事地圖 Modal：4欄網格縮小 */
+  #story-map-modal .modal {
+    padding: 12px !important;
+  }
+
+  #story-map-modal div[style*="grid-template-columns: repeat(4"] {
+    grid-template-columns: repeat(3, 1fr) !important;
+  }
+
+  /* 人才庫 Modal：單欄 */
+  .talent-pool-modal-grid {
+    grid-template-columns: 1fr !important;
+    max-height: 55dvh !important;
+  }
+
+  /* ── 故事劇場覆蓋層：字體縮小、對話框高度自適應 ── */
+  .story-chapter-title {
+    font-size: 1.0rem !important;
+    top: 20px !important;
+  }
+
+  .story-intro-panel {
+    top: 65px !important;
+    font-size: 0.8rem !important;
+    width: 92% !important;
+    padding: 10px 14px !important;
+  }
+
+  .story-character-container {
+    width: 200px !important;
+    height: 320px !important;
+    bottom: 170px !important;
+  }
+
+  .story-dialogue-box {
+    width: 92% !important;
+    height: auto !important;
+    min-height: 120px !important;
+    padding: 20px 16px 16px !important;
+  }
+
+  .story-name-tag {
+    font-size: 0.85rem !important;
+    padding: 4px 16px !important;
+    top: -26px !important;
+    left: 16px !important;
+  }
+
+  .story-dialogue-text {
+    font-size: 0.95rem !important;
+    line-height: 1.5 !important;
+  }
+
+  .story-condition-badge {
+    font-size: 0.65rem !important;
+    padding: 3px 7px !important;
+  }
+
+  /* ── 浮動教學提示框：全寬 ── */
+  #floating-tutorial-widget {
+    width: 95% !important;
+    bottom: 12px !important;
+  }
+
+  /* ── 成就列表彈窗：全寬捲動 ── */
+  .ach-modal {
+    max-height: 88dvh !important;
+  }
+
+  .ach-scroll-body {
+    max-height: 60dvh !important;
+  }
+
+  .ach-item-row {
+    padding: 6px 8px !important;
+  }
+
+  .ach-row-name {
+    font-size: 0.75rem !important;
+  }
+
+  .ach-row-desc {
+    font-size: 0.62rem !important;
+  }
+
+}
+/* ═══════════════════════════════ 手機優化結束 ═══════════════════════════════ */
