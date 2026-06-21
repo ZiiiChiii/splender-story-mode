@@ -50,7 +50,7 @@ html, body {
   display: flex;
   flex-direction: column;
   position: relative;
-  gap: 2px; /* Part A 修改: gap 3px -> 2px */
+  gap: 2px;
 }
 
 .top-meta-wrap {
@@ -140,26 +140,18 @@ html, body {
 
 .diff-setting-box { display: grid; grid-template-columns: repeat(2, 1fr); gap: 6px; margin: 10px 0; }
 .diff-opt-btn { padding: 8px 4px; font-size: 0.75rem; font-weight: 700; background: #1a1410; border: 1px solid #4a3a30; color: #968a7f; border-radius: 4px; cursor: pointer; transition: all 0.2s ease; }
-#story-map-modal .diff-opt-btn { pointer-events: auto !important; }
-.action-panel .token-btn { pointer-events: auto !important; }
-
-.diff-opt-btn.active[data-diff="easy"] { background: var(--diff-easy); color: #000; border-color: #fff; }
-.diff-opt-btn.active[data-diff="normal"] { background: var(--diff-normal); color: #000; border-color: #fff; }
-.diff-opt-btn.active[data-diff="hard"] { background: var(--diff-hard); color: #000; border-color: #fff; }
-
-.menu-grid-layout { display: flex; flex-direction: column; gap: 8px; margin: 14px 0; }
-.menu-row-btn { width: 100%; padding: 10px; font-size: 0.85rem; font-weight: 700; color: #ffe099; background: linear-gradient(180deg, #2a2018, #150f0b); border: 1px solid #d4af37; border-radius: var(--radius-sm); cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 8px; transition: all 0.2s; }
 
 .nobles-section { margin-bottom: 2px; border: 2px solid transparent; border-radius: var(--radius); padding: 1px; flex-shrink: 0; }
 .nobles-grid { display: flex; gap: 6px; overflow-x: auto; }
 
+/* 修改 1：放大貴族圖卡為 163px (原 65px 的 2.5 倍) */
 .noble-card {
   position: relative;
   background: #110e0c;
   border: 1px solid #9c7a3c;
   border-radius: var(--radius-sm);
-  min-width: 65px;
-  height: 65px;
+  min-width: 163px;
+  height: 163px;
   box-shadow: 0 4px 8px rgba(0,0,0,0.6);
   transition: all 0.3s ease;
   overflow: hidden;
@@ -178,7 +170,6 @@ html, body {
 .noble-pts { font-family: 'Cinzel', serif; font-size: 0.8rem; font-weight: 900; color: #fff; text-shadow: 0 0 6px #d4af37, 0 1px 3px #000; }
 .noble-reqs { display: flex; flex-direction: row; gap: 2px; font-size: 0.45rem; font-weight: bold; background: rgba(0,0,0,0.6); padding: 1px; border-radius: 2px; max-width: fit-content; }
 
-/* Part A 修改: .dashboard-container 間距調整 gap: 6px -> 4px */
 .dashboard-container { display: flex; gap: 4px; flex-shrink: 0; width: 100%; }
 .dashboard {
   background: rgba(10, 24, 18, 0.85);
@@ -218,24 +209,19 @@ html, body {
 
 .btn-primary { width: 100%; padding: 6px; border: 1px solid #8a6418; border-radius: 3px; background: linear-gradient(180deg, #a67c2e, #6e4e13); color: #f4f0ea; font-weight: 700; cursor: pointer; text-shadow: 0 1px 2px rgba(0,0,0,0.8); }
 
-/* Part A 修改: 新增桌機版 .matrix-reserved-wrapper 間距控制 */
-/* 主遊戲橫向排版容器：收緊左側鑄幣局與卡牌矩陣的間距 */
 .matrix-reserved-wrapper {
   gap: 6px;
 }
 
-/* Part A 修改: .board-matrix 行距收緊新增 gap: 2px */
 .board-matrix { display: flex; flex-direction: column; gap: 2px; }
-/* Part A 修改: .board-row 內距收緊新增 gap: 1px */
 .board-row { display: flex; flex-direction: column; gap: 1px; }
-/* Part A 修改: .grid-4 網格間距新增 gap: 3px */
 .grid-4 { display: grid; grid-template-columns: repeat(4, 1fr); gap: 3px; }
 
-/* Part B 修改: .card 新增雙重防護預設為 none / unset */
+/* 修改 2：新增縮小發展卡為 3/5 的 transform 設定 */
 .card {
   background: var(--card-bg); background-size: cover; background-position: center; border: 1px solid var(--card-border); border-radius: var(--radius-sm); display: flex; flex-direction: column; justify-content: space-between; height: 100%; position: relative; box-shadow: 0 4px 8px rgba(0,0,0,0.5); overflow: hidden;
-  transform: none;
-  transform-origin: unset;
+  transform: scale(0.6);
+  transform-origin: top left;
 }
 .card-content-wrapper { display: flex; flex-direction: column; justify-content: space-between; width: 100%; height: 100%; flex: 1; padding: 3px; background: linear-gradient(180deg, rgba(16, 12, 10, 0.75) 0%, rgba(16, 12, 10, 0.2) 50%, rgba(16, 12, 10, 0.85) 100%); }
 
@@ -269,7 +255,6 @@ html, body {
 .t-dot.active { background: #ffcc00; box-shadow: 0 0 10px #ffcc00; }
 .btn-tutorial-next { padding: 6px 16px; background: linear-gradient(180deg, #ffe680, #ffcc00, #b38600); color: #110e0c; border: none; border-radius: 4px; font-size: 0.78rem; font-weight: 800; cursor: pointer; }
 
-/* ── 🪙 皇家金庫資產增減與脈衝發光 CSS 特效 ── */
 .floating-diff {
   position: absolute;
   top: -14px;
@@ -311,7 +296,6 @@ html, body {
 .bg-k { background-image: var(--c-onyx); }
 .bg-o { background-image: var(--c-gold); }
 
-/* Part C 驗證: 完美保留原生滑入與淡入動畫 */
 @keyframes cardDealIn { from { opacity: 0; transform: translateY(-10px); } to { opacity: 1; transform: translateY(0); } }
 .animate-deal { animation: cardDealIn 0.35s cubic-bezier(0.25, 1, 0.5, 1) forwards !important; }
 .modal-overlay:not(.show) { opacity: 0 !important; visibility: hidden !important; pointer-events: none !important; display: none !important; }
@@ -321,7 +305,7 @@ html, body {
 #floating-tutorial-widget { position: fixed !important; z-index: 10000002 !important; pointer-events: auto !important; }
 
 /* ═══════════════════════════════════════════════
-   Part D 修改: 完整替換 @media (max-width: 430px) 區塊
+   @media (max-width: 430px) 區塊
    ═══════════════════════════════════════════════ */
 @media (max-width: 430px) {
   html, body {
@@ -350,8 +334,9 @@ html, body {
   .ach-badge-title { font-size: 0.52rem; }
   .ach-latest-display { font-size: 0.6rem; }
 
+  /* 修改 3：同步更新手機版 media query 內的貴族卡尺寸為 130px (原 52px 的 2.5 倍) */
   .nobles-section { margin-bottom: 2px !important; padding: 1px !important; flex-shrink: 0 !important; }
-  .noble-card { min-width: 52px; height: 52px; flex-shrink: 0; }
+  .noble-card { min-width: 130px; height: 130px; flex-shrink: 0; }
   .noble-pts { font-size: 0.62rem; }
 
   /* 鑄幣交易局縮小 */
@@ -398,8 +383,6 @@ html, body {
     gap: 2px !important;
   }
 
-  /* ✅ 手機卡牌：強制 transform none，覆蓋 game.js 已刪除的 inline style */
-  /* （game.js 已移除 inline transform，此條作為雙重防護保留）*/
   .card {
     flex: 1 !important;
     min-height: 0 !important;
