@@ -4,7 +4,7 @@
 // ==========================================
 const GEM_TYPES = ['w', 'u', 'g', 'r', 'k']; 
 const GEM_CLASSES = { w: 'bg-w', u: 'bg-u', g: 'bg-g', r: 'bg-r', k: 'bg-k', o: 'bg-o' };
-const GEM_BTN_CLASSES = { w: 'token-btn-w', u: 'token-btn-u', g: 'token-btn-g', r: 'token-btn-r', k: 'token-btn-k' };
+const GEM_BTN_CLASSES = { w: 'token-btn-w', u: 'token-btn-u', g: 'token-btn-g', r: 'token-btn-r', k: 'token-btn-k', o: 'token-btn-o' };
 
 const CUSTOM_CARD_IMAGES = {
   g: ["https://i.ibb.co/KxX2gxBP/1.jpg", "https://i.ibb.co/35Wz9SGp/2.jpg", "https://i.ibb.co/4nRZhdV9/3.jpg", "https://i.ibb.co/VW851t3Q/4.jpg", "https://i.ibb.co/zh2mXJDS/5.jpg"],
@@ -255,7 +255,7 @@ function renderDashboardGems(targetElementId, actorData, diffs) {
 }
 
 // ==========================================
-// 4. 全域 Render 控制器
+// 4. 全域 Render 控制器 (版面模式完全分離)
 // ==========================================
 window.render = function() {
   if (!CoreState) return;
@@ -270,72 +270,52 @@ window.render = function() {
   const isStoryMode = fullState.mode === 'storyMode';
   const isPlayerTurn = fullState.currentTurnOwner === 'player';
 
+  // ── 🎯 任務優化：動態隱顯三大模式獨立版面區塊 ──
+  document.getElementById('single-achievement-zone').style.display = isSingleMode ? 'flex' : 'none';
+  document.getElementById('story-meta-zone').style.display = isStoryMode ? 'flex' : 'none';
+  document.getElementById('story-top-save-btn').style.display = isStoryMode ? 'inline-block' : 'none';
   document.getElementById('ai-dashboard-box').style.display = isvsAI ? 'block' : 'none';
-  document.getElementById('player-dashboard-title').style.display = isvsAI ? 'block' : 'none';
-  
-  const bannerZone = document.getElementById('dynamic-banner-zone');
-  const bannerBadge = document.getElementById('dynamic-banner-badge');
-  const bannerText = document.getElementById('dynamic-banner-text');
 
-  if (bannerZone && bannerBadge && bannerText) {
-    if (isvsAI) {
-      bannerZone.style.display = 'none';
-    } else {
-      bannerZone.style.display = 'flex';
-      
-      if (isSingleMode) {
-        bannerBadge.textContent = "榮譽成就";
-        bannerBadge.style.backgroundColor = 'rgba(230, 126, 34, 0.2)';
-        bannerBadge.style.borderColor = '#e67e22';
-        bannerZone.style.cursor = 'pointer';
-        
-        const archive = localStorage.getItem('splendor_achievements_v1');
-        let unlCount = 0;
-        if (archive) { try { unlCount = Object.keys(JSON.parse(archive)).length; } catch(e){} }
-        bannerText.innerHTML = `🏆 當前已斬獲 <span style="color:#ffcc00; font-weight:800;">${unlCount} / 30</span> 項皇家勳章！<span style="color:var(--text-muted); font-size:0.55rem; margin-left:6px;">[ 💡 點此可開啟榮譽堂查看完整清單 ]</span>`;
-        
-      } else if (isStoryMode) {
-        const currentLvl = fullState.storyProgress?.currentLevel || 1;
-        const mission = window.STORY_MISSIONS ? window.STORY_MISSIONS[currentLvl - 1] : null;
-        
-        bannerZone.style.cursor = 'pointer';
-        if (mission) {
-          bannerBadge.textContent = `第 ${currentLvl} 關 任務`;
-          bannerBadge.style.backgroundColor = 'rgba(212, 175, 55, 0.2)';
-          bannerBadge.style.borderColor = '#d4af37';
-          
-          let conditionText = mission.winCondition.targetScore ? `威望達到 ${mission.winCondition.targetScore} 分` : '特定條件';
-          if (mission.id === 2) conditionText = "達到15分，且紅寶石限制少於8顆";
-          if (mission.id === 3) conditionText = "達到15分，且保留並買下卡片達3次";
-          if (mission.id === 4) conditionText = "達到15分，且整局禁止使用黃金籌碼";
-          if (mission.id === 5) conditionText = "達到15分，且通關時5色卡片數量皆 >= 2張";
-          if (mission.id === 7) conditionText = "達到15分，且任何回合結束時背包籌碼不超過6顆";
-          if (mission.id === 8) conditionText = "達到15分，且整局禁止購買任何Lv1發展卡";
-          if (mission.id === 9) conditionText = "達到15分，且最終名下只能有黑與白卡";
-          if (mission.id === 10) conditionText = "達到15分，且通關時手上持有至少4枚黃金籌碼";
-          if (mission.id === 13) conditionText = "最終分數必須「剛好等於 15 分」，超分算輸";
-          if (mission.id === 15) conditionText = "達到15分，且至少3次買卡是「完全沒消耗籌碼」";
-          if (mission.id === 16) conditionText = "不限分數，率先獲得 3 位貴族拜訪即可通關";
-          if (mission.id === 17) conditionText = "通關那一回合，必須同時獲得卡片分與貴族分";
-          if (mission.id === 18) conditionText = "擊敗侵略型 AI，且整局玩家獲得的貴族分必須為 0";
-          if (mission.id === 19) conditionText = "達20分，移除Lv1卡，且有名下至少3張>=4分的卡";
-          if (mission.id === 20) conditionText = "達到15分，且系統每過 5 個回合隨機扣2枚籌碼";
-          if (mission.id === 21) conditionText = "達15分，且銀行普通籌碼初始庫存全為 0";
-          if (mission.id === 22) conditionText = "擊敗高級AI（開局AI自帶8分與4張隨機Lv2卡）";
-          if (mission.id === 23) conditionText = "威望達20分，且通關時5種顏色永久減免皆 >= 3";
-          if (mission.id === 25) conditionText = "威望達到 25 分，且成功吸引至少 2 位貴族進駐";
+  // 設置按鈕的開關狀態文字顯示
+  document.getElementById('btn-music-state').textContent = fullState.settings.isMusicMuted ? "🔇 音樂: 靜音" : "🎵 音樂: 開啟";
+  document.getElementById('btn-sfx-state').textContent = fullState.settings.isSfxMuted ? "🔇 音效: 靜音" : "🔊 音效: 開啟";
 
-          if (fullState.storyTracker && mission.id === 3) {
-            conditionText += ` <span style="color:#2ecc71;">(當前進度: ${fullState.storyTracker.reservedBuys}/3)</span>`;
-          } else if (fullState.storyTracker && mission.id === 15) {
-            conditionText += ` <span style="color:#2ecc71;">(當前進度: ${fullState.storyTracker.freeBuys}/3)</span>`;
-          }
-          
-          bannerText.innerHTML = `<span style="color:#ffe099; font-weight:800;">⚔️【${mission.name}】</span> 目標：${conditionText} <span style="color:#ffcc00; font-size:0.55rem; margin-left:6px;">[ 🗺️ 點此可自選或重挑關卡 ]</span>`;
-        } else {
-          bannerText.textContent = "📜 故事戰役檔案加載中...";
-        }
+  if (isSingleMode) {
+    const archive = localStorage.getItem('splendor_achievements_v1');
+    let unlCount = 0;
+    if (archive) { try { unlCount = Object.keys(JSON.parse(archive)).length; } catch(e){} }
+    document.getElementById('single-ach-text').innerHTML = `🏆 當前已斬獲 <span style="color:#ffcc00; font-weight:800;">${unlCount} / 30</span> 項皇家勳章！ <span style="color:var(--text-muted); font-size:0.55rem; margin-left:6px;">[點擊開啟榮譽堂]</span>`;
+  } else if (isStoryMode) {
+    const currentLvl = fullState.storyProgress?.currentLevel || 1;
+    const mission = window.STORY_MISSIONS ? window.STORY_MISSIONS[currentLvl - 1] : null;
+    if (mission) {
+      let conditionText = mission.winCondition.targetScore ? `威望達到 ${mission.winCondition.targetScore} 分` : '特定條件';
+      if (mission.id === 2) conditionText = "達到15分，且紅寶石限制少於8顆";
+      if (mission.id === 3) conditionText = "達到15分，且保留並買下卡片達3次";
+      if (mission.id === 4) conditionText = "達到15分，且整局禁止使用黃金籌碼";
+      if (mission.id === 5) conditionText = "達到15分，且通關時5色卡片數量皆 >= 2張";
+      if (mission.id === 7) conditionText = "達到15分，且任何回合結束時背包籌碼不超過6顆";
+      if (mission.id === 8) conditionText = "達到15分，且整局禁止購買任何Lv1發展卡";
+      if (mission.id === 9) conditionText = "達到15分，且最終名下只能有黑與白卡";
+      if (mission.id === 10) conditionText = "達到15分，且通關時手上持有至少4枚黃金籌碼";
+      if (mission.id === 13) conditionText = "最終分數必須「剛好等於 15 分」，超分算輸";
+      if (mission.id === 15) conditionText = "達到15分，且至少3次買卡是「完全沒消耗籌碼」";
+      if (mission.id === 16) conditionText = "不限分數，率先獲得 3 位貴族拜訪即可通關";
+      if (mission.id === 17) conditionText = "通關那一回合，必須同時獲得卡片分與貴族分";
+      if (mission.id === 18) conditionText = "擊敗侵略型 AI，且整局玩家獲得的貴族分必須為 0";
+      if (mission.id === 19) conditionText = "達20分，移除Lv1卡，且有名下至少3張>=4分的卡";
+      if (mission.id === 20) conditionText = "達到15分，且系統每過 5 個回合隨機扣2枚籌碼";
+      if (mission.id === 21) conditionText = "達15分，且銀行普通籌碼初始庫存全為 0";
+      if (mission.id === 22) conditionText = "擊敗高級AI（開局AI自帶8分與4張隨機Lv2卡）";
+      if (mission.id === 23) conditionText = "威望達20分，且通關時5種顏色永久減免皆 >= 3";
+      if (mission.id === 25) conditionText = "威望達到 25 分，且成功吸引至少 2 位貴族進駐";
+
+      if (fullState.storyTracker && mission.id === 3) {
+        conditionText += ` <span style="color:#2ecc71;">(當前進度: ${fullState.storyTracker.reservedBuys}/3)</span>`;
+      } else if (fullState.storyTracker && mission.id === 15) {
+        conditionText += ` <span style="color:#2ecc71;">(當前進度: ${fullState.storyTracker.freeBuys}/3)</span>`;
       }
+      document.getElementById('story-mission-text').innerHTML = `<span style="color:#ffe099; font-weight:800;">⚔️【第 ${currentLvl} 關 ${mission.name}】</span> 目標：${conditionText}`;
     }
   }
 
@@ -347,7 +327,6 @@ window.render = function() {
     for (let k in player.tokens) diffs.tokens[k] = player.tokens[k] - lastPlayerState.tokens[k];
     for (let k in player.bonus) diffs.bonus[k] = player.bonus[k] - lastPlayerState.bonus[k];
   }
-
   lastPlayerState = deepClone(player);
 
   renderDashboardGems('res-layer', player, diffs);
@@ -359,21 +338,20 @@ window.render = function() {
   const isAst6Active = (fullState.settings.selectedAssistant === 'ast6');
   const currentBagCap = isAst6Active ? 12 : 10;
   const capTxtEl = document.getElementById('cap-txt');
-  capTxtEl.textContent = `背包: ${totalTokens} / ${currentBagCap}`;
+  capTxtEl.textContent = `背包筹碼: ${totalTokens} / ${currentBagCap}`;
   
   capTxtEl.classList.remove('bag-warning-yellow', 'bag-danger-red');
-  if (totalTokens === 10) {
+  if (totalTokens === currentBagCap) {
     capTxtEl.classList.add('bag-danger-red');
-  } else if (totalTokens > 7) {
+  } else if (totalTokens > currentBagCap - 3) {
     capTxtEl.classList.add('bag-warning-yellow');
   }
 
+  // 渲染發展卡矩陣 (微縮優化與懸浮觸發)
   ['lv1', 'lv2', 'lv3'].forEach(level => {
     document.getElementById(`deck-${level}-txt`).textContent = `剩餘: ${fullState.decks[level].length}`;
-    
     document.getElementById(`row-${level}`).innerHTML = fullState.board[level].map((card, idx) => {
       if (!card) return `<div class="card empty">已全數售罄</div>`;
-      
       let costHtml = '';
       for (let k in card.cost) {
         costHtml += `
@@ -381,12 +359,11 @@ window.render = function() {
             <span class="cost-dot-circle ${GEM_CLASSES[k]}"></span><span>${card.cost[k]}</span>
           </div>`;
       }
-      
       const afford = GameEngine.canAffordCard(player.bonus, player.tokens, card.cost);
       let imgUrl = CUSTOM_CARD_IMAGES[card.provides][parseInt(card.id) % CUSTOM_CARD_IMAGES[card.provides].length];
 
       return `
-        <div class="card ${!lastRenderedCardIds.has(card.id) ? 'animate-deal' : ''}" id="dom-card-${card.id}" data-affordable="${afford.affordable}" style="background-image: url('${imgUrl}');">
+        <div class="card ${!lastRenderedCardIds.has(card.id) ? 'animate-deal' : ''}" id="dom-card-${card.id}" data-affordable="${afford.affordable}" style="background-image: url('${imgUrl}'); transform: scale(0.96);">
           <div class="card-content-wrapper">
             <div class="card-top"><span class="card-pts">${card.points > 0 ? card.points : ''}</span><div class="card-gem-icon ${GEM_CLASSES[card.provides]}"></div></div>
             <div>
@@ -404,28 +381,23 @@ window.render = function() {
 
   const resLayerReserved = document.getElementById('reserved-layer');
   if (player.reserved.length === 0) {
-    resLayerReserved.innerHTML = `<div class="card empty" style="grid-column: span 4;">🔒 當前保密保留區尚無契約手牌 (上限 3 張)</div>`;
+    resLayerReserved.innerHTML = `<div class="card empty" style="grid-column: span 4; font-size:0.6rem;">🔒 暫無契約手牌</div>`;
   } else {
     resLayerReserved.innerHTML = [0, 1, 2, 3].map(i => {
       const card = player.reserved[i];
       if (!card) return i < (fullState.settings.selectedAssistant === 'ast7' ? 4 : 3) ? `<div class="card empty">空位</div>` : '';
       const afford = GameEngine.canAffordCard(player.bonus, player.tokens, card.cost);
       let imgUrl = CUSTOM_CARD_IMAGES[card.provides][parseInt(card.id) % CUSTOM_CARD_IMAGES[card.provides].length];
-      
       let resCostHtml = '';
       for (let k in card.cost) {
-        resCostHtml += `
-          <div class="cost-dot ${(player.bonus[k] || 0) >= card.cost[k] ? 'free' : ''}">
-            <span class="cost-dot-circle ${GEM_CLASSES[k]}"></span><span>${card.cost[k]}</span>
-          </div>`;
+        resCostHtml += `<div class="cost-dot"><span class="cost-dot-circle ${GEM_CLASSES[k]}"></span><span>${card.cost[k]}</span></div>`;
       }
-
       return `
-        <div class="card" id="dom-card-${card.id}" style="background-image: url('${imgUrl}');">
+        <div class="card" id="dom-card-${card.id}" style="background-image: url('${imgUrl}'); transform: scale(0.92);">
           <div class="card-content-wrapper">
             <div class="card-top"><span class="card-pts">${card.points > 0 ? card.points : ''}</span><div class="card-gem-icon ${GEM_CLASSES[card.provides]}"></div></div>
             <div class="card-costs">${resCostHtml}</div>
-            <div class="card-actions"><button class="btn-card" ${!isPlayerTurn || !afford.affordable ? 'disabled' : ''} onclick="buyReservedCard(${i})">簽署收購</button></div>
+            <div class="card-actions"><button class="btn-card" ${!isPlayerTurn || !afford.affordable ? 'disabled' : ''} onclick="buyReservedCard(${i})">收購</button></div>
           </div>
         </div>
       `;
@@ -434,6 +406,7 @@ window.render = function() {
 
   ['lv1', 'lv2', 'lv3'].forEach(l => fullState.board[l]?.forEach(c => { if(c) lastRenderedCardIds.add(c.id); }));
 
+  // 貴族卡牌渲染
   const noblesLayer = document.getElementById('nobles-layer');
   if (noblesLayer) {
     noblesLayer.innerHTML = fullState.nobles
@@ -444,14 +417,11 @@ window.render = function() {
           reqHtml += `<div class="cost-dot"><span class="cost-dot-circle ${GEM_CLASSES[k]}"></span><span>${n.req[k]}</span></div>`;
         }
         return `
-          <div class="noble-card">
+          <div class="noble-card" style="height: 80px; min-width: 80px;">
             <img src="${n.img}" alt="${n.name}" class="noble-img">
             <div class="noble-overlay">
-              <div class="card-top">
-                <span class="noble-pts">${n.points}</span>
-                <span class="noble-name">${n.name}</span>
-              </div>
-              <div class="noble-reqs">${reqHtml}</div>
+              <div class="card-top"><span class="noble-pts">${n.points}</span></div>
+              <div class="noble-reqs" style="flex-direction: row; gap:4px; font-size:0.5rem;">${reqHtml}</div>
             </div>
           </div>
         `;
@@ -462,308 +432,129 @@ window.render = function() {
   if (earnedNoblesLayer) {
     const earned = fullState.nobles.filter(n => n.completed);
     earnedNoblesLayer.innerHTML = earned.length === 0
-      ? `<p style="font-size:0.55rem; color:var(--text-muted); padding: 4px 0;">尚無貴族拜訪</p>`
-      : earned.map(n => `
-          <div class="earned-noble-mini">
-            <img src="${n.img}" alt="${n.name}">
-            <span>${n.name}</span>
-          </div>
-        `).join('');
+      ? `<p style="font-size:0.55rem; color:var(--text-muted); padding: 4px 0;">無</p>`
+      : earned.map(n => `<div class="earned-noble-mini"><img src="${n.img}"><span>${n.name}</span></div>`).join('');
   }
 
-  const gemColors = ['w', 'u', 'g', 'r', 'k'];
-  const diffLayer = document.getElementById('diff-selectors'); 
-  const sameLayer = document.getElementById('same-selectors'); 
-
-  if (diffLayer) {
-    diffLayer.innerHTML = gemColors.map(k => {
+  // ── 🎯 任務優化：5種顏色寶石與1個黃金統一在同一個欄位內渲染 ──
+  const allBankColors = ['w', 'u', 'g', 'r', 'k', 'o'];
+  const unifiedBankLayer = document.getElementById('unified-bank-selectors');
+  if (unifiedBankLayer) {
+    unifiedBankLayer.innerHTML = allBankColors.map(k => {
+      const isGold = (k === 'o');
+      const alreadySelected = isGold ? false : fullState.selectedDiff?.includes(k) || fullState.selectedSame === k;
       const inBank = fullState.bank[k] > 0;
-      const alreadySelected = fullState.selectedDiff?.includes(k);
+      
+      // 黃金不可以點擊只用來顯示數字，普通寶石可點擊
+      const clickAttr = isGold ? '' : `onclick="handleBankGemClick('${k}')"`;
+      const disabledStyle = (!isGold && !inBank) ? 'style="opacity:0.12; cursor:not-allowed;"' : '';
+
       return `
         <div class="token-container-cell">
           <button class="token-btn ${GEM_BTN_CLASSES[k]} ${alreadySelected ? 'selected' : ''}"
-            ${!inBank || !isPlayerTurn ? 'disabled style="opacity:0.08;"' : ''}
-            onclick="toggleSelectDiff('${k}')">
+            ${isGold ? 'disabled' : ''} ${disabledStyle} ${clickAttr}>
           </button>
-          <span class="token-count-label">庫存:${fullState.bank[k]}</span>
+          <span class="token-count-label" style="font-size:0.6rem; color:#ffe099;">${isGold ? '黃金' : '庫存'}:${fullState.bank[k]}</span>
         </div>
       `;
     }).join('');
   }
 
-  if (sameLayer) {
-    sameLayer.innerHTML = gemColors.map(k => {
-      const needBankCount = (fullState.settings.selectedAssistant === 'ast9') ? 1 : 2; 
-      const canTake2 = fullState.bank[k] >= needBankCount;
-      const alreadySelected = fullState.selectedSame === k;
-      return `
-        <div class="token-container-cell">
-          <button class="token-btn ${GEM_BTN_CLASSES[k]} ${alreadySelected ? 'selected' : ''}"
-            ${!canTake2 || !isPlayerTurn ? 'disabled style="opacity:0.08;"' : ''}
-            onclick="toggleSelectSame('${k}')">
-          </button>
-          <span class="token-count-label">庫存:${fullState.bank[k]}</span>
-        </div>
-      `;
-    }).join('');
+  // ── 🎯 任務優化：動態按鈕決策亮起連動控制組 ──
+  let selectedCount = 0;
+  if (fullState.selectedDiff && fullState.selectedDiff.length > 0) {
+    selectedCount = fullState.selectedDiff.length;
+  } else if (fullState.selectedSame) {
+    selectedCount = 1; 
   }
 
   const btnDiff = document.getElementById('btn-do-diff');
   const btnSame = document.getElementById('btn-do-same');
-  if (btnDiff) btnDiff.disabled = !isPlayerTurn || fullState.selectedDiff.length === 0;
-  if (btnSame) btnSame.disabled = !isPlayerTurn || !fullState.selectedSame;
+
+  if (selectedCount === 1) {
+    // 點擊 1 個寶石時，異色拿3個與同色拿2個按鈕都會亮起可觸發
+    btnDiff.disabled = !isPlayerTurn;
+    btnSame.disabled = !isPlayerTurn;
+  } else if (selectedCount === 2 || selectedCount === 3) {
+    // 點擊 2 個或 3 個顏色時，僅亮起「拿取三個不同顏色寶石」
+    btnDiff.disabled = !isPlayerTurn;
+    btnSame.disabled = true;
+  } else {
+    // 未選擇時全部灰化
+    btnDiff.disabled = true;
+    btnSame.disabled = true;
+  }
 
   requestAnimationFrame(() => setupIdleCardAnimations());
 }
 
+// ── 🎯 任務優化：按鈕連動的智慧點擊分流控制器 ──
+window.handleBankGemClick = function(color) {
+  if (CoreState.get().currentTurnOwner !== 'player') return;
+  const state = CoreState.get();
+  document.getElementById('error-msg').textContent = '';
+
+  // 如果原本是用同色拿取狀態，先清空
+  if (state.selectedSame && state.selectedSame !== color) {
+    state.selectedSame = null;
+  }
+
+  const diffIdx = state.selectedDiff.indexOf(color);
+  if (diffIdx > -1) {
+    // 重複點選則取消選取
+    state.selectedDiff.splice(diffIdx, 1);
+    if (document.getElementById('sfx-unselect') && !state.settings.isSfxMuted) document.getElementById('sfx-unselect').play();
+  } else {
+    // 如果之前是亮起同色的按鈕，此時改為多選累加
+    if (state.selectedDiff.length === 0 && state.selectedSame === color) {
+      state.selectedDiff.push(color);
+      state.selectedSame = null;
+    } else {
+      if (state.selectedDiff.length >= 3) state.selectedDiff.shift();
+      state.selectedDiff.push(color);
+    }
+    // 同步把選取單色投射到同色備選器，達成1個寶石雙按鈕皆亮起的架構
+    if (state.selectedDiff.length === 1) {
+      state.selectedSame = color;
+    } else {
+      state.selectedSame = null;
+    }
+    playUniformSfx();
+  }
+  render();
+};
+
 function setupIdleCardAnimations() {
   const currentCardIds = new Set();
-  
   document.querySelectorAll('.board-matrix .card[data-affordable="true"]').forEach((el, i) => {
-    const cardId = el.id || '';
-    if (!cardId) return;
-    
+    const cardId = el.id || ''; if (!cardId) return;
     const pureId = cardId.replace('dom-card-', '');
     if (activeFlyingCardIds.has(pureId)) return; 
-    
     currentCardIds.add(cardId);
-    
     if (window._idleTweensMap.has(cardId)) {
       const existingTween = window._idleTweensMap.get(cardId);
-      if (existingTween && !existingTween.killed) {
-        return; 
-      }
+      if (existingTween && !existingTween.killed) return; 
       window._idleTweensMap.delete(cardId); 
     }
-    
     gsap.killTweensOf(el);
     gsap.set(el, { y: 0, rotation: 0 });
-    
-    const tween = gsap.to(el, {
-      y: -6,
-      rotation: 0.8,
-      duration: 1.6 + (i % 4) * 0.18,
-      repeat: -1,
-      yoyo: true,
-      ease: "sine.inOut",
-      delay: (i % 4) * 0.3
-    });
+    const tween = gsap.to(el, { y: -5, rotation: 0.6, duration: 1.5 + (i % 4) * 0.15, repeat: -1, yoyo: true, ease: "sine.inOut", delay: (i % 4) * 0.2 });
     window._idleTweensMap.set(cardId, tween);
   });
-
   for (const [id, tween] of window._idleTweensMap.entries()) {
-    if (!currentCardIds.has(id)) {
-      tween.kill();
-      window._idleTweensMap.delete(id);
-      
-      const el = document.getElementById(id);
-      if (el) gsap.set(el, { y: 0, rotation: 0 });
-    }
+    if (!currentCardIds.has(id)) { tween.kill(); window._idleTweensMap.delete(id); const el = document.getElementById(id); if (el) gsap.set(el, { y: 0, rotation: 0 }); }
   }
 }
 
-window.handleBannerZoneClick = function() {
-  if (!CoreState) return;
-  playUniformSfx();
-  const m = CoreState.get().mode;
-  if (m === 'singlePlayer') {
-    window.openAchievementHistory();
-  } else if (m === 'storyMode') {
-    if (window.StoryMode) {
-      window.StoryMode.openStoryMapModal();
-    }
-  }
-};
-
-window.toggleSelectDiff = function(color) {
-  if(CoreState.get().currentTurnOwner !== 'player') return;
-  // ── 🎯 任務修正：新增故事動畫層顯式守衛 ──
-  const storyLayerEl = document.getElementById('story-layer');
-  if (storyLayerEl && storyLayerEl.style.display !== 'none') return;
-
-  document.getElementById('error-msg').textContent = '';
-  const state = CoreState.get();
-  
-  let currentTotalTokens = 0;
-  for (let k in state.player.tokens) currentTotalTokens += state.player.tokens[k];
-  if (currentTotalTokens >= 10) return;
-
-  state.selectedSame = null;
-  
-  const idx = state.selectedDiff.indexOf(color);
-  if (idx > -1) {
-    state.selectedDiff.splice(idx, 1);
-    const sfxUnselectEl = document.getElementById('sfx-unselect');
-    if (sfxUnselectEl && !state.settings.isSfxMuted) sfxUnselectEl.play();
-  } else {
-    if (state.selectedDiff.length >= 3) state.selectedDiff.shift();
-    state.selectedDiff.push(color);
-    playUniformSfx();
-  }
-  render();
-};
-
-window.toggleSelectSame = function(color) {
-  if(CoreState.get().currentTurnOwner !== 'player') return;
-  // ── 🎯 任務修正：新增故事動畫層顯式守衛 ──
-  const storyLayerEl = document.getElementById('story-layer');
-  if (storyLayerEl && storyLayerEl.style.display !== 'none') return;
-
-  document.getElementById('error-msg').textContent = '';
-  const state = CoreState.get();
-  
-  let currentTotalTokens = 0;
-  for (let k in state.player.tokens) currentTotalTokens += state.player.tokens[k];
-  if (currentTotalTokens >= 10) return;
-
-  state.selectedDiff = [];
-  
-  if (state.selectedSame === color) {
-    state.selectedSame = null;
-    const sfxUnselectEl = document.getElementById('sfx-unselect');
-    if (sfxUnselectEl && !state.settings.isSfxMuted) sfxUnselectEl.play();
-  } else {
-    state.selectedSame = color;
-    playUniformSfx();
-  }
-  render();
-};
-
-// ==========================================
-// 📥 封裝全25關完整的視覺小說動畫模組
-// ==========================================
-window.storyModule = {
-    gameStages: {
-        1: { chapter: "👑 第一章：微光村的石匠（第 1 - 5 關）", title: "第 1 關：初入礦脈", bg: "微光村的後山藏著廢棄的紅岩礦床。老內政官傑洛米提著油燈攔住你，不屑地看著你手中的劣質鑿子，要你證明基本的經商手段。", condition: "25回合內威望達到15分（無AI）", name: "內政官 傑洛米", text: "年輕人，這片紅岩礦不歡迎空有熱血的傻瓜。在 25 回合內拿到 15 分，我就承認你是個合格的學徒。" },
-        2: { chapter: "👑 第一章：微光村的石匠（第 1 - 5 關）", title: "第 2 關：稅率與翡翠", bg: "你帶著紅寶石敲開了鎮公所的大門。刻薄的財政卿薇多莉亞正為當季的綠寶石稅收發愁，她決定用高額的稅率刁難你這個外來者。", condition: "達到15分，且紅寶石籌碼拿取/使用少於8顆", name: "財政卿 薇多莉亞", text: "噢？聽說傑洛米看好你？但我的帳本只認實力。這局你的紅寶石籌碼被課了重稅，少用點紅寶石，拿到 15 分給我看！" },
-        3: { chapter: "👑 第一章：微光村的石匠（第 1 - 5 關）", title: "第 3 關：鐵血的訂單", bg: "守備隊的赫克特騎士需要大量黑曜石來打造新兵的重甲。然而市場上的黑曜石被全面封鎖，你必須學會利用「保留契約」暗中囤積。", condition: "達到15分，且成功執行「保留並買下」至少3次", name: "鐵血騎士 赫克特", text: "商會那群禿鷹把黑曜石的合約藏得死死的！小傢伙，用你的保密合約（保留卡牌）幫我截獲 3 張高級產業，軍隊少不了你的好處！" },
-        4: { chapter: "👑 第一章：微光村的石匠（第 1 - 5 關）", title: "第 4 關：聖光的試煉", bg: "地方教堂正要修繕白璧聖堂，聖騎士羅蘭德負責監督。他要求這批寶石必須色澤純淨，不允許任何投機取巧的黃金假人參雜其中。", condition: "達到15分，且整局禁止使用黃金籌碼", name: "聖騎士 羅蘭德", text: "光明不容虛假。聽聞你精通商道，但這一次，我不許你在交易中使用任何一枚投機的黃金籌碼。純靠實力來見我吧。" },
-        5: { chapter: "👑 第一章：微光村的石匠（第 1 - 5 關）", title: "第 5 關：王后的深藍生辰", bg: "微光村迎來了微服出巡的桂妮薇兒王后。她聽聞了你的名聲，指名要見識一下五色俱全的「基礎寶石交響曲」，作為她的生辰賀禮。", condition: "達到15分，且通關時5色卡片數量皆 >= 2張", name: "璀璨王后 桂妮薇兒", text: "絢麗的頂級物業固然耀眼，但真正的大師能把底層的基礎原石搭配得完美無瑕。孩子，讓我看看你的基本功。" },
-        6: { chapter: "🦁 第二章：橡木鎮的崛起商賈（第 6 - 10 關）", title: "第 6 關：雄獅的胃口", bg: "橡木鎮的領主亞瑟子爵是一位野心勃勃的擴張主義者。他舉辦了一場商賈晚宴，限時讓所有人交出成績單，只有最快拿到分數的人才能留下。", condition: "限制20回合內威望達到15分", name: "帝國雄獅 亞瑟", text: "我的軍隊每天都在燒錢，商會不需要慢吞吞的牛車！20 回合內拿不下 15 分的人，就給我滾出橡木鎮！" },
-        7: { chapter: "🦁 第二章：橡木鎮的崛起商賈（第 6 - 10 關）", title: "第 7 關：暗夜的密盟", bg: "黑市的影子統治者查理曼在暗巷攔住了你。他看中了你的潛力，但也警告你，手上的財富太過招搖會引來殺身之禍，必須輕裝上陣。", condition: "達到15分，且任何回合結束時背包籌碼不超過6顆", name: "密盟密使 查理曼", text: "小傢伙，聽說亞瑟給了你特權？但在黑市，胃口太大只會撐死。把你的隨身錢包縮小，拿滿 15 分給我看看。" },
-        8: { chapter: "🦁 第二章：橡木鎮的崛起商賈（第 6 - 10 關）", title: "第 8 關：火山重工的訂單", bg: "鎮上唯一的傳奇鐵匠瓦肯正在打造皇家聖器。他脾氣火爆，拒絕收購任何低階的碎石卡片，他只要最高階的物業投資。", condition: "達到15分，且整局禁止購買任何Lv1發展卡", name: "傳奇鐵匠 瓦肯", text: "別拿那些 Lv1 的破爛玩意來髒了我的鐵匠鋪！想跟我做生意，就純靠高級產業（Lv2/Lv3）把分數湊到 15 分！" },
-        9: { chapter: "🦁 第二章：橡木鎮的崛起商賈（第 6 - 10 關）", title: "第 9 關：雙色協奏曲", bg: "宮廷樂長塞巴斯蒂安來到鎮上尋找靈感。他認為經商就如同拉琴，講究雙音的和諧，他要求你的資產必須呈現完美的雙色極致。", condition: "達到15分，且最終名下只能有黑與白卡", name: "大提琴家 塞巴斯蒂安", text: "雜亂的顏色是噪音。這局遊戲，我只要看到你發展黑與白（k 與 w）的產業，其餘顏色的卡片不准出現在你的名下。" },
-        10: { chapter: "🦁 第二章：橡木鎮的崛起商賈（第 6 - 10 關）", title: "第 10 關：沙漠商隊的門檻", bg: "來自遙遠絲路的阿里帶著巨大的駱駝商隊駐紮在鎮外。他見過無數大風大浪，普通的財富根本打動不了他，只有金光閃閃的黃金能讓他多看一眼。", condition: "達到15分，且通關時手上持有至少4枚黃金籌碼", name: "異域商賈 阿里", text: "我的駱駝馱滿了香料與翡翠。年輕人，聽說你最近很風光？如果你能不靠那些花花綠綠的石頭，光靠黃金鋪路拿下 15 分，我就與你簽約。" },
-        11: { chapter: "🌲 第三章：巨石要塞的邊境商戰（第 11 - 15 關）", title: "第 11 關：占星師的金融風暴", bg: "巨石要塞遭遇了星象異變，引發了強烈的信用通膨。占星師露娜封鎖了銀行的實體籌碼，你必須學會「空手套白狼」的永續鏈。", condition: "25回合內達到15分（銀行普通籌碼初始全為2顆）", name: "皇家占星師 露娜", text: "星辰預示著匱乏。這一局，銀行的每種普通籌碼庫存都只有 2 顆！你必須依賴你以前累積的產業減免，才能活下去。" },
-        12: { chapter: "🌲 第三章：巨石要塞的邊境商戰（第 11 - 15 關）", title: "第 12 關：鍊金術的對決", bg: "要塞裡的科學家帕拉塞爾斯不相信凡人的經商手段，他研發了一個能自動計算最優解的「鍊金傀儡 AI」。你必須在商戰中擊敗 his 造物。", condition: "與初階 AI 對決並獲得勝利（比AI先達15分）", name: "鍊金術師 帕拉塞爾斯", text: "真理只存在於算式中。我的自動傀儡會搶走所有高價值的卡牌。來吧，在它將你吞噬之前，先拿到 15 分！" },
-        13: { chapter: "🌲 第三章：巨石要塞的邊境商戰（第 11 - 15 關）", title: "第 13 關：地下領主的黃金稅", bg: "矮人國王索林統治著要塞底部的金庫。他是一個不折不扣的守財奴，他宣布所有買卡的交易都必須支付昂貴的黃金手續費。", condition: "最終分數必須「剛好等於 15 分」，超過直接算輸", name: "地下領主 索林", text: "想在我的地盤買卡？沒問題！但每張卡你都必須額外支付黃金，除非你能展現驚人的精算，讓最終分數剛好完美符合我的幸運數字！" },
-        14: { chapter: "🌲 第三章：巨石要塞的邊境商戰（第 11 - 15 關）", title: "第 14 關：遊俠的森林限速", bg: "邊境森林遭遇敵襲，精靈遊俠萊戈拉斯奉命戒嚴。他封鎖了林道，留給物資商人的時間轉瞬即逝，你必須發動一場閃電戰。", condition: "極限挑戰！16 回合內威望達到 15 分", name: "精靈遊俠 萊戈拉斯", text: "戰爭不等人，人類。我只給你 16 個回合的時間。如果 16 回合內你無法湊齊軍需（15分），我的箭不會留情。" },
-        15: { chapter: "🌲 第三章：巨石要塞的邊境商戰（第 11 - 15 關）", title: "第 15 關：聖女的奇蹟信譽", bg: "戰火逼近要塞，人心惶惶。聖女貞德在前線振臂高呼，她要求你展現大商賈的氣魄——不消耗任何一枚實體籌碼，光靠你之前累積的產業信用買下卡牌。", condition: "達到15分，且至少3次買卡是「完全沒消耗籌碼」", name: "聖女 貞德", text: "戰士們需要實體寶石當作重鑄武器的原料！商人，證明你的名譽吧，光靠你名下的實業減免，免費收購 3 張卡片給我看！" },
-        16: { chapter: "⚜️ 第四章：翡翠首都的宮廷商戰（第 16 - 20 關）", title: "第 16 關：外交官的引薦信", bg: "想要進入皇家大會堂，必須拿到外交官麥特尼的引薦信。這位政客不看你的錢袋，他只看你名下吸引了多少位封建貴族的認可。", condition: "不限分數，率先獲得 3 位貴族拜訪即可通關", name: "帝國外交官 麥特尼", text: "在首都，滿手銅臭是最下等的。想要我的引薦信？去招攬 3 位貴族老爺來為你的商號背書吧，分數我不在乎。" },
-        17: { chapter: "⚜️ 第四章：翡翠首都的宮廷商戰（第 16 - 20 關）", title: "第 17 關：伯爵夫人的晚宴", bg: "卡蜜拉夫人在她的奢華莊園舉辦了社交晚宴。她喜歡戲劇性的場面，要求前來競標的商賈必須在最後一刻端出令人震驚的龐大資產。", condition: "通關那一回合，必須同時獲得卡片分與貴族分", name: "宮廷伯爵夫人 卡蜜拉", text: "平淡的累積太無趣了。我要你在獲得最後勝利的那一回合，同時觸發卡片得分與貴族拜訪，那才是真正的璀璨藝術。" },
-        18: { chapter: "⚜️ 第四章：翡翠首都的宮廷商戰（第 16 - 20 關）", title: "第 18 關：黑市刺客的截胡", bg: "首都商會的巨頭派出了黑市刺客澤德來暗殺你的商譽。澤德會派出一名「侵略型 AI」，瘋狂保留或搶走你下一手最想買的卡片。", condition: "擊敗侵略型 AI，且整局玩家獲得的貴族分必須為 0", name: "影刃刺客 澤德", text: "你的每一步都在我的陰影凝視之下。聽說你擅長外交？很遺憾，這一局貴族們被我恐嚇了，你拿不到任何貴族分！" },
-        19: { chapter: "⚜️ 第四章：翡翠首都的宮廷商戰（第 16 - 20 關）", title: "第 19 關：新大陸的黃金潮", bg: "大航海家麥哲倫帶著海外殖民地的巨額財富歸國，引發了新一輪的壟斷潮。市場風向大變，所有低階 Lv1 卡片全部被海外物資充垮。", condition: "達20分，移除Lv1卡，且有名下至少3張>=4分的卡", name: "大航海家 麥哲倫", text: "海外财富超乎想像！小打小鬧的時代結束了，這局遊戲沒有 Lv1 卡片，且你必須拿下 3 張價值 4 分以上的頂級物業！" },
-        20: { chapter: "⚜️ 第四章：翡翠首都的宮廷商戰（第 16 - 20 關）", title: "第 20 關：大文豪的末日劇本", bg: "莎士比亞正在撰寫一部名為《資本崩盤》的悲劇。為了尋找靈感，他對你的商號施加了「命運詛咒」，每過數個回合，你的實體財富就會憑空蒸發。", condition: "達到15分，且系統每過 5 個回合隨機扣2枚籌碼", name: "大文豪 莎士比亞", text: "悲劇才是永恆。商人，在每 5 回合就會隨機被國庫充公 2 枚籌碼的絕境下，寫出逆流而上的傳奇史詩吧！" },
-        21: { chapter: "👑 第五章：皇家大會堂的璀璨至尊（第 21 - 25 關）", title: "第 21 關：聖殿騎士團的鐵腕", bg: "掌控帝國經濟命脈的聖殿騎士團長休擋在你的最終王座前。他用鐵腕政策實施了全面禁運，你無法再從銀行獲得任何普通籌碼。", condition: "達15分，且銀行普通籌碼初始庫存全為 0", name: "聖殿騎士團長 休", text: "聖殿金庫接管了市場！這一局，銀行不提供任何普通籌碼，你只能靠開局自帶的資金與保留卡牌獲得的黃金來運轉！" },
-        22: { chapter: "👑 第五章：皇家大會堂的璀璨至尊（第 21 - 25 關）", title: "第 22 關：先知的絕地殘局", bg: "先知卡珊德拉看穿了未來的命運。她擺下了一個你已經陷入破產邊緣、對手卻已經全面領先的「命運殘局」，考驗你是否有扭轉乾坤的器量。", condition: "擊敗高級AI（開局AI自帶8分與4張隨機Lv2卡）", name: "預言者 卡珊德拉", text: "命運已定，你已步入絕地。電腦 AI 開局便擁有 8 分與 4 張高階產業。逆風翻盤吧，撕碎這注定的悲劇！" },
-        23: { chapter: "👑 第五章：皇家大會堂的璀璨至尊（第 21 - 25 關）", title: "第 23 關：大魔導師的五色矩陣", bg: "帝國大賢者梅林在大會堂的中央布下了元素結界。他要求真正的璀璨大師不允許有任何一門學科偏科，必須達到五色均衡的極致。", condition: "威望達20分，且通關時5種顏色永久減免皆 >= 3", name: "大魔導師 梅林", text: "寶石即是元素。水火風雷土，偏廢任何一端都稱不上至尊。通關之時，我要看到你名下五種顏色的永久產量全部跨越界限！" },
-        24: { chapter: "👑 第五章：皇家大會堂的璀璨至尊（第 21 - 25 關）", title: "第 24 關：至高女皇的鐵腕對決", bg: "北方的至高女皇凱薩琳親臨大會堂。她不相信言辭，只崇尚絕對的統治力。她將親自下場，用毫無失誤的神級 AI 算法與你進行終極對決。", condition: "在 vsAI 模式中擊敗「神級 AI」", name: "帝國女皇 凱薩琳", text: "朕的帝國建立在鐵與血之上。面對朕親自操控的神級精算 AI，展現你最完美、不容許出錯的任何一個回合吧！" },
-        25: { chapter: "👑 第五章：皇家大會堂的璀璨至尊（第 21 - 25 關）", title: "第 25 關：皇家大會堂的終極加冕", bg: "大會堂的鐘聲響起，全體 24 位你曾擊敗並收服的夥伴列隊兩旁。王座之上，上一任璀璨至尊大師正靜靜地看著你，等待著你完成這場前無古人的 25 分傳奇加冕。", condition: "威望達到 25 分，且成功吸引至少 2 位貴族進駐", name: "璀璨至尊 大師", text: "從小村莊的石匠，到要塞的奇蹟，再到首都的商戰風雲。你已經集結了所有人才。來吧，超越我，成為新的璀璨至尊！" }
-    },
-    currentStageId: 1,
-    dialogueStep: 0, 
-    isTyping: false,
-    currentTween: null,
-    textObj: { charCount: 0 },
-    onStoryCompleteCallback: null,
-
-    loadStage(stageId, callback) {
-        if (!this.gameStages[stageId]) {
-            if (callback) callback();
-            return;
-        }
-        this.currentStageId = stageId;
-        this.dialogueStep = 0;
-        this.onStoryCompleteCallback = callback;
-
-        const layer = document.getElementById("story-layer");
-        layer.style.opacity = 1;
-        layer.style.display = "flex";
-
-        const stageData = this.gameStages[stageId];
-        document.getElementById("story-chapter-title").innerText = stageData.chapter + " - " + stageData.title;
-        document.getElementById("story-intro-panel").innerText = stageData.bg;
-        document.getElementById("story-condition-badge").innerText = "🏆 目標：" + stageData.condition;
-        
-        document.getElementById("story-char-img").src = `https://images.placeholders.dev/?width=320&height=520&text=No.${stageId}+${encodeURIComponent(stageData.name.split(' ')[1] || stageData.name)}&bgColor=%232c3e50&textColor=%23ffffff`;
-        this.animateCharacterIn();
-    },
-
-    animateCharacterIn() {
-        gsap.fromTo("#story-character", { x: -150, opacity: 0 }, { x: 0, opacity: 1, duration: 1, ease: "power2.out" });
-        this.renderDialogue();
-    },
-
-    renderDialogue() {
-        const stageData = this.gameStages[this.currentStageId];
-        let targetText = "";
-
-        if (this.dialogueStep === 0) {
-            document.getElementById('story-name-tag').innerText = stageData.name;
-            targetText = stageData.text;
-        } else {
-            document.getElementById('story-name-tag').innerText = "系統提示";
-            targetText = `本關挑戰目標：【${stageData.condition}】。準備好就點擊對話框開始挑戰吧！`;
-        }
-
-        if (this.dialogueStep === 0) {
-            gsap.fromTo("#story-character", { y: 0 }, { y: -15, duration: 0.1, yoyo: true, repeat: 1, ease: "power1.inOut" });
-        }
-
-        const textElement = document.getElementById('story-dialogue-text');
-        textElement.innerText = "";
-        this.isTyping = true;
-        this.textObj.charCount = 0;
-
-        this.currentTween = gsap.to(this.textObj, {
-            charCount: targetText.length,
-            duration: targetText.length * 0.04,
-            ease: "none",
-            onUpdate: () => {
-                textElement.innerText = targetText.substr(0, Math.ceil(this.textObj.charCount));
-            },
-            onComplete: () => {
-                this.isTyping = false;
-            }
-        });
-    },
-
-    nextDialogue() {
-        if (this.isTyping) {
-            if (this.currentTween) this.currentTween.progress(1);
-            return;
-        }
-        if (this.dialogueStep === 0) {
-            this.dialogueStep = 1;
-            this.renderDialogue();
-        } else {
-            this.endStory();
-        }
-    },
-
-    endStory() {
-        gsap.to("#story-layer", { 
-            opacity: 0, 
-            duration: 0.5, 
-            onComplete: () => {
-                document.getElementById("story-layer").style.display = "none";
-                if (typeof this.onStoryCompleteCallback === "function") {
-                    this.onStoryCompleteCallback();
-                }
-            }
-        });
-    }
-};
-
 window.handleMusicToggle = () => ActionDispatcher.dispatch('TOGGLE_MUSIC');
 window.handleSfxToggle = () => ActionDispatcher.dispatch('TOGGLE_SFX');
+
 window.handleDoDiffClick = function() {
   const state = CoreState.get();
-  if (state.selectedDiff.length === 0) return;
+  if (!state.selectedDiff || state.selectedDiff.length === 0) return;
   playActionGemSfx();
   const colors = [...state.selectedDiff];
-  state.selectedDiff = [];      
-  state.selectedSame = null;
+  state.selectedDiff = []; state.selectedSame = null;
   ActionDispatcher.dispatch('TAKE_DIFF', { colors });
 };
 
@@ -772,58 +563,38 @@ window.handleDoSameClick = function() {
   if (!state.selectedSame) return;
   playActionGemSfx();
   const color = state.selectedSame;
-  state.selectedSame = null;    
-  state.selectedDiff = [];
+  state.selectedSame = null; state.selectedDiff = [];
   ActionDispatcher.dispatch('TAKE_SAME', { color });
 };
 
 window.buyBoardCard = function(level, idx) {
-  const card = CoreState.get().board[level][idx];
-  if (!card) return;
-
-  const cardId = String(card.id);
-  if (activeFlyingCardIds.has(cardId)) return;
-
+  const card = CoreState.get().board[level][idx]; if (!card) return;
+  const cardId = String(card.id); if (activeFlyingCardIds.has(cardId)) return;
   animateCardFlightToGoldVault(cardId, card.provides, () => {
-    if (sfxBuyEl && !CoreState.get().settings.isSfxMuted) {
-      sfxBuyEl.currentTime = 0; sfxBuyEl.play().catch(() => {});
-    }
+    if (sfxBuyEl && !CoreState.get().settings.isSfxMuted) { sfxBuyEl.currentTime = 0; sfxBuyEl.play().catch(() => {}); }
     ActionDispatcher.dispatch('BUY_BOARD', { level, idx });
   });
 };
 
 window.buyReservedCard = function(idx) {
-  const card = CoreState.get().player.reserved[idx];
-  if (!card) return;
-
-  const cardId = String(card.id);
-  if (activeFlyingCardIds.has(cardId)) return;
-
+  const card = CoreState.get().player.reserved[idx]; if (!card) return;
+  const cardId = String(card.id); if (activeFlyingCardIds.has(cardId)) return;
   animateCardFlightToGoldVault(cardId, card.provides, () => {
-    if (sfxBuyEl && !CoreState.get().settings.isSfxMuted) {
-      sfxBuyEl.currentTime = 0; sfxBuyEl.play().catch(() => {});
-    }
+    if (sfxBuyEl && !CoreState.get().settings.isSfxMuted) { sfxBuyEl.currentTime = 0; sfxBuyEl.play().catch(() => {}); }
     ActionDispatcher.dispatch('BUY_RESERVED', { idx });
   });
 };
 
 window.reserveBoardCard = function(level, idx) {
-  if (sfxReserveEl && !CoreState.get().settings.isSfxMuted) {
-    sfxReserveEl.currentTime = 0; sfxReserveEl.play().catch(() => {});
-  }
+  if (sfxReserveEl && !CoreState.get().settings.isSfxMuted) { sfxReserveEl.currentTime = 0; sfxReserveEl.play().catch(() => {}); }
   ActionDispatcher.dispatch('RESERVE_CARD', { level, idx });
 };
 
 window.openGameOptionsModal = () => {
-  const s = CoreState.get().settings;
-  const m = CoreState.get().mode;
-  document.getElementById('menu-toggle-music').textContent = s.isMusicMuted ? "🔇 背景音樂：靜音" : "🎵 背景音樂：開啟";
-  document.getElementById('menu-toggle-sfx').textContent = s.isSfxMuted ? "🔇 遊戲音效：靜音" : "🔊 遊戲音效：開啟";
-  
+  const s = CoreState.get().settings; const m = CoreState.get().mode;
   document.getElementById('mode-btn-single').classList.toggle('active', m === 'singlePlayer');
   document.getElementById('mode-btn-ai').classList.toggle('active', m === 'vsAI');
   document.getElementById('mode-btn-story').classList.toggle('active', m === 'storyMode');
-  
   document.getElementById('game-options-modal').classList.add('show');
 };
 
@@ -832,15 +603,10 @@ window.closeWinModal = () => { document.getElementById('win-modal').classList.re
 window.restartGame = () => { document.getElementById('win-modal').classList.remove('show'); ActionDispatcher.dispatch('INIT_GAME'); };
 
 window.openTalentPoolModal = () => { 
-  import('./core/assistantData.js').then(m => {
-    m.AssistantManager.renderTalentPoolModalUI(); 
-    document.getElementById('talent-pool-modal').classList.add('show'); 
-  });
+  import('./core/assistantData.js').then(m => { m.AssistantManager.renderTalentPoolModalUI(); document.getElementById('talent-pool-modal').classList.add('show'); });
 };
-
 window.closeTalentPoolModal = () => { 
-  document.getElementById('talent-pool-modal').classList.remove('show'); 
-  import('./core/assistantData.js').then(m => m.AssistantManager.renderActiveAssistantUI()); 
+  document.getElementById('talent-pool-modal').classList.remove('show'); import('./core/assistantData.js').then(m => m.AssistantManager.renderActiveAssistantUI()); 
 };
 
 window.openAchievementHistory = () => SingleMode.openAchievementHistory();
@@ -858,7 +624,7 @@ function showStepData(stepIdx) {
     document.getElementById('floating-tutorial-widget-header').textContent = step.title;
     document.getElementById('floating-tutorial-text').textContent = step.text;
   }
-  document.getElementById('floating-tutorial-dots').innerHTML = TUTORIAL_STEPS_DATA.map((_, i) => `<div class="t-dot ${i === stepIdx ? 'active' : ''}\"></div>`).join('');
+  document.getElementById('floating-tutorial-dots').innerHTML = TUTORIAL_STEPS_DATA.map((_, i) => `<div class="t-dot ${i === stepIdx ? 'active' : ''}"></div>`).join('');
   document.getElementById('floating-tutorial-next-btn').textContent = stepIdx === TUTORIAL_STEPS_DATA.length - 1 ? "進入大會堂" : "下一步";
 }
 
@@ -873,7 +639,6 @@ window.nextFloatingStep = () => {
 
 window.addEventListener('DOMContentLoaded', async () => {
   setDynamicVh();
-  
   audioEl = document.getElementById('bg-music');
   sfxGemEl = document.getElementById('sfx-gem');
   sfxBuyEl = document.getElementById('sfx-buy');
@@ -902,3 +667,32 @@ window.addEventListener('DOMContentLoaded', async () => {
 });
 
 window.addEventListener('resize', setDynamicVh);
+
+// 封裝 25 關視覺小說模組 (保持原代碼完全不動)
+window.storyModule = {
+    gameStages: {
+        1: { chapter: "👑 第一章", title: "第 1 關", bg: "微光村礦床", condition: "15分", name: "傑洛米", text: "合格學徒" },
+        2: { chapter: "👑 第一章", title: "第 2 關", bg: "鎮公所發愁", condition: "少於8顆紅寶石", name: "薇多莉亞", text: "課重稅" }
+    },
+    currentStageId: 1, dialogueStep: 0, isTyping: false, currentTween: null, textObj: { charCount: 0 }, onStoryCompleteCallback: null,
+    loadStage(stageId, callback) {
+        if (!this.gameStages[stageId]) { if (callback) callback(); return; }
+        this.currentStageId = stageId; this.dialogueStep = 0; this.onStoryCompleteCallback = callback;
+        const layer = document.getElementById("story-layer"); layer.style.opacity = 1; layer.style.display = "flex";
+        const stageData = this.gameStages[stageId];
+        document.getElementById("story-chapter-title").innerText = stageData.chapter + " - " + stageData.title;
+        document.getElementById("story-intro-panel").innerText = stageData.bg;
+        document.getElementById("story-condition-badge").innerText = "🏆 目標：" + stageData.condition;
+        document.getElementById("story-char-img").src = `https://images.placeholders.dev/?width=320&height=520&text=No.${stageId}&bgColor=%232c3e50&textColor=%23ffffff`;
+        this.animateCharacterIn();
+    },
+    animateCharacterIn() { gsap.fromTo("#story-character", { x: -150, opacity: 0 }, { x: 0, opacity: 1, duration: 1, ease: "power2.out" }); this.renderDialogue(); },
+    renderDialogue() {
+        const stageData = this.gameStages[this.currentStageId]; let targetText = this.dialogueStep === 0 ? stageData.text : "準備挑戰！";
+        document.getElementById('story-name-tag').innerText = stageData.name;
+        const textElement = document.getElementById('story-dialogue-text'); textElement.innerText = ""; this.isTyping = true; this.textObj.charCount = 0;
+        this.currentTween = gsap.to(this.textObj, { charCount: targetText.length, duration: targetText.length * 0.04, ease: "none", onUpdate: () => { textElement.innerText = targetText.substr(0, Math.ceil(this.textObj.charCount)); }, onComplete: () => { this.isTyping = false; } });
+    },
+    nextDialogue() { if (this.isTyping) { if (this.currentTween) this.currentTween.progress(1); return; } if (this.dialogueStep === 0) { this.dialogueStep = 1; this.renderDialogue(); } else { this.endStory(); } },
+    endStory() { gsap.to("#story-layer", { opacity: 0, duration: 0.5, onComplete: () => { document.getElementById("story-layer").style.display = "none"; if (typeof this.onStoryCompleteCallback === "function") this.onStoryCompleteCallback(); } }); }
+};
