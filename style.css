@@ -391,16 +391,19 @@ html, body {
 .rule-box { text-align: left; background: rgba(0,0,0,0.4); border: 1px solid rgba(212,175,55,0.15); padding: 12px; border-radius: 6px; margin: 12px 0; font-size: 0.85rem; line-height: 1.6; }
 .btn-replay { width: 100%; padding: 10px; background: linear-gradient(180deg, #d4af37, #8a6418); color: #FFF; border: none; border-radius: 4px; font-weight: 700; cursor: pointer; margin-top: 12px; font-size:0.85rem; }
 
-/* ── 🎯 終極修復：當大overlay不具有.show類名時，物理級強制使其消失，釋放所有滑鼠點擊穿透 ── */
-.modal-overlay {
-  transition: opacity 0.3s ease, visibility 0.3s ease;
+/* ── 🎯 終極修復：將教學相關元件與遮罩的物理權限強制拉升至宇宙最高 ── */
+.modal-overlay[id*="tutorial"],
+.modal-overlay[id*="start"] {
+  z-index: 10000000 !important; /* 凌駕於故事動畫層 999999 之上 */
+  pointer-events: auto !important;
 }
 
+/* 當任何 overlay 不具有 .show 類名時，必須使用 display: none 從 DOM 物理層面徹底抹除 */
 .modal-overlay:not(.show) {
   opacity: 0 !important;
   visibility: hidden !important;
   pointer-events: none !important;
-  display: none !important; /* 物理級抹除，確保絕對不擋路 */
+  display: none !important; 
 }
 
 .tutorial-highlight { 
@@ -408,13 +411,13 @@ html, body {
   box-shadow: 0 0 30px rgba(255, 204, 0, 0.6) !important; 
   transition: all 0.3s ease; 
   position: relative !important; 
-  z-index: 9999999 !important; 
+  z-index: 10000001 !important; /* 教學高亮元件置頂 */
   pointer-events: auto !important; 
 }
 
 #floating-tutorial-widget { 
   position: fixed !important; 
-  z-index: 99999999 !important; 
+  z-index: 10000002 !important; /* 教學說明框擁有絕對最高權限 */
   pointer-events: auto !important; 
 }
 
@@ -428,7 +431,7 @@ html, body {
   font-weight: 800; 
   cursor: pointer; 
   box-shadow: 0 2px 6px rgba(0,0,0,0.5); 
-  pointer-events: auto !important; 
+  pointer-events: auto !important; /* 強制激活滑鼠事件 */
 }
 
 .t-dot { width: 8px; height: 8px; border-radius: 50%; background: rgba(255, 204, 0, 0.2); }
@@ -642,7 +645,7 @@ html, body {
   .ach-modal { max-height: 85vh !important; width: 95% !important; }
 }
 
-/* ── 【展演層：最高級隔離配置】 ── */
+/* ── 【展演層】 ── */
 #story-layer {
   position: fixed;
   top: 0;
