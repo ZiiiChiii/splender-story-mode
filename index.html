@@ -3,16 +3,14 @@
 <head>
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover" />
-<title>璀璨寶石 — 皇家大會堂</title>
+<title>璀璨寶石 — 皇家大會堂 (終極整合版)</title>
 <link rel="preconnect" href="https://fonts.googleapis.com" />
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
 <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@700;900&family=Orbitron:wght@700;900&family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
-
 <link rel="stylesheet" href="style.css">
-
 <script src="https://cdn.jsdelivr.net/npm/gsap@3.12.5/dist/gsap.min.js"></script>
 <style>
-    /* ── 📥 視覺小說故事劇場專專屬樣式 ── */
+    /* 📥 視覺小說故事劇場專屬樣式 */
     #story-layer {
         position: fixed;
         top: 0;
@@ -64,6 +62,20 @@
 <audio id="sfx-ach-expert" src="https://assets.mixkit.co/active_storage/sfx/2063/2063-preview.mp3"></audio>
 <audio id="sfx-ach-master" src="https://assets.mixkit.co/active_storage/sfx/2059/2059-preview.mp3"></audio>
 
+<div id="story-layer">
+    <div class="story-chapter-title" id="story-chapter-title">章節加載中...</div>
+    <div class="story-intro-panel" id="story-intro-panel">背景故事加載中...</div>
+    <div class="story-character-container" id="story-character">
+        <img class="story-character-img" id="story-char-img" alt="角色立繪">
+    </div>
+    <div class="story-dialogue-box" id="story-dialogue-box" onclick="window.storyModule.nextDialogue()">
+        <div class="story-name-tag" id="story-name-tag">???</div>
+        <div class="story-condition-badge" id="story-condition-badge">通關條件</div>
+        <div class="story-dialogue-text" id="story-dialogue-text">...</div>
+        <div class="story-click-hint">▼ 點擊繼續</div>
+    </div>
+</div>
+
 <div id="effects-layer"></div>
 
 <div class="shell">
@@ -84,75 +96,81 @@
   <div class="achievement-banner" id="dynamic-banner-zone" onclick="window.handleBannerZoneClick()">
     <div class="ach-latest-container" style="width: 100%;">
       <span class="ach-badge-title" id="dynamic-banner-badge">加載中</span>
-      <div class="ach-latest-display" id="dynamic-banner-text" style="color: #fff; font-size: 0.85rem; line-height: 1.3;">🏆 殿堂核心加載中...</div>
+      <div class="ach-latest-display" id="dynamic-banner-text">🏆 殿堂核心加載中...</div>
     </div>
   </div>
 
-  <div style="display: flex; gap: 12px; flex: 1; min-height: 0; margin-bottom: 6px; align-items: stretch;">
+  <div class="main-battlefield">
     
-    <section class="action-panel" id="guide-actions" style="width: 150px; flex-shrink: 0; display: flex; flex-direction: column; justify-content: space-between; padding: 8px; margin-bottom: 0;">
-      <div style="font-size:0.65rem; color:#ffe099; font-weight:800; text-align:center; border-bottom:1px dashed rgba(255,255,255,0.15); padding-bottom:4px; margin-bottom:4px;">🪙 鑄幣交易局</div>
-      
-      <div id="unified-bank-selectors" style="display: grid; grid-template-columns: 1fr; gap: 5px; flex: 1; padding: 2px 0; overflow-y:auto;"></div>
-      
-      <div style="display: flex; flex-direction: column; gap: 5px; margin-top: auto; padding-top: 6px; border-top:1px dashed rgba(255,255,255,0.15);">
-        <button class="btn-primary" id="btn-do-diff" style="font-size:0.6rem; padding:6px 2px; line-height:1.2;" disabled onclick="handleDoDiffClick()">收下 (3色)</button>
-        <button class="btn-primary" id="btn-do-same" style="font-size:0.6rem; padding:6px 2px; line-height:1.2;" disabled onclick="handleDoSameClick()">收下 (2色)</button>
+    <section class="action-panel" id="guide-actions">
+      <div class="action-panel-title">🪙 鑄幣交易局</div>
+      <div id="unified-bank-selectors" class="unified-bank-grid"></div>
+      <div class="action-execute-zone">
+        <button class="btn-primary" id="btn-do-diff" disabled onclick="handleDoDiffClick()">收下 (3色)</button>
+        <button class="btn-primary" id="btn-do-same" disabled onclick="handleDoSameClick()">收下 (2色)</button>
       </div>
-      <div class="msg-box" id="error-msg" style="min-height:0; margin-top:2px; line-height:1.1; font-size:0.55rem;"></div>
+      <div class="msg-box" id="error-msg"></div>
     </section>
 
-    <div class="board-matrix" id="guide-matrix" style="flex: 1; min-height: 0; display: flex; flex-direction: column; gap: 2px;">
+    <div class="board-matrix" id="guide-matrix">
       
-      <section class="nobles-section" id="guide-nobles" style="margin-bottom: 4px; padding: 2px 0; border-bottom: 1px dashed rgba(212,175,55,0.2);">
-        <div style="font-size: 0.6rem; color: #ffe099; font-weight: 700; margin-bottom: 2px; text-transform: uppercase; padding-left: 6px;">⚜️ 議事堂出席覲見貴族</div>
-        <div class="nobles-grid" id="nobles-layer" style="gap: 8px;"></div>
+      <section class="nobles-section" id="guide-nobles">
+        <div class="nobles-title">⚜️ 議事堂出席覲見貴族</div>
+        <div class="nobles-grid" id="nobles-layer"></div>
       </section>
 
-      <div class="board-row" style="flex: 1; min-height: 0; display: flex; flex-direction: column;">
-        <div class="row-header lv3" style="margin-bottom: 2px;"><span class="section-title" style="color:#d4af37; font-weight:700; font-size:0.65rem;">頂級物業 (Lv3)</span><span class="deck-count" id="deck-lv3-txt">剩餘: 0</span></div>
-        <div class="grid-4" id="row-lv3" style="flex: 1; min-height: 0; gap: 4px;"></div>
+      <div class="board-row">
+        <div class="row-header lv3">
+          <span class="section-title" style="color:#d4af37;">頂級物業 (Lv3)</span>
+          <span class="deck-count" id="deck-lv3-txt">剩餘: 0</span>
+        </div>
+        <div class="grid-4" id="row-lv3"></div>
       </div>
       
-      <div class="board-row" style="flex: 1; min-height: 0; display: flex; flex-direction: column;">
-        <div class="row-header lv2" style="margin-bottom: 2px;"><span class="section-title" style="color:#b0b5b8; font-weight:700; font-size:0.65rem;">中階產業 (Lv2)</span><span class="deck-count" id="deck-lv2-txt">剩餘: 0</span></div>
-        <div class="grid-4" id="row-lv2" style="flex: 1; min-height: 0; gap: 4px;"></div>
+      <div class="board-row">
+        <div class="row-header lv2">
+          <span class="section-title" style="color:#b0b5b8;">中階產業 (Lv2)</span>
+          <span class="deck-count" id="deck-lv2-txt">剩餘: 0</span>
+        </div>
+        <div class="grid-4" id="row-lv2"></div>
       </div>
       
-      <div class="board-row" style="flex: 1; min-height: 0; display: flex; flex-direction: column;">
-        <div class="row-header lv1" style="margin-bottom: 2px;"><span class="section-title" style="color:#a1704a; font-weight:700; font-size:0.65rem;">基礎礦脈 (Lv1)</span><span class="deck-count" id="deck-lv1-txt">剩餘: 0</span></div>
-        <div class="grid-4" id="row-lv1" style="flex: 1; min-height: 0; gap: 4px;"></div>
+      <div class="board-row">
+        <div class="row-header lv1">
+          <span class="section-title" style="color:#a1704a;">基礎礦脈 (Lv1)</span>
+          <span class="deck-count" id="deck-lv1-txt">剩餘: 0</span>
+        </div>
+        <div class="grid-4" id="row-lv1"></div>
       </div>
     </div>
-
   </div>
 
-  <div class="dashboard-container" id="guide-dashboard" style="margin-top: auto; padding-top: 6px; border-top: 1px dashed rgba(255,255,255,0.15); display: flex; gap: 10px; align-items: stretch; height: 105px; flex-shrink: 0;">
-    <section class="dashboard" style="flex: 2.5; display: flex; flex-direction: column; justify-content: center; padding: 6px 10px; height: 100%;">
-      <div id="player-dashboard-title" style="font-size:0.6rem; color:#ffe099; font-weight:700; margin-bottom: 2px;">👤 玩家金庫</div>
+  <div class="dashboard-container" id="guide-dashboard">
+    <section class="dashboard">
+      <div id="player-dashboard-title" class="dashboard-title">👤 皇家金庫資產欄</div>
       <div class="res-grid" id="res-layer"></div>
-      <div class="cap-bar" id="cap-txt" style="margin-top: 4px;">背包: 0 / 10</div>
+      <div class="cap-bar" id="cap-txt">背包: 0 / 10</div>
       
-      <div id="ai-dashboard-box" style="display:none; border-top:1px dashed rgba(255,255,255,0.15); padding-top:2px; margin-top:2px;">
-        <div style="font-size:0.55rem; color:#e74c3c; font-weight:700; margin-bottom:1px;">🤖 電腦 AI 金庫 (分數: <span id="ai-score-txt">0</span>)</div>
+      <div id="ai-dashboard-box" style="display:none;">
+        <div class="ai-dashboard-title">🤖 電腦 AI 金庫 (分數: <span id="ai-score-txt">0</span>)</div>
         <div class="res-grid" id="ai-res-layer"></div>
       </div>
     </section>
     
-    <section class="earned-nobles-panel" style="flex: 1.6; padding: 6px; min-width: 130px; height: 100%; display: flex; flex-direction: column; justify-content: space-between;">
-      <div style="display: flex; flex-direction: column; gap: 2px;">
-        <div class="earned-nobles-title" style="color: #ffe099; font-size: 0.55rem; padding-bottom: 1px;">🤝 首席輔助官</div>
-        <div id="assistant-display-layer" style="display: flex; align-items: center; gap: 4px;"></div>
+    <section class="earned-nobles-panel">
+      <div class="assistant-wrapper">
+        <div class="panel-sub-title" style="color: #ffe099;">🤝 首席輔助官</div>
+        <div id="assistant-display-layer"></div>
       </div>
-      <div style="display: flex; flex-direction: column; gap: 2px; border-top: 1px dashed rgba(255,255,255,0.1); padding-top: 2px;">
-        <div class="earned-nobles-title" style="font-size: 0.55rem; padding-bottom: 1px;">👑 已拜訪貴族</div>
-        <div class="earned-nobles-list" id="earned-nobles-layer" style="max-height: 35px; overflow-y: auto; gap: 2px;"></div>
+      <div class="nobles-earned-wrapper">
+        <div class="panel-sub-title">👑 已拜訪貴族</div>
+        <div class="earned-nobles-list" id="earned-nobles-layer"></div>
       </div>
     </section>
 
-    <section class="reserved-section" id="guide-reserved" style="flex: 3.5; min-width: 320px; padding: 6px; height: 100%; display: flex; flex-direction: column;">
-      <p class="section-title" style="color:#d4af37; font-size: 0.6rem; text-align: center; margin-bottom: 2px;">🔒 保密保留完整契約手牌區</p>
-      <div class="grid-4" id="reserved-layer" style="display: grid; grid-template-columns: repeat(4, 1fr); gap: 4px; flex: 1; min-height: 0;"></div>
+    <section class="reserved-section" id="guide-reserved">
+      <p class="section-title">🔒 機密保留完整契約手牌區 (上限 3 張)</p>
+      <div class="reserved-grid-4" id="reserved-layer"></div>
     </section>
   </div>
 </div>
@@ -210,7 +228,7 @@
 <div class="modal-overlay" id="welcome-back-modal">
   <div class="modal">
     <span style="font-size:2.5rem;">💎</span>
-    <h2 class="modal-title" style="letter-spacing: 0.05em;">璀璨寶石交易殿堂</h2>
+    <h2 class="modal-title" style="letter-spacing: 0.05em;">璀璀璨寶石交易殿堂</h2>
     <p style="font-size:0.95rem; color:#ffe099; line-height:1.6; font-weight:600; margin: 15px 0;">歡迎進入璀璨寶石交易殿堂！</p>
     <p style="font-size:0.82rem; color:var(--text-muted); line-height:1.5; margin-bottom:10px;">皇家對局已鎖定 28 回合終點線。祝您在今日的貿易戰局中奪得最高榮譽。</p>
     <button class="btn-replay" id="btn-welcome-confirm" onclick="playUniformSfx(); hideWelcomeModal();">開啟音樂並進入遊戲</button>
