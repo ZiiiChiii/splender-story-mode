@@ -12,23 +12,29 @@
 
 <script src="https://cdn.jsdelivr.net/npm/gsap@3.12.5/dist/gsap.min.js"></script>
 <style>
+    /* ── 🎯 任務修正：將故事劇情動畫層級降到與模式同階層，且初始不展示 ── */
     #story-layer {
         position: fixed;
         top: 0;
         left: 0;
         width: 100%;
         height: 100%;
-        z-index: 99999; 
-        background: rgba(15, 20, 26, 0.92); 
-        display: flex;
+        z-index: 500; /* 降到合理常規模態層級 */
+        background: rgba(15, 20, 26, 0.95); 
+        display: none; /* 預設完全不顯示，避免開局干擾單人模式教學 */
         flex-direction: column;
         justify-content: flex-end;
         align-items: center;
         padding-bottom: 50px;
         box-sizing: border-box;
         font-family: 'Microsoft JhengHei', 'Heiti TC', sans-serif;
-        opacity: 1;
-        pointer-events: all;
+        opacity: 0;
+        pointer-events: none;
+    }
+    #story-layer.story-active {
+        display: flex !important;
+        opacity: 1 !important;
+        pointer-events: all !important;
     }
     .story-main-box { display: flex; width: 920px; max-width: 95%; height: 320px; align-items: flex-end; position: relative; gap: 20px; }
     .story-char-box { width: 240px; height: 100%; display: flex; align-items: flex-end; justify-content: center; flex-shrink: 0; }
