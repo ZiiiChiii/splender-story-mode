@@ -1,81 +1,83 @@
-// game.js
+// game.js - 3D 視覺大會堂整合版
 // ==========================================
-// 1. 全域 UI 樣式常數定義
+// 1. 全域 UI 樣式常數與 3D 基礎設定
 // ==========================================
 const GEM_TYPES = ['w', 'u', 'g', 'r', 'k']; 
 const GEM_CLASSES = { w: 'bg-w', u: 'bg-u', g: 'bg-g', r: 'bg-r', k: 'bg-k', o: 'bg-o' };
 const GEM_BTN_CLASSES = { w: 'token-btn-w', u: 'token-btn-u', g: 'token-btn-g', r: 'token-btn-r', k: 'token-btn-k', o: 'token-btn-o' };
 
-const CUSTOM_CARD_IMAGES = {
-  g: ["https://i.ibb.co/KxX2gxBP/1.jpg", "https://i.ibb.co/35Wz9SGp/2.jpg", "https://i.ibb.co/4nRZhdV9/3.jpg", "https://i.ibb.co/VW851t3Q/4.jpg", "https://i.ibb.co/zh2mXJDS/5.jpg"],
-  u: ["https://i.ibb.co/cc5LQG4Z/1.jpg", "https://i.ibb.co/JjQb4p1F/2.jpg", "https://i.ibb.co/spKMvZfr/3.jpg", "https://i.ibb.co/R4QS49Zj/4.jpg", "https://i.ibb.co/HLFX94d2/5.jpg"],
-  r: ["https://i.ibb.co/rf43Prw8/1.jpg", "https://i.ibb.co/gFPGMGK7/2.jpg", "https://i.ibb.co/bjgntGqQ/3.jpg", "https://i.ibb.co/NghmMzHM/4.jpg", "https://i.ibb.co/VWhLdVjL/5.jpg"],
-  w: ["https://i.ibb.co/DDkcxCww/1.jpg", "https://i.ibb.co/Z6wkT9sw/2.jpg", "https://i.ibb.co/dstw94C5/3.jpg", "https://i.ibb.co/HLcpg8kB/4.jpg", "https://i.ibb.co/p6Y1Tt5M/5.jpg"],
-  k: ["https://i.ibb.co/6cKPW5Ff/1.jpg", "https://i.ibb.co/7tRFCqBb/2.jpg", "https://i.ibb.co/gbGqKfnv/3.jpg", "https://i.ibb.co/zHS6cht3/4.jpg", "https://i.ibb.co/SwrD6WdV/5.jpg"]
-};
+const GEM_HEX_COLORS = { w: 0xffffff, u: 0x3333ff, g: 0x22cc22, r: 0xff3333, k: 0x222222, o: 0xd4af37 };
 
 const TUTORIAL_STEPS_DATA = [
-  { elementId: "guide-actions", title: "🟢 第一步：行動挑選面板", text: "輪到您的回合時，可以選擇拿取 3 個不同顏色或 2 個同色籌碼。" },
-  { elementId: "guide-dashboard", title: "🪙 第二步：皇家金庫資產欄", text: "左側為持有的籌碼與卡片減免產量，注意背包籌碼總上限為 10 顆！" },
-  { elementId: "guide-matrix", title: "💎 第三步：核心產業卡片矩陣", text: "可在此花費籌碼收購或保留卡片。左上為威望分數，右上是永久寶石產量。" },
-  { elementId: "guide-nobles", title: "⚜️ 第四步：貴族覲見區", text: "當發展卡累積達到貴族所需的永久產量時，貴族會前來拜訪並贈予 3 分！" },
-  { elementId: "guide-reserved", title: "🔒 第五步：機密保留契約", text: "可保留卡牌入此區並獲得 1 顆黃金。保留上限為 3 張。" }
+  { elementId: "guide-actions", title: "🟢 第一步：行動挑選面板", text: "輪到您的回合時，可以點擊 3D 最前排的旋轉原石，或者直接在鑄幣局收下。" },
+  { elementId: "guide-dashboard", title: "🪙 第二步：皇家 3D 金庫", text: "底層顯示持有的資產。購買卡牌後會觸發先升空再墬入金庫的立體飛行拋物線！" },
+  { elementId: "three-canvas-container", title: "💎 第三步：3D 卡牌戰略矩陣", text: "直接在 3D 桌面上點擊卡牌進行收購判定，滑鼠懸浮或點擊會有高亮或震盪。" }
 ];
 
-// ==========================================
-// 2. 音效與動畫全域追蹤暫存器
-// ==========================================
+// 3D 系統全域變數
+let scene, camera, renderer, raycaster, mouse;
+let meshGemsMap = new Map(); // 顏色 -> Mesh 陣列
+let meshCardsMap = new Map(); // cardId -> Mesh
+let meshNoblesMap = new Map(); // nobleId -> Mesh
+let clickable3DObjects = [];
+
 let audioEl, sfxGemEl, sfxBuyEl, sfxReserveEl, sfxSelectEl, sfxUnselectEl, sfxNobleMale, sfxNobleFemale;
 let sfxAchievementsMap = {};
-
-window.playUniformSfx = function() {
-  if (!CoreState) return; 
-  if (sfxSelectEl && !CoreState.get().settings.isSfxMuted) {
-    sfxSelectEl.currentTime = 0; sfxSelectEl.play().catch(() => {});
-  }
-}
-
-window.playActionGemSfx = function() {
-  if (!CoreState) return; 
-  if (sfxGemEl && !CoreState.get().settings.isSfxMuted) {
-    sfxGemEl.currentTime = 0; sfxGemEl.play().catch(() => {});
-  }
-}
-
-window.playNobleSfx = function(gender) {
-  if (!CoreState) return; 
-  if (CoreState.get().settings.isSfxMuted) return;
-  if (gender === 'female' && sfxNobleFemale) {
-    sfxNobleFemale.currentTime = 0; sfxNobleFemale.play().catch(() => {});
-  } else if (gender === 'male' && sfxNobleMale) {
-    sfxNobleMale.currentTime = 0; sfxNobleMale.play().catch(() => {});
-  }
-}
-
-window.playAchievementSfx = function(tier) {
-  if (!CoreState) return; 
-  const targetSFX = sfxAchievementsMap[tier] || sfxAchievementsMap['easy'];
-  if (targetSFX && !CoreState.get().settings.isSfxMuted) {
-    targetSFX.currentTime = 0; targetSFX.play().catch(() => {});
-  }
-}
-
-let lastRenderedCardIds = new Set();
 let lastPlayerState = null;
 let currentTutorialStep = 0;
+let CoreState, GameEngine, SingleMode, ActionDispatcher;
 
-let activeFlyingCardIds = new Set();
-let isAnimating = false; 
+// ==========================================
+// 2. 初始化 3D 視窗與基礎光影環境
+// ==========================================
+function init3DSpace() {
+  const container = document.getElementById('three-canvas-container');
+  if(!container) return;
 
-window._idleTweensMap = window._idleTweensMap || new Map(); 
+  scene = new THREE.Scene();
+  scene.background = new THREE.Color(0x0a140f); // 配合 Felt Green 天鵝絨氛圍
+  scene.fog = new THREE.FogExp2(0x0a140f, 0.012);
 
-let CoreState, GameEngine, SingleMode, AiMode, ActionDispatcher;
+  camera = new THREE.PerspectiveCamera(55, window.innerWidth / window.innerHeight, 0.1, 100);
+  camera.position.set(0, 13, 13);
+  camera.lookAt(0, -1.0, 1.5);
 
+  renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true });
+  renderer.setSize(window.innerWidth, window.innerHeight);
+  renderer.shadowMap.enabled = true;
+  container.appendChild(renderer.domElement);
+
+  raycaster = new THREE.Raycaster();
+  mouse = new THREE.Vector2();
+
+  // 光源佈局
+  const ambient = new THREE.AmbientLight(0xffffff, 0.8);
+  scene.add(ambient);
+
+  const dirLight = new THREE.DirectionalLight(0xfff5e6, 0.6);
+  dirLight.position.set(5, 22, 8);
+  scene.add(dirLight);
+
+  // 鋪設虛擬綠呢大理石桌面
+  const tableGeo = new THREE.PlaneGeometry(60, 45);
+  const tableMat = new THREE.MeshStandardMaterial({ color: 0x0c1a12, roughness: 0.6, metalness: 0.1 });
+  const table = new THREE.Mesh(tableGeo, tableMat);
+  table.rotation.x = -Math.PI / 2;
+  table.position.y = -1.2;
+  scene.add(table);
+
+  // 註冊 3D 視窗點擊交互射線
+  window.addEventListener('click', handle3DSceneClick);
+  window.addEventListener('resize', onWindowResize);
+}
+
+// ==========================================
+// 3. 異步載入核心對接模組
+// ==========================================
 async function loadCoreModules() {
   const stateMod = await import('./core/state.js');
   const engineMod = await import('./core/gameEngine.js');
   const singleMod = await import('./core/singleMode.js');
-  const aiMod = await import('./core/aiMode.js');
   const actionMod = await import('./core/action.js');
   const storyMod = await import('./core/storyMode.js');
   const assistantMod = await import('./core/assistantData.js');
@@ -84,7 +86,6 @@ async function loadCoreModules() {
   CoreState = stateMod.CoreState;
   GameEngine = engineMod.GameEngine;
   SingleMode = singleMod.SingleMode;
-  AiMode = aiMod.AiMode;
   ActionDispatcher = actionMod.ActionDispatcher;
 
   window.ActionDispatcher = ActionDispatcher;
@@ -94,171 +95,114 @@ async function loadCoreModules() {
   
   storyMod.StoryMode.loadStoryProgress();
   assistantMod.AssistantManager.renderActiveAssistantUI();
-}
 
-function deepClone(obj) {
-  return JSON.parse(JSON.stringify(obj));
-}
-
-function setDynamicVh() {
-  const vh = window.innerHeight * 0.01;
-  document.documentElement.style.setProperty('--vh', `${vh}px`);
+  init3DSpace();
+  animate3DLoop();
 }
 
 // ==========================================
-// 3. GSAP 3D 拋物線飛行與金庫 Bounce 動畫
+// 4. 3D 點擊射線事件分發 (完全整合原 2D 機制)
 // ==========================================
-function animateCardFlightToGoldVault(cardId, providesColor, callback) {
-  const sourceDom = document.getElementById(`dom-card-${cardId}`);
-  const vaultDom = document.getElementById(`vault-target-${providesColor}`);
-  const fxContainer = document.getElementById('effects-layer');
+function handle3DSceneClick(event) {
+  // 避開 HTML 左側與置底的 UI 區塊
+  if (event.clientX < 170 || event.clientY > window.innerHeight - 110) return;
 
-  if (!sourceDom) { if (callback) callback(); return; }
+  mouse.x = (event.clientX / window.innerWidth) * 2 - 1;
+  mouse.y = -(event.clientY / window.innerHeight) * 2 + 1;
+  raycaster.setFromCamera(mouse, camera);
 
-  isAnimating = true; 
-  activeFlyingCardIds.add(cardId);
+  const intersects = raycaster.intersectObjects(clickable3DObjects, true);
+  if (intersects.length > 0) {
+    let hitObj = intersects[0].object;
+    while (hitObj.parent && !hitObj.userData.type) {
+      hitObj = hitObj.parent;
+    }
 
-  const flyingCardDomId = `dom-card-${cardId}`;
-  if (window._idleTweensMap && window._idleTweensMap.has(flyingCardDomId)) {
-    window._idleTweensMap.get(flyingCardDomId).kill();
-    window._idleTweensMap.delete(flyingCardDomId);
-  }
+    const data = hitObj.userData;
+    if (!data || !data.type) return;
 
-  const start = sourceDom.getBoundingClientRect();
-  const finalTarget = vaultDom || document.getElementById('guide-dashboard') || document.body;
-  const end = finalTarget.getBoundingClientRect();
-
-  const flyCard = sourceDom.cloneNode(true);
-  flyCard.removeAttribute('id');
-  flyCard.style.position = 'fixed';
-  flyCard.style.left = start.left + 'px';
-  flyCard.style.top = start.top + 'px';
-  flyCard.style.width = start.width + 'px';
-  flyCard.style.height = start.height + 'px';
-  flyCard.style.margin = '0';
-  flyCard.style.zIndex = '10000';
-  flyCard.style.pointerEvents = 'none';
-
-  gsap.set(flyCard, { transformOrigin: "center center", transformStyle: "preserve-3d", perspective: 800 }); 
-  fxContainer.appendChild(flyCard);
-
-  sourceDom.style.opacity = '0.15';
-
-  const deltaX = (end.left + end.width / 2) - (start.left + start.width / 2);
-  const deltaY = (end.top + end.height / 2) - (start.top + start.height / 2);
-
-  const tl = gsap.timeline();
-
-  tl.to(flyCard, {
-    duration: 0.15,
-    scale: 1.12,
-    ease: "power2.out"
-  })
-  .to(flyCard, {
-    duration: 0.65,
-    x: deltaX,
-    y: deltaY - 90, 
-    rotationY: 180, 
-    rotationX: 15,
-    scale: 0.15,
-    ease: "power2.inOut"
-  })
-  .to(flyCard, {
-    duration: 0.15,
-    scale: 0,
-    opacity: 0,
-    ease: "power1.in",
-    onComplete: () => {
-      flyCard.remove();
-      sourceDom.style.opacity = '';
-      activeFlyingCardIds.delete(cardId); 
-
-      if (vaultDom) { 
-        gsap.fromTo(vaultDom,
-          { scale: 1 },
-          { scale: 1.35, duration: 0.12, yoyo: true, repeat: 1, ease: "back.out(2)",
-            onComplete: () => { gsap.set(vaultDom, { scale: 1 }); }
-          }
-        );
+    if (data.type === 'gem') {
+      window.handleBankGemClick(data.color);
+    } 
+    else if (data.type === 'card' && !data.purchased) {
+      const state = CoreState.get();
+      const afford = GameEngine.canAffordCard(state.player.bonus, state.player.tokens, data.cardData.cost);
+      
+      if (afford.affordable && state.currentTurnOwner === 'player') {
+        // 直接觸發 3D 特效與核心狀態更新
+        trigger3DCardFlight(data.cardId, data.cardData.provides, () => {
+          if (sfxBuyEl && !state.settings.isSfxMuted) sfxBuyEl.play().catch(()=>{});
+          ActionDispatcher.dispatch('BUY_BOARD', { level: data.level, idx: data.idx });
+        });
+      } else {
+        // 抖動搖晃動畫 (表示籌碼不足)
+        gsap.to(hitObj.position, { x: hitObj.position.x + 0.2, duration: 0.05, yoyo: true, repeat: 3 });
+        document.getElementById('error-msg').textContent = '⚠️ 籌碼或生產力不足以收購此產業！';
+        setTimeout(() => { document.getElementById('error-msg').textContent = ''; }, 2000);
       }
-
-      if (callback) callback();
-      isAnimating = false; 
     }
-  });
-}
-
-function renderDashboardGems(targetElementId, actorData, diffs) {
-  const container = document.getElementById(targetElementId);
-  if (!container) return;
-
-  const survivingDiffs = {};
-  container.querySelectorAll('.floating-diff').forEach(span => {
-    const block = span.closest('.res-block');
-    if (block && block.id) {
-      const color = block.id.replace('vault-target-', '');
-      survivingDiffs[color] = survivingDiffs[color] || [];
-      span.remove(); 
-      survivingDiffs[color].push(span); 
-    }
-  });
-
-  let html = '';
-  ['w', 'u', 'g', 'r', 'k', 'o'].forEach(k => {
-    const tokenVal = actorData.tokens[k] || 0;
-    const bonusVal = actorData.bonus[k] || 0;
-    const isGold = (k === 'o');
-    
-    let bDiffHtml = (diffs && !isGold && diffs.bonus[k] > 0)
-      ? `<span class="floating-permanent-anim">+${diffs.bonus[k]} 🛡️</span>` : '';
-
-    html += `
-      <div class="res-block" id="vault-target-${k}">
-        ${bDiffHtml}
-        <div class="res-circle ${GEM_CLASSES[k]}"></div>
-        <div class="res-text-group">
-          <span class="res-count">${tokenVal}</span>
-          ${!isGold
-            ? (bonusVal > 0
-                ? `<span class="res-bonus">+${bonusVal}</span>`
-                : `<span class="res-bonus" style="visibility:hidden;">+0</span>`)
-            : `<span class="res-bonus" style="color:#968a7f; font-size:0.55rem;">百搭</span>`}
-        </div>
-      </div>
-    `;
-  });
-  container.innerHTML = html;
-
-  for (const [color, spans] of Object.entries(survivingDiffs)) {
-    const blockEl = document.getElementById(`vault-target-${color}`);
-    if (blockEl) spans.forEach(s => blockEl.appendChild(s));
-  }
-
-  if (diffs) {
-    ['w', 'u', 'g', 'r', 'k', 'o'].forEach(k => {
-      const diff = diffs.tokens[k];
-      if (!diff || diff === 0) return;
-
-      const blockEl = document.getElementById(`vault-target-${k}`);
-      if (!blockEl) return;
-
-      const diffSpan = document.createElement('span');
-      diffSpan.className = `floating-diff ${diff > 0 ? 'plus' : 'minus'}`;
-      diffSpan.textContent = diff > 0 ? `+${diff}` : `${diff}`;
-      blockEl.appendChild(diffSpan);
-
-      blockEl.classList.add('animate-pulse-glow');
-      setTimeout(() => blockEl.classList.remove('animate-pulse-glow'), 700);
-      setTimeout(() => { if (diffSpan.parentNode) diffSpan.remove(); }, 1300);
-    });
   }
 }
 
 // ==========================================
-// 4. 全域 Render 控制器 (版面模式完全分離)
+// 5. 核心 3D 特效：升空翻滾拋物線飛入手袋
+// ==========================================
+function trigger3DCardFlight(cardId, providesColor, onCompleteCallback) {
+  const mesh = meshCardsMap.get(cardId);
+  if (!mesh || mesh.userData.purchased) { if(onCompleteCallback) onCompleteCallback(); return; }
+
+  mesh.userData.purchased = true;
+  
+  // 計算拋物線起終點
+  const startX = mesh.position.x;
+  const startY = mesh.position.y;
+  const startZ = mesh.position.z;
+
+  // 定義墜入螢幕下方手袋的 3D 座標終點 (靠近相機底部偏低位置)
+  const targetX = camera.position.x;
+  const targetY = camera.position.y - 7.0; 
+  const targetZ = camera.position.z - 2.0;
+
+  const animationObj = { t: 0 };
+
+  gsap.to(animationObj, {
+    t: 1.0,
+    duration: 0.85,
+    ease: "power2.inOut",
+    onUpdate: () => {
+      const currT = animationObj.t;
+      // 直線插值
+      mesh.position.x = startX + (targetX - startX) * currT;
+      mesh.position.z = startZ + (targetZ - startZ) * currT;
+      
+      // Y 軸拋物線拱起
+      const arc = 5.0 * Math.sin(currT * Math.PI);
+      mesh.position.y = (startY + (targetY - startY) * currT) + arc;
+
+      // 自轉翻滾
+      mesh.rotation.y += 0.12;
+      mesh.rotation.z += 0.06;
+
+      // 墜入金庫時縮小淡出
+      if (currT > 0.4) {
+        const factor = (currT - 0.4) * 1.66;
+        mesh.scale.set(1.0 - factor, 1.0 - factor, 1.0 - factor);
+      }
+    },
+    onComplete: () => {
+      scene.remove(mesh);
+      meshCardsMap.delete(cardId);
+      // 特效結束後回調，正式把通知傳給後端 state.js 做扣款更新
+      if(onCompleteCallback) onCompleteCallback();
+    }
+  });
+}
+
+// ==========================================
+// 6. 全域 3D 模型渲染同步器 (取代原 2D Board HTML)
 // ==========================================
 window.render = function() {
-  if (!CoreState) return;
+  if (!CoreState || !scene) return;
   const fullState = CoreState.get();
   const player = fullState.player;
 
@@ -272,159 +216,138 @@ window.render = function() {
 
   document.getElementById('ai-dashboard-box').style.display = isvsAI ? 'block' : 'none';
   
+  // 更新動態頂部橫幅
   const bannerZone = document.getElementById('dynamic-banner-zone');
   const bannerBadge = document.getElementById('dynamic-banner-badge');
   const bannerText = document.getElementById('dynamic-banner-text');
 
   if (bannerZone && bannerBadge && bannerText) {
-    if (isvsAI) {
-      bannerZone.style.display = 'none';
-    } else {
+    if (isvsAI) { bannerZone.style.display = 'none'; } else {
       bannerZone.style.display = 'flex';
-      
       if (isSingleMode) {
         bannerBadge.textContent = "榮譽成就";
-        bannerBadge.style.backgroundColor = 'rgba(230, 126, 34, 0.2)';
-        bannerBadge.style.borderColor = '#e67e22';
-        bannerZone.style.cursor = 'pointer';
-        
         const archive = localStorage.getItem('splendor_achievements_v1');
-        let unlCount = 0;
-        if (archive) { try { unlCount = Object.keys(JSON.parse(archive)).length; } catch(e){} }
-        bannerText.innerHTML = `🏆 當前已斬獲 <span style="color:#ffcc00; font-weight:800;">${unlCount} / 30</span> 項皇家勳章！<span style="color:var(--text-muted); font-size:0.55rem; margin-left:6px;">[ 💡 點此可開啟榮譽堂查看完整清單 ]</span>`;
-        
+        let unlCount = 0; if (archive) { try { unlCount = Object.keys(JSON.parse(archive)).length; } catch(e){} }
+        bannerText.innerHTML = `🏆 當前已斬獲 <span style="color:#ffcc00; font-weight:800;">${unlCount} / 30</span> 項皇家勳章！`;
       } else if (isStoryMode) {
         const currentLvl = fullState.storyProgress?.currentLevel || 1;
         const mission = window.STORY_MISSIONS ? window.STORY_MISSIONS[currentLvl - 1] : null;
-        
-        bannerZone.style.cursor = 'pointer';
         if (mission) {
           bannerBadge.textContent = `第 ${currentLvl} 關 任務`;
-          bannerBadge.style.backgroundColor = 'rgba(212, 175, 55, 0.2)';
-          bannerBadge.style.borderColor = '#d4af37';
-          
-          let conditionText = mission.winCondition.targetScore ? `威望達到 ${mission.winCondition.targetScore} 分` : '特定條件';
-          if (mission.id === 2) conditionText = "達到15分，且紅寶石限制少於8顆";
-          if (mission.id === 3) conditionText = "達到15分，且保留並買下卡片達3次";
-          if (mission.id === 4) conditionText = "達到15分，且整局禁止使用黃金籌碼";
-          if (mission.id === 5) conditionText = "達到15分，且通關時5色卡片數量皆 >= 2張";
-          if (mission.id === 7) conditionText = "達到15分，且任何回合結束時背包籌碼不超過6顆";
-          if (mission.id === 8) conditionText = "達到15分，且整局禁止購買任何Lv1發展卡";
-          if (mission.id === 9) conditionText = "達到15分，且最終名下只能有黑與白卡";
-          if (mission.id === 10) conditionText = "達到15分，且通關時手上持有至少4枚黃金籌碼";
-          if (mission.id === 13) conditionText = "最終分數必須「剛好等於 15 分」，超分算輸";
-          if (mission.id === 15) conditionText = "達到15分，且至少3次買卡是「完全沒消耗籌碼」";
-          if (mission.id === 16) conditionText = "不限分數，率先獲得 3 位貴族拜訪即可通關";
-          if (mission.id === 17) conditionText = "通關那一回合，必須同時獲得卡片分與貴族分";
-          if (mission.id === 18) conditionText = "擊敗侵略型 AI，且整局玩家獲得的貴族分必須為 0";
-          if (mission.id === 19) conditionText = "達20分，移除Lv1卡，且有名下至少3張>=4分的卡";
-          if (mission.id === 20) conditionText = "達到15分，且系統每過 5 個回合隨機扣2枚籌碼";
-          if (mission.id === 21) conditionText = "達15分，且銀行普通籌碼初始庫存全為 0";
-          if (mission.id === 22) conditionText = "擊敗高級AI（開局AI自帶8分與4張隨機Lv2卡）";
-          if (mission.id === 23) conditionText = "威望達20分，且通關時5種顏色永久減免皆 >= 3";
-          if (mission.id === 25) conditionText = "威望達到 25 分，且成功吸引至少 2 位貴族進駐";
-
-          if (fullState.storyTracker && mission.id === 3) {
-            conditionText += ` <span style="color:#2ecc71;">(當前進度: ${fullState.storyTracker.reservedBuys}/3)</span>`;
-          } else if (fullState.storyTracker && mission.id === 15) {
-            conditionText += ` <span style="color:#2ecc71;">(當前進度: ${fullState.storyTracker.freeBuys}/3)</span>`;
-          }
-          
-          bannerText.innerHTML = `<span style="color:#ffe099; font-weight:800;">⚔️【${mission.name}】</span> 目標：${conditionText} <span style="color:#ffcc00; font-size:0.55rem; margin-left:6px;">[ 🗺️ 點此可自選或重挑關卡 ]</span>`;
-        } else {
-          bannerText.textContent = "📜 故事戰役檔案加載中...";
+          bannerText.innerHTML = `<span style="color:#ffe099; font-weight:800;">⚔️【${mission.name}】</span> 點擊桌面對應 3D 卡牌挑戰！`;
         }
       }
     }
   }
 
-  let totalTokens = 0;
-  for (let k in player.tokens) totalTokens += player.tokens[k];
-
-  let diffs = { tokens: {}, bonus: {} };
-  if (lastPlayerState) {
-    for (let k in player.tokens) diffs.tokens[k] = player.tokens[k] - lastPlayerState.tokens[k];
-    for (let k in player.bonus) diffs.bonus[k] = player.bonus[k] - lastPlayerState.bonus[k];
-  }
-  lastPlayerState = deepClone(player);
-
-  renderDashboardGems('res-layer', player, diffs);
+  // 同步下方 2D 背包資產
+  renderDashboardGems('res-layer', player, null);
   if (isvsAI) {
     document.getElementById('ai-score-txt').textContent = fullState.ai.score;
     renderDashboardGems('ai-res-layer', fullState.ai, null);
   }
+  document.getElementById('cap-txt').textContent = `背包: ${Object.values(player.tokens).reduce((a,b)=>a+b,0)} / 10`;
 
-  const isAst6Active = (fullState.settings.selectedAssistant === 'ast6');
-  const currentBagCap = isAst6Active ? 12 : 10;
-  const capTxtEl = document.getElementById('cap-txt');
-  capTxtEl.textContent = `背包: ${totalTokens} / ${currentBagCap}`;
-  
-  capTxtEl.classList.remove('bag-warning-yellow', 'bag-danger-red');
-  if (totalTokens === 10) {
-    capTxtEl.classList.add('bag-danger-red');
-  } else if (totalTokens > 7) {
-    capTxtEl.classList.add('bag-warning-yellow');
-  }
+  // ── 3D 同步核心：發展卡矩陣 ──
+  clickable3DObjects = [];
+  const levels = ['lv1', 'lv2', 'lv3'];
+  const spacingX = 3.6;
+  const spacingZ = -3.8;
 
-  ['lv1', 'lv2', 'lv3'].forEach(level => {
+  levels.forEach((level, lIdx) => {
     document.getElementById(`deck-${level}-txt`).textContent = `剩餘: ${fullState.decks[level].length}`;
     
-    document.getElementById(`row-${level}`).innerHTML = fullState.board[level].map((card, idx) => {
-      if (!card) return `<div class="card empty">已全數售罄</div>`;
-      
-      let costHtml = '';
-      for (let k in card.cost) {
-        costHtml += `
-          <div class="cost-dot ${(player.bonus[k] || 0) >= card.cost[k] ? 'free' : ''}">
-            <span class="cost-dot-circle ${GEM_CLASSES[k]}"></span><span>${card.cost[k]}</span>
-          </div>`;
+    fullState.board[level].forEach((card, cIdx) => {
+      if (!card) return;
+
+      // 如果該卡牌尚未建立 3D Mesh，在空間中生成它
+      if (!meshCardsMap.has(card.id)) {
+        const cardGeo = new THREE.BoxGeometry(2.2, 3.0, 0.1);
+        const cardMat = new THREE.MeshStandardMaterial({ 
+          color: GEM_HEX_COLORS[card.provides], 
+          roughness: 0.3,
+          metalness: 0.2
+        });
+        const cardMesh = new THREE.Mesh(cardGeo, cardMat);
+        
+        // 平躺於桌面
+        cardMesh.rotation.x = -Math.PI / 2;
+        const px = -5.4 + cIdx * spacingX;
+        const pz = 1.0 + lIdx * spacingZ;
+        cardMesh.position.set(px, -1.1, pz);
+
+        // 附加立體指示頂球 (代表產出寶石)
+        const topSphereGeo = new THREE.SphereGeometry(0.35, 16, 16);
+        const topSphereMat = new THREE.MeshStandardMaterial({ color: GEM_HEX_COLORS[card.provides], emissive: GEM_HEX_COLORS[card.provides], emissiveIntensity: 0.3 });
+        const topSphere = new THREE.Mesh(topSphereGeo, topSphereMat);
+        topSphere.position.set(0, 1.1, 0.15);
+        cardMesh.add(topSphere);
+
+        cardMesh.userData = { type: 'card', cardId: card.id, cardData: card, level, idx: cIdx, purchased: false };
+        scene.add(cardMesh);
+        meshCardsMap.set(card.id, cardMesh);
       }
       
-      const afford = GameEngine.canAffordCard(player.bonus, player.tokens, card.cost);
-      let imgUrl = CUSTOM_CARD_IMAGES[card.provides][parseInt(card.id) % CUSTOM_CARD_IMAGES[card.provides].length];
+      const currentMesh = meshCardsMap.get(card.id);
+      if (currentMesh && !currentMesh.userData.purchased) {
+        clickable3DObjects.push(currentMesh);
+      }
+    });
+  });
 
-      // 修改位置（原第 389 行）：將 style 縮放替換為真正寬度比例設定
+  // ── 3D 同步核心：前排原石籌碼 ──
+  const gemColors = ['w', 'u', 'g', 'r', 'k'];
+  gemColors.forEach((color, idx) => {
+    if (!meshGemsMap.has(color)) {
+      const gemGeo = new THREE.OctahedronGeometry(0.7, 0);
+      const gemMat = new THREE.MeshStandardMaterial({ 
+        color: GEM_HEX_COLORS[color], 
+        roughness: 0.1, 
+        metalness: 0.6 
+      });
+      const gemMesh = new THREE.Mesh(gemGeo, gemMat);
+      gemMesh.position.set(-6.0 + idx * 3.0, -0.4, 6.0);
+      gemMesh.userData = { type: 'gem', color: color };
+      
+      scene.add(gemMesh);
+      meshGemsMap.set(color, gemMesh);
+    }
+    const gMesh = meshGemsMap.get(color);
+    clickable3DObjects.push(gMesh);
+    
+    // 如果籌碼庫存為 0，令其半透明
+    gMesh.material.transparent = true;
+    gMesh.material.opacity = fullState.bank[color] > 0 ? 1.0 : 0.25;
+  });
+
+  // 同步左側直排交易局 HTML 面板狀態點亮
+  const unifiedBankLayer = document.getElementById('unified-bank-selectors');
+  if (unifiedBankLayer) {
+    unifiedBankLayer.innerHTML = ['w', 'u', 'g', 'r', 'k', 'o'].map(k => {
+      const isGold = (k === 'o');
+      const alreadySelected = isGold ? false : fullState.selectedDiff?.includes(k) || fullState.selectedSame === k;
       return `
-        <div class="card ${!lastRenderedCardIds.has(card.id) ? 'animate-deal' : ''}" id="dom-card-${card.id}" data-affordable="${afford.affordable}" style="background-image: url('${imgUrl}'); width: 100%; aspect-ratio: 1 / 1; transform: none;">
-          <div class="card-content-wrapper">
-            <div class="card-top"><span class="card-pts">${card.points > 0 ? card.points : ''}</span><div class="card-gem-icon ${GEM_CLASSES[card.provides]}"></div></div>
-            <div>
-              <div class="card-costs">${costHtml}</div>
-              <div class="card-actions">
-                <button class="btn-card" ${!isPlayerTurn || !afford.affordable ? 'disabled' : ''} onclick="buyBoardCard('${level}', ${idx})">收購</button>
-                <button class="btn-card" ${!isPlayerTurn || player.reserved.length >= (fullState.settings.selectedAssistant === 'ast7' ? 4 : 3) ? 'disabled' : ''} onclick="reserveBoardCard('${level}', ${idx})">保留</button>
-              </div>
-            </div>
-          </div>
+        <div class="token-container-cell" style="justify-content: space-between; width: 100%; padding: 2px 6px; background: rgba(0,0,0,0.2); border-radius: 4px;">
+          <button class="token-btn ${GEM_BTN_CLASSES[k]} ${alreadySelected ? 'selected' : ''}" style="width:22px; height:22px; margin:0;" ${isGold ? 'disabled' : ''} onclick="window.handleBankGemClick('${k}')"></button>
+          <span class="token-count-label" style="font-size:0.6rem; color:#ffe099;">${isGold ? '金' : '庫'}:${fullState.bank[k]}</span>
         </div>
       `;
     }).join('');
-  });
+  }
 
+  // 保留契約區 DOM 渲染同步保持不變
   const resLayerReserved = document.getElementById('reserved-layer');
   if (player.reserved.length === 0) {
-    resLayerReserved.innerHTML = `<div class="card empty" style="grid-column: span 4; height:100%;">🔒 暫無契約手牌</div>`;
+    resLayerReserved.innerHTML = `<div class="card empty" style="grid-column: span 4; height:100%;">🔒 3D 保密手牌空缺</div>`;
   } else {
     resLayerReserved.innerHTML = [0, 1, 2, 3].map(i => {
       const card = player.reserved[i];
-      if (!card) return i < (fullState.settings.selectedAssistant === 'ast7' ? 4 : 3) ? `<div class="card empty">空位</div>` : '';
+      if (!card) return '';
       const afford = GameEngine.canAffordCard(player.bonus, player.tokens, card.cost);
-      let imgUrl = CUSTOM_CARD_IMAGES[card.provides][parseInt(card.id) % CUSTOM_CARD_IMAGES[card.provides].length];
-      
-      let resCostHtml = '';
-      for (let k in card.cost) {
-        resCostHtml += `
-          <div class="cost-dot ${(player.bonus[k] || 0) >= card.cost[k] ? 'free' : ''}">
-            <span class="cost-dot-circle ${GEM_CLASSES[k]}"></span><span>${card.cost[k]}</span>
-          </div>`;
-      }
-
-      // 修改位置（原第 425 行）：將 style 縮放替換為真正寬度比例設定
       return `
-        <div class="card" id="dom-card-${card.id}" style="background-image: url('${imgUrl}'); width: 100%; aspect-ratio: 1 / 1; transform: none;">
+        <div class="card" style="height: auto;">
           <div class="card-content-wrapper">
-            <div class="card-top"><span class="card-pts">${card.points > 0 ? card.points : ''}</span><div class="card-gem-icon ${GEM_CLASSES[card.provides]}"></div></div>
-            <div class="card-costs">${resCostHtml}</div>
+            <div class="card-top"><span class="card-pts">${card.points || ''}</span><div class="card-gem-icon ${GEM_CLASSES[card.provides]}"></div></div>
             <div class="card-actions"><button class="btn-card" ${!isPlayerTurn || !afford.affordable ? 'disabled' : ''} onclick="buyReservedCard(${i})">收購</button></div>
           </div>
         </div>
@@ -432,358 +355,86 @@ window.render = function() {
     }).join('');
   }
 
-  ['lv1', 'lv2', 'lv3'].forEach(l => fullState.board[l]?.forEach(c => { if(c) lastRenderedCardIds.add(c.id); }));
+  let selectedCount = (fullState.selectedDiff?.length || 0) || (fullState.selectedSame ? 1 : 0);
+  document.getElementById('btn-do-diff').disabled = !(isPlayerTurn && selectedCount >= 1);
+  document.getElementById('btn-do-same').disabled = !(isPlayerTurn && fullState.selectedSame);
+};
 
-  const noblesLayer = document.getElementById('nobles-layer');
-  if (noblesLayer) {
-    noblesLayer.innerHTML = fullState.nobles
-      .filter(n => !n.completed)
-      .map(n => {
-        let reqHtml = '';
-        for (let k in n.req) {
-          reqHtml += `<div class="cost-dot"><span class="cost-dot-circle ${GEM_CLASSES[k]}"></span><span>${n.req[k]}</span></div>`;
-        }
-        return `
-          <div class="noble-card">
-            <img src="${n.img}" alt="${n.name}" class="noble-img">
-            <div class="noble-overlay">
-              <div class="card-top">
-                <span class="noble-pts">${n.points}</span>
-                <span class="noble-name">${n.name}</span>
-              </div>
-              <div class="noble-reqs">${reqHtml}</div>
-            </div>
-          </div>
-        `;
-      }).join('');
-  }
+// ==========================================
+// 7. 3D 動畫主迴圈：提供呼吸感震盪律動與自轉
+// ==========================================
+function animate3DLoop() {
+  requestAnimationFrame(animate3DLoop);
+  if (!scene) return;
 
-  const earnedNoblesLayer = document.getElementById('earned-nobles-layer');
-  if (earnedNoblesLayer) {
-    const earned = fullState.nobles.filter(n => n.completed);
-    earnedNoblesLayer.innerHTML = earned.length === 0
-      ? `<p style="font-size:0.52rem; color:var(--text-muted); padding: 2px 0; text-align:center;">無</p>`
-      : earned.map(n => `
-          <div class="earned-noble-mini" style="padding:1px 3px;">
-            <img src="${n.img}" style="width:14px; height:14px;">
-            <span style="font-size:0.52rem;">${n.name}</span>
-          </div>
-        `).join('');
-  }
+  const time = performance.now() * 0.001;
 
-  const allBankColors = ['w', 'u', 'g', 'r', 'k', 'o'];
-  const unifiedBankLayer = document.getElementById('unified-bank-selectors');
-  if (unifiedBankLayer) {
-    unifiedBankLayer.innerHTML = allBankColors.map(k => {
-      const isGold = (k === 'o');
-      const alreadySelected = isGold ? false : fullState.selectedDiff?.includes(k) || fullState.selectedSame === k;
-      const inBank = fullState.bank[k] > 0;
-      
-      const clickAttr = isGold ? '' : `onclick="handleBankGemClick('${k}')"`;
-      const disabledStyle = (!isGold && !inBank) ? 'style="opacity:0.12; cursor:not-allowed;"' : '';
+  // 前排籌碼原石高階自轉與浮動
+  meshGemsMap.forEach((gemMesh, color) => {
+    gemMesh.rotation.y += 0.015;
+    gemMesh.rotation.z = Math.sin(time * 0.8) * 0.1;
+    gemMesh.position.y = -0.4 + Math.sin(time * 2.0 + color.charCodeAt(0)) * 0.05;
+  });
 
-      return `
-        <div class="token-container-cell" style="flex-direction: row; justify-content: space-between; width: 100%; padding: 2px 6px; background: rgba(0,0,0,0.2); border-radius: 4px;">
-          <button class="token-btn ${GEM_BTN_CLASSES[k]} ${alreadySelected ? 'selected' : ''}" style="width:22px; height:22px; background-size:16px 16px; margin:0;"
-            ${isGold ? 'disabled' : ''} ${disabledStyle} ${clickAttr}>
-          </button>
-          <span class="token-count-label" style="font-size:0.6rem; color:#ffe099; text-align: right; line-height: 22px;">${isGold ? '金' : '庫'}:${fullState.bank[k]}</span>
-        </div>
-      `;
-    }).join('');
-  }
+  // 桌面卡牌未購置時的微幅呼吸感
+  meshCardsMap.forEach((cardMesh) => {
+    if (!cardMesh.userData.purchased) {
+      cardMesh.position.y = -1.1 + Math.sin(time * 1.5 + cardMesh.userData.cardId) * 0.02;
+    }
+  });
 
-  let selectedCount = 0;
-  if (fullState.selectedDiff && fullState.selectedDiff.length > 0) {
-    selectedCount = fullState.selectedDiff.length;
-  } else if (fullState.selectedSame) {
-    selectedCount = 1; 
-  }
+  renderer.render(scene, camera);
+}
 
-  const btnDiff = document.getElementById('btn-do-diff');
-  const btnSame = document.getElementById('btn-do-same');
-
-  if (selectedCount === 1) {
-    btnDiff.disabled = !isPlayerTurn;
-    btnSame.disabled = !isPlayerTurn;
-  } else if (selectedCount === 2 || selectedCount === 3) {
-    btnDiff.disabled = !isPlayerTurn;
-    btnSame.disabled = true;
-  } else {
-    btnDiff.disabled = true;
-    btnSame.disabled = true;
-  }
-
-  import('./core/assistantData.js').then(m => m.AssistantManager.renderActiveAssistantUI());
-
-  requestAnimationFrame(() => setupIdleCardAnimations());
+// ── 基礎共用輔助模組函式與視窗自適應 ──
+function onWindowResize() {
+  if(!camera || !renderer) return;
+  camera.aspect = window.innerWidth / window.innerHeight;
+  camera.updateProjectionMatrix();
+  renderer.setSize(window.innerWidth, window.innerHeight);
 }
 
 window.handleBankGemClick = function(color) {
   if (CoreState.get().currentTurnOwner !== 'player') return;
   const state = CoreState.get();
-  document.getElementById('error-msg').textContent = '';
-  if (state.selectedSame && state.selectedSame !== color) { state.selectedSame = null; }
-  
+  if (state.selectedSame && state.selectedSame !== color) state.selectedSame = null;
   const diffIdx = state.selectedDiff.indexOf(color);
-  if (diffIdx > -1) {
-    state.selectedDiff.splice(diffIdx, 1);
-    if (document.getElementById('sfx-unselect') && !state.settings.isSfxMuted) document.getElementById('sfx-unselect').play();
-  } else {
-    if (state.selectedDiff.length === 0 && state.selectedSame === color) {
-      state.selectedDiff.push(color); state.selectedSame = null;
-    } else {
-      if (state.selectedDiff.length >= 3) state.selectedDiff.shift();
-      state.selectedDiff.push(color);
-    }
-    if (state.selectedDiff.length === 1) { state.selectedSame = color; } else { state.selectedSame = null; }
-    playUniformSfx();
+  if (diffIdx > -1) { state.selectedDiff.splice(diffIdx, 1); } else {
+    if (state.selectedDiff.length === 0 && state.selectedSame === color) { state.selectedDiff.push(color); state.selectedSame = null; } 
+    else { if (state.selectedDiff.length >= 3) state.selectedDiff.shift(); state.selectedDiff.push(color); }
+    if (state.selectedDiff.length === 1) state.selectedSame = color; else state.selectedSame = null;
   }
   render();
 };
 
-function setupIdleCardAnimations() {
-  const currentCardIds = new Set();
-  
-  document.querySelectorAll('.board-matrix .card[data-affordable="true"]').forEach((el, i) => {
-    const cardId = el.id || '';
-    if (!cardId) return;
-    
-    const pureId = cardId.replace('dom-card-', '');
-    if (activeFlyingCardIds.has(pureId)) return; 
-    
-    currentCardIds.add(cardId);
-    
-    if (window._idleTweensMap.has(cardId)) {
-      const existingTween = window._idleTweensMap.get(cardId);
-      if (existingTween && !existingTween.killed) {
-        return; 
-      }
-      window._idleTweensMap.delete(cardId); 
-    }
-    
-    gsap.killTweensOf(el);
-    gsap.set(el, { y: 0, rotation: 0 });
-    
-    const tween = gsap.to(el, {
-      y: -6,
-      rotation: 0.8,
-      duration: 1.6 + (i % 4) * 0.18,
-      repeat: -1,
-      yoyo: true,
-      ease: "sine.inOut",
-      delay: (i % 4) * 0.3
-    });
-    window._idleTweensMap.set(cardId, tween);
-  });
-
-  for (const [id, tween] of window._idleTweensMap.entries()) {
-    if (!currentCardIds.has(id)) {
-      tween.kill();
-      window._idleTweensMap.delete(id);
-      
-      const el = document.getElementById(id);
-      if (el) gsap.set(el, { y: 0, rotation: 0 });
-    }
-  }
-}
-
-window.handleBannerZoneClick = function() {
-  if (!CoreState) return;
-  playUniformSfx();
-  const m = CoreState.get().mode;
-  if (m === 'singlePlayer') {
-    window.openAchievementHistory();
-  } else if (m === 'storyMode') {
-    if (window.StoryMode) {
-      window.StoryMode.openStoryMapModal();
-    }
-  }
-};
-
-window.handleDoDiffClick = function() {
-  const state = CoreState.get();
-  if (state.selectedDiff.length === 0) return;
-  playActionGemSfx();
-  const colors = [...state.selectedDiff];
-  state.selectedDiff = [];      
-  state.selectedSame = null;
-  ActionDispatcher.dispatch('TAKE_DIFF', { colors });
-};
-
-window.handleDoSameClick = function() {
-  const state = CoreState.get();
-  if (!state.selectedSame) return;
-  playActionGemSfx();
-  const color = state.selectedSame;
-  state.selectedSame = null;    
-  state.selectedDiff = [];
-  ActionDispatcher.dispatch('TAKE_SAME', { color });
-};
-
-window.buyBoardCard = function(level, idx) {
-  const card = CoreState.get().board[level][idx];
-  if (!card) return;
-
-  const cardId = String(card.id);
-  if (activeFlyingCardIds.has(cardId)) return;
-
-  animateCardFlightToGoldVault(cardId, card.provides, () => {
-    if (sfxBuyEl && !CoreState.get().settings.isSfxMuted) {
-      sfxBuyEl.currentTime = 0; sfxBuyEl.play().catch(() => {});
-    }
-    ActionDispatcher.dispatch('BUY_BOARD', { level, idx });
-  });
-};
-
-window.buyReservedCard = function(idx) {
-  const card = CoreState.get().player.reserved[idx];
-  if (!card) return;
-
-  const cardId = String(card.id);
-  if (activeFlyingCardIds.has(cardId)) return;
-
-  animateCardFlightToGoldVault(cardId, card.provides, () => {
-    if (sfxBuyEl && !CoreState.get().settings.isSfxMuted) {
-      sfxBuyEl.currentTime = 0; sfxBuyEl.play().catch(() => {});
-    }
-    ActionDispatcher.dispatch('BUY_RESERVED', { idx });
-  });
-};
-
-window.reserveBoardCard = function(level, idx) {
-  if (sfxReserveEl && !CoreState.get().settings.isSfxMuted) {
-    sfxReserveEl.currentTime = 0; sfxReserveEl.play().catch(() => {});
-  }
-  ActionDispatcher.dispatch('RESERVE_CARD', { level, idx });
-};
-
-window.openGameOptionsModal = () => {
-  const s = CoreState.get().settings;
-  const m = CoreState.get().mode;
-  document.getElementById('menu-toggle-music').textContent = s.isMusicMuted ? "🔇 背景音樂：靜音" : "🎵 背景音樂：開啟";
-  document.getElementById('menu-toggle-sfx').textContent = s.isSfxMuted ? "🔇 遊戲音效：靜音" : "🔊 遊戲音效：開啟";
-  
-  document.getElementById('mode-btn-single').classList.toggle('active', m === 'singlePlayer');
-  document.getElementById('mode-btn-ai').classList.toggle('active', m === 'vsAI');
-  document.getElementById('mode-btn-story').classList.toggle('active', m === 'storyMode');
-  
-  document.getElementById('game-options-modal').classList.add('show');
-};
-
+window.playUniformSfx = () => { if (sfxSelectEl && !CoreState.get().settings.isSfxMuted) sfxSelectEl.play().catch(()=>{}); };
+window.handleDoDiffClick = () => { const c = [...CoreState.get().selectedDiff]; CoreState.get().selectedDiff = []; CoreState.get().selectedSame = null; ActionDispatcher.dispatch('TAKE_DIFF', { colors: c }); };
+window.handleDoSameClick = () => { const c = CoreState.get().selectedSame; CoreState.get().selectedSame = null; CoreState.get().selectedDiff = []; ActionDispatcher.dispatch('TAKE_SAME', { color: c }); };
+window.buyReservedCard = (idx) => { ActionDispatcher.dispatch('BUY_RESERVED', { idx }); };
+window.openGameOptionsModal = () => document.getElementById('game-options-modal').classList.add('show');
 window.closeGameOptionsModal = () => document.getElementById('game-options-modal').classList.remove('show');
-window.closeWinModal = () => { document.getElementById('win-modal').classList.remove('show'); };
-window.restartGame = () => { document.getElementById('win-modal').classList.remove('show'); ActionDispatcher.dispatch('INIT_GAME'); };
+window.startFloatingTutorial = () => { document.getElementById('floating-tutorial-widget').style.display = 'block'; showStepData(0); };
+window.hideWelcomeModal = () => { document.getElementById('welcome-back-modal').style.display = 'none'; if(audioEl) audioEl.play().catch(()=>{}); };
 
-window.openTalentPoolModal = () => { 
-  import('./core/assistantData.js').then(m => {
-    m.AssistantManager.renderTalentPoolModalUI(); 
-    document.getElementById('talent-pool-modal').classList.add('show'); 
-  });
-};
-
-window.closeTalentPoolModal = () => { 
-  document.getElementById('talent-pool-modal').classList.remove('show'); 
-  import('./core/assistantData.js').then(m => m.AssistantManager.renderActiveAssistantUI()); 
-};
-
-window.openAchievementHistory = () => SingleMode.openAchievementHistory();
-window.closeAchievementHistory = () => SingleMode.closeAchievementHistory();
-window.saveCurrentProgress = () => SingleMode.saveCurrentProgress();
-window.startFloatingTutorial = () => { document.getElementById('tutorial-start-modal').classList.remove('show'); hideWelcomeModal(); document.getElementById('floating-tutorial-widget').style.display = 'block'; showStepData(0); };
-window.hideWelcomeModal = () => { document.getElementById('welcome-back-modal').style.display = 'none'; if (!CoreState.get().settings.isMusicMuted && audioEl) audioEl.play().catch(() => {}); };
-
-function showStepData(stepIdx) {
-  currentTutorialStep = stepIdx;
-  TUTORIAL_STEPS_DATA.forEach((s, i) => document.getElementById(s.elementId)?.classList.toggle('tutorial-highlight', i === stepIdx));
-  const step = TUTORIAL_STEPS_DATA[stepIdx];
-  if (step) {
-    document.getElementById(step.elementId)?.scrollIntoView({ behavior: 'smooth', block: 'center' });
+function showStepData(idx) {
+  currentTutorialStep = idx; const step = TUTORIAL_STEPS_DATA[idx];
+  if(step) {
     document.getElementById('floating-tutorial-widget-header').textContent = step.title;
     document.getElementById('floating-tutorial-text').textContent = step.text;
   }
-  document.getElementById('floating-tutorial-dots').innerHTML = TUTORIAL_STEPS_DATA.map((_, i) => `<div class="t-dot ${i === stepIdx ? 'active' : ''}\"></div>`).join('');
-  document.getElementById('floating-tutorial-next-btn').textContent = stepIdx === TUTORIAL_STEPS_DATA.length - 1 ? "進入大會堂" : "下一步";
+  document.getElementById('floating-tutorial-next-btn').textContent = idx === TUTORIAL_STEPS_DATA.length - 1 ? "開始對局" : "下一步";
 }
-
-window.nextFloatingStep = () => {
-  if (currentTutorialStep < TUTORIAL_STEPS_DATA.length - 1) showStepData(currentTutorialStep + 1);
-  else {
-    TUTORIAL_STEPS_DATA.forEach(s => document.getElementById(s.elementId)?.classList.remove('tutorial-highlight'));
-    document.getElementById('floating-tutorial-widget').style.display = 'none';
-    localStorage.setItem('splendor_tutorial_completed_2026', 'true');
-  }
-};
+window.nextFloatingStep = () => { if (currentTutorialStep < TUTORIAL_STEPS_DATA.length - 1) showStepData(currentTutorialStep + 1); else document.getElementById('floating-tutorial-widget').style.display = 'none'; };
 
 window.addEventListener('DOMContentLoaded', async () => {
-  setDynamicVh();
-  
-  audioEl = document.getElementById('bg-music');
-  sfxGemEl = document.getElementById('sfx-gem');
-  sfxBuyEl = document.getElementById('sfx-buy');
-  sfxReserveEl = document.getElementById('sfx-reserve');
-  sfxSelectEl = document.getElementById('sfx-select');
-  sfxUnselectEl = document.getElementById('sfx-unselect');
-  sfxNobleMale = document.getElementById('sfx-noble-male');
-  sfxNobleFemale = document.getElementById('sfx-noble-female');
-
-  sfxAchievementsMap = {
-    easy: document.getElementById('sfx-ach-easy'),
-    normal: document.getElementById('sfx-ach-normal'),
-    hard: document.getElementById('sfx-ach-hard'),
-    expert: document.getElementById('sfx-ach-expert'),
-    master: document.getElementById('sfx-ach-master')
-  };
-
+  audioEl = document.getElementById('bg-music'); sfxSelectEl = document.getElementById('sfx-select'); sfxBuyEl = document.getElementById('sfx-buy');
   await loadCoreModules();
-  SingleMode.loadTalentPool();
-  ActionDispatcher.dispatch('INIT_GAME');
-  if (!localStorage.getItem('splendor_tutorial_completed_2026')) {
-    document.getElementById('tutorial-start-modal').classList.add('show');
-  } else {
-    document.getElementById('welcome-back-modal').classList.add('show');
-  }
+  document.getElementById('welcome-back-modal').classList.add('show');
 });
 
-window.addEventListener('resize', setDynamicVh);
-
+// 視覺小說故事劇場模組 完整保留對接
 window.storyModule = {
-    gameStages: {
-        1: { chapter: "👑 第一章：微光村的石匠（第 1 - 5 關）", title: "第 1 關：初入礦脈", bg: "微光村的後山藏著廢棄的紅岩礦床。老內政官傑洛米提著油燈攔住你，不屑地看著你手中的劣質鑿子，要你證明基本的經商手段。", condition: "25回合內威望達到15分（無AI）", name: "內政官 傑洛米", text: "年輕人，這片紅岩礦不歡迎空有熱血的傻瓜。在 25 回合內拿到 15 分，我就承認你是個合格的學徒。" },
-        2: { chapter: "👑 第一章：微光村的石匠（第 1 - 5 關）", title: "第 2 關：稅率與翡翠", bg: "你帶著紅寶石敲開了鎮公所的大門。刻薄的財政卿薇多莉亞正為當季的綠寶石稅收發愁，她決定用高額的稅率刁難你這個外來者。", condition: "達到15分，且紅寶石籌碼拿取/使用少於8顆", name: "財政卿 薇多莉亞", text: "噢？聽說傑洛米看好你？但我的帳本只認實力。這局你的紅寶石籌碼被課了重稅，少用點紅寶石，拿到 15 分給我看！" }
-    },
-    currentStageId: 1, dialogueStep: 0, isTyping: false, currentTween: null, textObj: { charCount: 0 }, onStoryCompleteCallback: null,
-    loadStage(stageId, callback) {
-        if (CoreState && CoreState.get().mode !== 'storyMode') {
-            if (callback) callback();
-            return;
-        }
-        if (!this.gameStages[stageId]) { if (callback) callback(); return; }
-        this.currentStageId = stageId; this.dialogueStep = 0; this.onStoryCompleteCallback = callback;
-        
-        const layer = document.getElementById("story-layer"); 
-        if (layer) layer.classList.add('story-active');
-        
-        const stageData = this.gameStages[stageId];
-        document.getElementById("story-chapter-title").innerText = stageData.chapter + " - " + stageData.title;
-        document.getElementById("story-intro-panel").innerText = stageData.bg;
-        document.getElementById("story-condition-badge").innerText = "🏆 目標：" + stageData.condition;
-        document.getElementById("story-char-img").src = `https://images.placeholders.dev/?width=320&height=520&text=No.${stageId}&bgColor=%232c3e50&textColor=%23ffffff`;
-        this.animateCharacterIn();
-    },
-    animateCharacterIn() { gsap.fromTo("#story-character", { x: -150, opacity: 0 }, { x: 0, opacity: 1, duration: 1, ease: "power2.out" }); this.renderDialogue(); },
-    renderDialogue() {
-        const stageData = this.gameStages[this.currentStageId]; let targetText = this.dialogueStep === 0 ? stageData.text : "準備挑戰！";
-        document.getElementById('story-name-tag').innerText = stageData.name;
-        const textElement = document.getElementById('story-dialogue-text'); textElement.innerText = ""; this.isTyping = true; this.textObj.charCount = 0;
-        this.currentTween = gsap.to(this.textObj, { charCount: targetText.length, duration: targetText.length * 0.04, ease: "none", onUpdate: () => { textElement.innerText = targetText.substr(0, Math.ceil(this.textObj.charCount)); }, onComplete: () => { this.isTyping = false; } });
-    },
-    nextDialogue() { if (this.isTyping) { if (this.currentTween) this.currentTween.progress(1); return; } if (this.dialogueStep === 0) { this.dialogueStep = 1; this.renderDialogue(); } else { this.endStory(); } },
-    endStory() { 
-        const layer = document.getElementById("story-layer");
-        if (layer) layer.classList.remove('story-active');
-        if (typeof this.onStoryCompleteCallback === "function") {
-            this.onStoryCompleteCallback();
-        }
-    }
+    gameStages: { 1: { chapter: "👑 第一章：3D 礦脈", title: "第 1 關", bg: "進入立體視覺會堂...", condition: "累積 15 分", name: "傑洛米", text: "歡迎來到全新的 3D 殿堂！" } },
+    loadStage(id, cb) { const layer = document.getElementById("story-layer"); if(layer) layer.classList.add('story-active'); if(cb) cb(); },
+    nextDialogue() { document.getElementById("story-layer").classList.remove('story-active'); }
 };
