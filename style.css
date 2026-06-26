@@ -331,11 +331,10 @@ html, body {
   html, body {
     padding: 2px;
     margin: 0;
-    overflow: hidden;    /* 🔒 物理封鎖滾動條，確保絕不溢出 */
-    height: 100dvh;      /* 鎖定手機真全螢幕高度 */
+    overflow: hidden;
+    height: 100dvh;
   }
 
-  /* 讓大外殼精確填滿螢幕，並用 Flex 進行垂直完美的比例分工 */
   .shell {
     height: 100%;
     display: flex;
@@ -345,264 +344,127 @@ html, body {
     overflow: hidden;
   }
 
-  /* 1. 頂部 meta 欄位高度極致壓縮 */
+  /* 頂部壓縮 */
   .top-meta-wrap { padding: 2px 4px; margin-bottom: 0; }
   .game-title { font-size: 0.8rem; letter-spacing: 0.02em; }
   .status-bar { gap: 2px; }
   .music-btn, .status-pill { padding: 1px 4px; font-size: 0.55rem; }
-  
-  /* 成就欄壓縮 */
+
+  /* 成就欄 */
   .achievement-banner { padding: 2px 6px; margin-bottom: 2px; }
   .ach-badge-title { font-size: 0.5rem; }
   .ach-latest-display { font-size: 0.58rem; line-height: 1.1; }
 
-  /* 2. 核心大上半部（交易局 + 卡牌主矩陣）：鎖定只拿走螢幕的 68% 高度 */
-  .shell > div[style*="display: flex"] {
-    flex-direction: column !important; /* 覆蓋 HTML 行內 Flex */
-    height: 68dvh !important;          /* 限制上半部總高度 */
-    gap: 4px;
+  /* 核心遊戲區：覆蓋 inline gap:12px 的容器 */
+  .shell > div[style*="display: flex"][style*="gap: 12px"] {
+    gap: 4px !important;
+    flex: 1 !important;
+    min-height: 0 !important;
+    margin-bottom: 0 !important;
+    overflow: hidden !important;
   }
 
-  /* 左側控制欄（在手機上變身為橫向左右平分） */
-  .shell #left-sidebar {
-    width: 100%;
-    height: auto;
-    display: grid;
-    grid-template-columns: 1fr 1fr; /* 左右平分：左邊鑄幣、右邊已拜訪貴族 */
-    gap: 6px;
-    flex-shrink: 0;
+  /* 左側鑄幣交易局：覆蓋 inline width:150px */
+  #guide-actions {
+    width: 62px !important;
+    padding: 4px 2px !important;
+    flex-shrink: 0 !important;
   }
-  
-  #left-sidebar #guide-actions {
-    width: 100%;
-    padding: 4px;
-    display: flex;
-    flex-direction: row; /* 籌碼按鈕在手機上改橫向並排，省高度 */
-    justify-content: space-between;
-    align-items: center;
-  }
-  
+  #guide-actions > div:first-child { display: none !important; }
+
   #unified-bank-selectors {
-    display: flex !important;
-    flex-direction: row !important;
-    gap: 3px;
+    display: grid !important;
+    grid-template-columns: 1fr !important;
+    gap: 3px !important;
+    overflow-y: auto !important;
+  }
+  .token-container-cell { padding: 1px !important; gap: 2px !important; }
+  .token-btn { width: 18px !important; height: 18px !important; background-size: 13px 13px !important; }
+  .token-count-label { font-size: 0.42rem !important; }
+  #btn-do-diff, #btn-do-same { font-size: 0.48rem !important; padding: 4px 1px !important; }
+
+  /* 右側卡牌矩陣 */
+  #guide-matrix {
+    flex: 1 !important;
+    min-height: 0 !important;
+    overflow: hidden !important;
+    gap: 2px !important;
   }
 
-  /* 右側卡牌大矩陣：在有限高度內彈性自適應，不准撐開 */
-  .shell #guide-matrix {
-    width: 100%;
-    flex: 1;
-    min-height: 0;
-    display: flex;
-    flex-direction: column;
-    justify-content: space-between;
-  }
+  /* 貴族區 */
+  .nobles-section { margin-bottom: 0 !important; padding: 1px 0 !important; flex-shrink: 0 !important; }
+  .nobles-grid { gap: 4px !important; }
+  .noble-card { min-width: 44px !important; height: 44px !important; flex-shrink: 0 !important; }
+  .noble-pts { font-size: 0.58rem !important; }
+  .noble-reqs { font-size: 0.36rem !important; }
 
-  /* 頂部議事堂貴族與首席輔助官並排區 */
-  #guide-matrix > div[style*="display: flex"] {
-    gap: 6px !important;
-    margin-bottom: 2px;
-  }
-
-  .nobles-section { margin-bottom: 0; padding: 0; }
-  
-  /* 🕵️ 根治大小問題：強迫所有貴族卡片在手機上縮小，絕不撐破版面 */
-  #nobles-layer .noble-card,
-  #guide-assistant-container #assistant-display-layer .noble-card,
-  #left-earned-nobles #earned-nobles-layer .noble-card {
-    width: 42px;
-    height: 42px;
-    min-width: 42px;
-    max-width: 42px;
-    aspect-ratio: 1 / 1;
-  }
-
-  /* 三層寶石卡列高度平分 */
+  /* 三排卡牌 */
   .board-row {
-    flex: 1;
-    min-height: 0;
-    display: flex;
-    flex-direction: column;
-    justify-content: center;
+    flex: 1 !important;
+    min-height: 0 !important;
+    display: flex !important;
+    flex-direction: column !important;
+    margin-bottom: 0 !important;
   }
-  .row-header { margin-bottom: 0; }
-  .section-title { font-size: 0.52rem; }
-  .deck-count { font-size: 0.48rem; }
+  .row-header { margin-bottom: 1px !important; }
+  .section-title { font-size: 0.5rem !important; }
+  .deck-count { font-size: 0.46rem !important; }
 
-  /* 寶石卡 4 列彈性平分寬度 */
   .grid-4 {
-    display: grid;
-    grid-template-columns: repeat(4, 1fr);
-    gap: 3px;
-    flex: 1;
+    flex: 1 !important;
+    min-height: 0 !important;
+    display: grid !important;
+    grid-template-columns: repeat(4, 1fr) !important;
+    grid-template-rows: 1fr !important;
+    gap: 3px !important;
   }
 
-  /* 卡牌內部縮小防禦 */
+  /* 卡牌正方形 */
   .card {
-    width: 100%;
-    max-width: 100%;
-    height: auto;
-    aspect-ratio: 1 / 1; /* 保持與電腦版一致的正方形 */
+    width: 100% !important;
+    height: 100% !important;
+    aspect-ratio: 1 / 1 !important;
+    transform: none !important;
   }
-  .card-content-wrapper { padding: 2px; }
-  .card-pts { font-size: 0.65rem; }
-  .cost-dot { font-size: 0.4rem; padding: 0 1px; }
-  .cost-dot-circle { width: 4px; height: 4px; }
-  .btn-card { font-size: 0.4rem; padding: 0; }
+  .card-content-wrapper { padding: 2px !important; }
+  .card-pts { font-size: 0.6rem !important; }
+  .card-gem-icon { width: 10px !important; height: 10px !important; }
+  .cost-dot { font-size: 0.38rem !important; padding: 0 1px !important; }
+  .cost-dot-circle { width: 4px !important; height: 4px !important; }
+  .btn-card { font-size: 0.38rem !important; padding: 1px 0 !important; }
 
-  /* 3. 底部金庫與手牌區：鎖定只拿走螢幕的 22% 高度 */
-  .dashboard-container {
-    flex-direction: column;
-    height: 22dvh !important;
-    gap: 2px;
-    margin-top: 0;
-    padding-top: 2px;
+  /* 底部金庫：覆蓋 inline height:105px */
+  #guide-dashboard {
+    height: auto !important;
+    min-height: 70px !important;
+    max-height: 88px !important;
+    flex-shrink: 0 !important;
+    gap: 4px !important;
+    padding-top: 3px !important;
+    margin-top: 0 !important;
   }
 
-  .dashboard { padding: 2px 4px; flex: 1; }
-  .res-circle { width: 10px; height: 10px; }
-  .res-count { font-size: 0.6rem; }
-  #cap-txt { font-size: 0.5rem; margin-top: 1px; }
+  .dashboard { padding: 3px 6px !important; }
+  .res-grid { gap: 3px !important; }
+  .res-circle { width: 11px !important; height: 11px !important; }
+  .res-count { font-size: 0.6rem !important; }
+  .res-bonus { font-size: 0.45rem !important; }
+  #cap-txt { font-size: 0.46rem !important; margin-top: 1px !important; }
 
-  /* 保留手牌區在手機上壓在金庫正下方 */
-  .reserved-section {
-    width: 100%;
-    min-width: 100%;
-    flex: 1;
-    padding: 2px;
+  /* 輔助官 + 貴族面板 */
+  .earned-nobles-panel { min-width: 80px !important; padding: 3px !important; }
+
+  /* 保留手牌區：覆蓋 inline min-width:320px */
+  #guide-reserved {
+    flex: 2.5 !important;
+    min-width: 0 !important;
+    padding: 3px !important;
   }
-  .reserved-section .section-title { font-size: 0.5rem; }
-  .reserved-section .grid-4 {
-    grid-template-columns: repeat(4, 1fr); /* 手機上手牌也是橫排 4 張 */
-  }
-}
+  #reserved-layer { gap: 3px !important; }
+  #guide-reserved .section-title { font-size: 0.46rem !important; margin-bottom: 1px !important; }
 
-/* 🎯 左側側邊欄高度完美分配，不使用 important */
-
-/* 1. 設定整個左側側邊欄的高度與主矩陣對齊 */
-.shell #left-sidebar {
-    height: 100%; /* 填滿整個上半部空間，底部自然會被玩家金庫卡住，所以會在金庫上方 */
-}
-
-/* 2. 鑄幣局與已拜訪貴族按比例分配高度 */
-#left-sidebar #guide-actions {
-    flex: 6; /* 佔據較多空間（約 60%） */
-    min-height: 0;
-}
-
-#left-sidebar #left-earned-nobles {
-    flex: 4; /* 佔據較少空間（約 40%），放已拜訪貴族剛剛好 */
-    min-height: 0;
-}
-
-/* 3. 被收購的貴族卡片自適應縮小為扁長條型 */
-#left-earned-nobles #earned-nobles-layer .noble-card {
-    min-width: 100%;
-    width: 100%;
-    height: 55px; /* 改為 55px 橫向長條卡 */
-}
-
-#left-earned-nobles #earned-nobles-layer .noble-overlay {
-    padding: 2px;
-}
-
-#left-earned-nobles #earned-nobles-layer .noble-reqs {
-    font-size: 0.5rem;
-
-  /* 🎯 讓首席輔助官內的卡牌與貴族卡牌完美同寬高 */
-
-/* 1. 鎖定輔助官顯示層的結構 */
-#guide-assistant-container #assistant-display-layer {
-    display: flex;
-    align-items: center;
-    gap: 8px;
-}
-
-/* 2. 精準控制輔助官卡片尺寸，直接套用與貴族一模一樣的 1:1 正方形和大小 */
-#guide-assistant-container #assistant-display-layer .noble-card {
-    width: 75px;        /* 與側邊欄或矩陣中的貴族卡片尺寸看齊 */
-    height: 75px;
-    min-width: 75px;    /* 防止被彈性擠壓變形 */
-    aspect-ratio: 1 / 1;
-}
-
-/* 3. 微調卡片內容 */
-#guide-assistant-container #assistant-display-layer .noble-overlay {
-    padding: 4px;
-}
-
-  /* 🎯 讓首席輔助官內的卡牌與貴族卡牌完美同寬高（不使用 important） */
-
-/* 1. 鎖定輔助官顯示層的結構 */
-#guide-assistant-container #assistant-display-layer {
-    display: flex;
-    align-items: center;
-    gap: 8px;
-}
-
-/* 2. 精準控制輔助官卡片尺寸，直接套用與貴族一模一樣的 1:1 正方形和大小 */
-#guide-assistant-container #assistant-display-layer .noble-card {
-    width: 75px;        /* 與側邊欄或矩陣中的貴族卡片尺寸看齊 */
-    height: 75px;
-    min-width: 75px;    /* 防止被彈性擠壓變形 */
-    aspect-ratio: 1 / 1;
-}
-
-/* 3. 微調卡片內容 */
-#guide-assistant-container #assistant-display-layer .noble-overlay {
-    padding: 4px;
-}
-
-/* ⚙️ 皇家選項選單按鈕樣式修復 */
-.shell .menu-row-btn {
-    width: 100%;
-    padding: 8px;
-    margin-bottom: 8px;
-    background: linear-gradient(180deg, #2d241f, #1a1512);
-    border: 1px solid #4a3a30;
-    color: #ffe099;
-    border-radius: var(--radius-sm);
-    font-size: 0.75rem;
-    font-weight: 600;
-    cursor: pointer;
-    transition: all 0.2s ease;
-    text-align: center;
-}
-
-/* 滑鼠懸停效果 */
-.shell .menu-row-btn:hover {
-    filter: brightness(1.2);
-    border-color: #d4af37;
-    box-shadow: 0 0 8px rgba(212, 175, 55, 0.3);
-}
-
-  /* 🎯 統一戰線：將主矩陣貴族、首席輔助官與寶石卡牌大小完全同步 */
-
-/* 1. 調整主對局矩陣中的議事堂貴族卡片尺寸 */
-#guide-matrix #nobles-layer .noble-card {
-    width: 100%;           /* 隨外框寬度自適應 */
-    max-width: 120px;      /* 鎖定跟你的寶石卡 .card 一模一樣的最大寬度限制 */
-    height: auto;          /* 高度交給比例去算 */
-    aspect-ratio: 1 / 1;   /* 變成完美的 1:1 正方形，與寶石卡完全對齊 */
-}
-
-/* 2. 調整首席輔助官欄位內獲得的貴族卡片尺寸 */
-#guide-assistant-container #assistant-display-layer .noble-card {
-    width: 100%;           /* 自適應縮放 */
-    max-width: 120px;      /* 保持與大矩陣所有卡牌一模一樣的上限尺寸 */
-    height: auto;
-    aspect-ratio: 1 / 1;   /* 拒絕變形，同樣鎖定 1:1 正方形 */
-}
-
-/* 3. 安全防禦：微調貴族卡片內部的文字與圖標，防止因變成正方形而擠壓 */
-.noble-card .noble-overlay {
-    padding: 4px;
-    display: flex;
-    flex-direction: column;
-    justify-content: space-between;
-}
-
-.noble-card .noble-reqs {
-    font-size: 0.55rem;
-    line-height: 1.1;
+  /* Modal */
+  .modal-overlay { padding: 8px !important; }
+  .modal { max-width: 100% !important; padding: 14px !important; max-height: 88dvh !important; overflow-y: auto !important; }
+  .modal-title { font-size: 1rem !important; }
 }
