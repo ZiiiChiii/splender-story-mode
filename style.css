@@ -144,6 +144,7 @@ html, body {
 .nobles-section { margin-bottom: 2px; border: 2px solid transparent; border-radius: var(--radius); padding: 1px; flex-shrink: 0; }
 .nobles-grid { display: flex; gap: 6px; overflow-x: auto; }
 
+/* 修改 1：放大貴族圖卡為 163px (原 65px 的 2.5 倍) */
 .noble-card {
   position: relative;
   background: #110e0c;
@@ -214,25 +215,13 @@ html, body {
 
 .board-matrix { display: flex; flex-direction: column; gap: 2px; }
 .board-row { display: flex; flex-direction: column; gap: 1px; }
+.grid-4 { display: grid; grid-template-columns: repeat(4, 1fr); gap: 3px; }
 
-/* 修改 2：將 grid-4 套用 grid-auto-rows: 0 並在下方補齊特定行高與正方形配置 */
-.grid-4 { display: grid; grid-template-columns: repeat(4, 1fr); gap: 3px; grid-auto-rows: 0; }
-
-/* 讓 grid-4 的高度由內容決定，不撐滿父層 */
-#row-lv1, #row-lv2, #row-lv3 {
-  flex: none !important;
-}
-
-/* 卡牌正方形：寬度是父層的 1/4 減去 gap，高度等於寬度 */
-#row-lv1 .card, #row-lv2 .card, #row-lv3 .card {
-  height: 0;
-  padding-bottom: 100%;
-  position: relative;
-}
-
-/* 修改 1：移除原本的 transform 與 transform-origin 設定 */
+/* 修改 2：新增縮小發展卡為 3/5 的 transform 設定 */
 .card {
   background: var(--card-bg); background-size: cover; background-position: center; border: 1px solid var(--card-border); border-radius: var(--radius-sm); display: flex; flex-direction: column; justify-content: space-between; height: 100%; position: relative; box-shadow: 0 4px 8px rgba(0,0,0,0.5); overflow: hidden;
+  transform: scale(0.6);
+  transform-origin: top left;
 }
 .card-content-wrapper { display: flex; flex-direction: column; justify-content: space-between; width: 100%; height: 100%; flex: 1; padding: 3px; background: linear-gradient(180deg, rgba(16, 12, 10, 0.75) 0%, rgba(16, 12, 10, 0.2) 50%, rgba(16, 12, 10, 0.85) 100%); }
 
@@ -315,7 +304,9 @@ html, body {
 .tutorial-highlight { position: relative !important; z-index: 10000001 !important; pointer-events: auto !important; }
 #floating-tutorial-widget { position: fixed !important; z-index: 10000002 !important; pointer-events: auto !important; }
 
-/* ── @media (max-width: 430px) 區塊 ── */
+/* ═══════════════════════════════════════════════
+   @media (max-width: 430px) 區塊
+   ═══════════════════════════════════════════════ */
 @media (max-width: 430px) {
   html, body {
     padding: 2px !important;
@@ -343,6 +334,7 @@ html, body {
   .ach-badge-title { font-size: 0.52rem; }
   .ach-latest-display { font-size: 0.6rem; }
 
+  /* 修改 3：同步更新手機版 media query 內的貴族卡尺寸為 130px (原 52px 的 2.5 倍) */
   .nobles-section { margin-bottom: 2px !important; padding: 1px !important; flex-shrink: 0 !important; }
   .noble-card { min-width: 130px; height: 130px; flex-shrink: 0; }
   .noble-pts { font-size: 0.62rem; }
