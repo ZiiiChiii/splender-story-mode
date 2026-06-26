@@ -483,7 +483,7 @@ window.render = function() {
       const disabledStyle = (!isGold && !inBank) ? 'style="opacity:0.12; cursor:not-allowed;"' : '';
 
       return `
-        <div class="token-container-cell" style="flex-direction: row; justify-content: space-between; width: 100%; padding: 2px 6px; background: rgba(0,0,0,0.2); border-radius: 4px;">
+        <div class="token-container-cell" style="flex-direction: row; justify-content: space-between; width: 100%; padding: 2px 6px;  border-radius: 4px;">
           <button class="token-btn ${GEM_BTN_CLASSES[k]} ${alreadySelected ? 'selected' : ''}" style="width:22px; height:22px; background-size:16px 16px; margin:0;"
             ${isGold ? 'disabled' : ''} ${disabledStyle} ${clickAttr}>
           </button>
