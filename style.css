@@ -499,3 +499,26 @@ html, body {
 #guide-assistant-container #assistant-display-layer .noble-overlay {
     padding: 4px;
 }
+
+/* ⚙️ 皇家選項選單按鈕樣式修復 */
+.shell .menu-row-btn {
+    width: 100%;
+    padding: 8px;
+    margin-bottom: 8px;
+    background: linear-gradient(180deg, #2d241f, #1a1512);
+    border: 1px solid #4a3a30;
+    color: #ffe099;
+    border-radius: var(--radius-sm);
+    font-size: 0.75rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    text-align: center;
+}
+
+/* 滑鼠懸停效果 */
+.shell .menu-row-btn:hover {
+    filter: brightness(1.2);
+    border-color: #d4af37;
+    box-shadow: 0 0 8px rgba(212, 175, 55, 0.3);
+}
