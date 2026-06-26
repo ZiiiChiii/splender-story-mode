@@ -159,11 +159,15 @@ html, body {
   background: #110e0c;
   border: 1px solid #9c7a3c;
   border-radius: var(--radius-sm);
-  min-width: 163px;
-  height: 163px;
   box-shadow: 0 4px 8px rgba(0,0,0,0.6);
   transition: all 0.3s ease;
   overflow: hidden;
+
+  /* 🎯 治本修正：解鎖 163px 的限制，讓它完美對齊寶石卡 */
+  width: 100%;           /* 寬度自動填滿欄位 */
+  max-width: 120px;      /* 鎖定跟寶石卡一模一樣的最大寬度 */
+  height: auto;          /* 高度交給比例 */
+  aspect-ratio: 1 / 1;   /* 鎖定完美的 1:1 正方形 */
 }
 .noble-img { width: 100%; height: 100%; object-fit: cover; position: absolute; top: 0; left: 0; z-index: 1; opacity: 0.9; }
 .noble-overlay {
