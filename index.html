@@ -118,24 +118,26 @@
 
   <div style="display: flex; gap: 12px; flex: 1; min-height: 0; margin-bottom: 6px; align-items: stretch;">
     
-    <section class="action-panel" id="guide-actions" style="width: 150px; flex-shrink: 0; display: flex; flex-direction: column; justify-content: space-between; padding: 8px; margin-bottom: 0;">
+   <section class="action-panel" id="guide-actions" style="width: 150px; flex-shrink: 0; display: flex; flex-direction: column; justify-content: space-between; padding: 8px; margin-bottom: 0;">
       <div style="font-size:0.65rem; color:#ffe099; font-weight:800; text-align:center; border-bottom:1px dashed rgba(255,255,255,0.15); padding-bottom:4px; margin-bottom:4px;">🪙 鑄幣交易局</div>
       
       <div id="unified-bank-selectors" style="display: grid; grid-template-columns: 1fr; gap: 5px; flex: 1; padding: 2px 0; overflow-y:auto;"></div>
       
       <div style="display: flex; flex-direction: column; gap: 5px; margin-top: auto; padding-top: 6px; border-top:1px dashed rgba(255,255,255,0.15);">
-        <button class="btn-primary" id="btn-do-diff" style="font-size:0.6rem; padding:6px 2px; line-height:1.2;" disabled onclick="handleDoDiffClick()">收下 (3色)</button>
-        <button class="btn-primary" id="btn-do-same" style="font-size:0.6rem; padding:6px 2px; line-height:1.2;" disabled onclick="handleDoSameClick()">收下 (2色)</button>
+        <button class="btn-primary" id="btn-do-diff" style="font-size:0.6rem; padding:6px 2px; line-height:1.2;" disabled onclick="handleDoDiffClick()">收下3種不同寶石</button>
+        <button class="btn-primary" id="btn-do-same" style="font-size:0.6rem; padding:6px 2px; line-height:1.2;" disabled onclick="handleDoSameClick()">收下2種不同寶石</button>
       </div>
       <div class="msg-box" id="error-msg" style="min-height:0; margin-top:2px; line-height:1.1; font-size:0.55rem;"></div>
     </section>
 
+    <section class="nobles-section" id="guide-nobles" style="width: 150px; flex-shrink: 0; margin-top: 10px; padding: 2px 0;">
+      <div style="font-size: 0.6rem; color: #ffe099; font-weight: 700; margin-bottom: 4px; text-transform: uppercase; text-align: center;">⚜️ 覲見貴族</div>
+      <div class="nobles-grid" id="nobles-layer" style="display: flex; flex-direction: column; gap: 8px; overflow-y: auto; max-height: 250px;"></div>
+    </section>
+
     <div class="board-matrix" id="guide-matrix" style="flex: 1; min-height: 0; display: flex; flex-direction: column; gap: 2px;">
       
-      <section class="nobles-section" id="guide-nobles" style="margin-bottom: 4px; padding: 2px 0; border-bottom: 1px dashed rgba(212,175,55,0.2);">
-        <div style="font-size: 0.6rem; color: #ffe099; font-weight: 700; margin-bottom: 2px; text-transform: uppercase; padding-left: 6px;">⚜️ 議事堂出席覲見貴族</div>
-        <div class="nobles-grid" id="nobles-layer" style="gap: 8px;"></div>
-      </section>
+     
 
       <div class="board-row" style="flex: 1; min-height: 0; display: flex; flex-direction: column;">
         <div class="row-header lv3" style="margin-bottom: 2px;"><span class="section-title" style="color:#d4af37; font-weight:700; font-size:0.65rem;">頂級物業 (Lv3)</span><span class="deck-count" id="deck-lv3-txt">剩餘: 0</span></div>
