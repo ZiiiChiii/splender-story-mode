@@ -532,3 +532,34 @@ html, body {
     border-color: #d4af37;
     box-shadow: 0 0 8px rgba(212, 175, 55, 0.3);
 }
+
+  /* 🎯 統一戰線：將主矩陣貴族、首席輔助官與寶石卡牌大小完全同步 */
+
+/* 1. 調整主對局矩陣中的議事堂貴族卡片尺寸 */
+#guide-matrix #nobles-layer .noble-card {
+    width: 100%;           /* 隨外框寬度自適應 */
+    max-width: 120px;      /* 鎖定跟你的寶石卡 .card 一模一樣的最大寬度限制 */
+    height: auto;          /* 高度交給比例去算 */
+    aspect-ratio: 1 / 1;   /* 變成完美的 1:1 正方形，與寶石卡完全對齊 */
+}
+
+/* 2. 調整首席輔助官欄位內獲得的貴族卡片尺寸 */
+#guide-assistant-container #assistant-display-layer .noble-card {
+    width: 100%;           /* 自適應縮放 */
+    max-width: 120px;      /* 保持與大矩陣所有卡牌一模一樣的上限尺寸 */
+    height: auto;
+    aspect-ratio: 1 / 1;   /* 拒絕變形，同樣鎖定 1:1 正方形 */
+}
+
+/* 3. 安全防禦：微調貴族卡片內部的文字與圖標，防止因變成正方形而擠壓 */
+.noble-card .noble-overlay {
+    padding: 4px;
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+}
+
+.noble-card .noble-reqs {
+    font-size: 0.55rem;
+    line-height: 1.1;
+}
