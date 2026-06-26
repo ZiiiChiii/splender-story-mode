@@ -326,116 +326,155 @@ html, body {
 .tutorial-highlight { position: relative !important; z-index: 10000001 !important; pointer-events: auto !important; }
 #floating-tutorial-widget { position: fixed !important; z-index: 10000002 !important; pointer-events: auto !important; }
 
-/* ── @media (max-width: 430px) 區塊 ── */
+/* ── 📱 全新手機版：完美一頁式、零滾動佈局 (max-width: 430px) ── */
 @media (max-width: 430px) {
   html, body {
-    padding: 2px !important;
-    overflow: hidden !important;
+    padding: 2px;
     margin: 0;
-    height: calc(var(--vh, 1vh) * 100) !important;
-    height: 100dvh !important;
+    overflow: hidden;    /* 🔒 物理封鎖滾動條，確保絕不溢出 */
+    height: 100dvh;      /* 鎖定手機真全螢幕高度 */
   }
 
+  /* 讓大外殼精確填滿螢幕，並用 Flex 進行垂直完美的比例分工 */
   .shell {
-    height: calc(100% - 4px) !important;
-    display: flex !important;
-    flex-direction: column !important;
-    gap: 0 !important;
-    overflow: hidden !important;
+    height: 100%;
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+    gap: 2px;
+    overflow: hidden;
   }
 
-  .top-meta-wrap { padding: 3px 6px !important; margin-bottom: 2px !important; }
-  .game-title { font-size: 0.82rem; letter-spacing: 0.05em; }
-  .status-bar { gap: 3px !important; }
-  .music-btn { padding: 2px 5px !important; font-size: 0.58rem !important; }
-  .status-pill { padding: 2px 5px !important; font-size: 0.58rem !important; }
+  /* 1. 頂部 meta 欄位高度極致壓縮 */
+  .top-meta-wrap { padding: 2px 4px; margin-bottom: 0; }
+  .game-title { font-size: 0.8rem; letter-spacing: 0.02em; }
+  .status-bar { gap: 2px; }
+  .music-btn, .status-pill { padding: 1px 4px; font-size: 0.55rem; }
+  
+  /* 成就欄壓縮 */
+  .achievement-banner { padding: 2px 6px; margin-bottom: 2px; }
+  .ach-badge-title { font-size: 0.5rem; }
+  .ach-latest-display { font-size: 0.58rem; line-height: 1.1; }
 
-  .achievement-banner { padding: 3px 8px !important; margin-bottom: 2px !important; }
-  .ach-badge-title { font-size: 0.52rem; }
-  .ach-latest-display { font-size: 0.6rem; }
-
-  .nobles-section { margin-bottom: 2px !important; padding: 1px !important; flex-shrink: 0 !important; }
-  .noble-card { min-width: 130px; height: 130px; flex-shrink: 0; }
-  .noble-pts { font-size: 0.62rem; }
-
-  #guide-actions {
-    width: 65px !important;
-    padding: 4px 2px !important;
+  /* 2. 核心大上半部（交易局 + 卡牌主矩陣）：鎖定只拿走螢幕的 68% 高度 */
+  .shell > div[style*="display: flex"] {
+    flex-direction: column !important; /* 覆蓋 HTML 行內 Flex */
+    height: 68dvh !important;          /* 限制上半部總高度 */
+    gap: 4px;
   }
-  .token-container-cell { padding: 1px !important; }
-  .token-btn { width: 16px !important; height: 16px !important; background-size: 12px 12px !important; }
-  .token-count-label { font-size: 0.45rem !important; }
 
-  .matrix-reserved-wrapper {
+  /* 左側控制欄（在手機上變身為橫向左右平分） */
+  .shell #left-sidebar {
+    width: 100%;
+    height: auto;
+    display: grid;
+    grid-template-columns: 1fr 1fr; /* 左右平分：左邊鑄幣、右邊已拜訪貴族 */
+    gap: 6px;
+    flex-shrink: 0;
+  }
+  
+  #left-sidebar #guide-actions {
+    width: 100%;
+    padding: 4px;
+    display: flex;
+    flex-direction: row; /* 籌碼按鈕在手機上改橫向並排，省高度 */
+    justify-content: space-between;
+    align-items: center;
+  }
+  
+  #unified-bank-selectors {
     display: flex !important;
     flex-direction: row !important;
-    flex: 1 !important;
-    min-height: 0 !important;
-    overflow: hidden !important;
-    gap: 3px !important;
+    gap: 3px;
   }
 
-  .board-matrix {
-    flex: 1 !important;
-    display: flex !important;
-    flex-direction: column !important;
-    min-height: 0 !important;
-    overflow: hidden !important;
-    gap: 1px !important;
+  /* 右側卡牌大矩陣：在有限高度內彈性自適應，不准撐開 */
+  .shell #guide-matrix {
+    width: 100%;
+    flex: 1;
+    min-height: 0;
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
   }
 
+  /* 頂部議事堂貴族與首席輔助官並排區 */
+  #guide-matrix > div[style*="display: flex"] {
+    gap: 6px !important;
+    margin-bottom: 2px;
+  }
+
+  .nobles-section { margin-bottom: 0; padding: 0; }
+  
+  /* 🕵️ 根治大小問題：強迫所有貴族卡片在手機上縮小，絕不撐破版面 */
+  #nobles-layer .noble-card,
+  #guide-assistant-container #assistant-display-layer .noble-card,
+  #left-earned-nobles #earned-nobles-layer .noble-card {
+    width: 42px;
+    height: 42px;
+    min-width: 42px;
+    max-width: 42px;
+    aspect-ratio: 1 / 1;
+  }
+
+  /* 三層寶石卡列高度平分 */
   .board-row {
-    flex: 1 !important;
-    display: flex !important;
-    flex-direction: column !important;
-    min-height: 0 !important;
-    margin-bottom: 1px !important;
-    gap: 0 !important;
+    flex: 1;
+    min-height: 0;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
   }
+  .row-header { margin-bottom: 0; }
+  .section-title { font-size: 0.52rem; }
+  .deck-count { font-size: 0.48rem; }
 
+  /* 寶石卡 4 列彈性平分寬度 */
   .grid-4 {
-    display: flex !important;
-    flex-direction: row !important;
-    flex: 1 !important;
-    gap: 2px !important;
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 3px;
+    flex: 1;
   }
 
+  /* 卡牌內部縮小防禦 */
   .card {
-    flex: 1 !important;
-    min-height: 0 !important;
-    display: flex !important;
-    flex-direction: column !important;
-    transform: none !important;
-    transform-origin: unset !important;
+    width: 100%;
+    max-width: 100%;
+    height: auto;
+    aspect-ratio: 1 / 1; /* 保持與電腦版一致的正方形 */
   }
+  .card-content-wrapper { padding: 2px; }
+  .card-pts { font-size: 0.65rem; }
+  .cost-dot { font-size: 0.4rem; padding: 0 1px; }
+  .cost-dot-circle { width: 4px; height: 4px; }
+  .btn-card { font-size: 0.4rem; padding: 0; }
 
-  .card-content-wrapper {
-    padding: 2px !important;
-    flex: 1 !important;
-    display: flex !important;
-    flex-direction: column !important;
-    justify-content: space-between !important;
-  }
-  .card-pts { font-size: 0.72rem; }
-  .cost-dot { font-size: 0.42rem !important; padding: 1px !important; }
-  .cost-dot-circle { width: 5px !important; height: 5px !important; }
-  .btn-card { font-size: 0.42rem; padding: 1px 0 !important; }
-  .row-header { padding-left: 3px !important; }
-  .section-title { font-size: 0.55rem !important; }
-  .deck-count { font-size: 0.5rem !important; }
-
+  /* 3. 底部金庫與手牌區：鎖定只拿走螢幕的 22% 高度 */
   .dashboard-container {
-    gap: 3px !important;
-    margin-bottom: 2px !important;
-    flex-shrink: 0 !important;
-    height: 75px !important;
+    flex-direction: column;
+    height: 22dvh !important;
+    gap: 2px;
+    margin-top: 0;
+    padding-top: 2px;
   }
-  .res-circle { width: 13px; height: 13px; }
-  .res-count { font-size: 0.68rem; }
 
-  .reserved-section { width: 130px !important; flex-shrink: 0 !important; }
-  .reserved-section .card { min-height: 40px !important; }
-  .reserved-section .grid-4 { display: grid !important; grid-template-columns: repeat(2, 1fr) !important; flex-direction: unset !important; flex: unset !important; }
+  .dashboard { padding: 2px 4px; flex: 1; }
+  .res-circle { width: 10px; height: 10px; }
+  .res-count { font-size: 0.6rem; }
+  #cap-txt { font-size: 0.5rem; margin-top: 1px; }
+
+  /* 保留手牌區在手機上壓在金庫正下方 */
+  .reserved-section {
+    width: 100%;
+    min-width: 100%;
+    flex: 1;
+    padding: 2px;
+  }
+  .reserved-section .section-title { font-size: 0.5rem; }
+  .reserved-section .grid-4 {
+    grid-template-columns: repeat(4, 1fr); /* 手機上手牌也是橫排 4 張 */
+  }
 }
 
 /* 🎯 左側側邊欄高度完美分配，不使用 important */
