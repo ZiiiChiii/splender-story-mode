@@ -394,7 +394,7 @@ html, body {
   /* 貴族區 */
   .nobles-section { margin-bottom: 0 !important; padding: 1px 0 !important; flex-shrink: 0 !important; }
   .nobles-grid { gap: 4px !important; }
-  .noble-card { min-width: 44px !important; height: 44px !important; flex-shrink: 0 !important; }
+  .noble-card { min-width: 0 !important; width: calc((100vw - 82px) / 4) !important; height: calc((100vw - 82px) / 4) !important; flex-shrink: 0 !important; }
   .noble-pts { font-size: 0.58rem !important; }
   .noble-reqs { font-size: 0.36rem !important; }
 
@@ -452,7 +452,7 @@ html, body {
   #cap-txt { font-size: 0.46rem !important; margin-top: 1px !important; }
 
   /* 輔助官 + 貴族面板 */
-  .earned-nobles-panel { min-width: 80px !important; padding: 3px !important; }
+  .earned-nobles-panel { flex: 1.8 !important; min-width: 0 !important; padding: 3px !important; }
 
   /* 保留手牌區：覆蓋 inline min-width:320px */
   #guide-reserved {
