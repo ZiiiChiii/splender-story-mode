@@ -87,12 +87,13 @@ html, body {
 }
 .status-pill strong { font-family: 'Orbitron', sans-serif; color: #d4af37; text-shadow: var(--glow-warm); }
 
-.music-btn {
+/* ⚙️ 讓 menu-row-btn 共用 music-btn 的古典深色外觀 */
+.music-btn, .menu-row-btn {
   background: linear-gradient(180deg, #3a2e22, #1c150e);
   border: 1px solid #d4af37;
   color: #ffe099;
   border-radius: var(--radius-sm);
-  padding: 4px 10px;
+  padding: 8px 12px;           /* 稍微調大一點點，讓彈出視窗內的按鈕更好點擊 */
   font-size: 0.75rem;
   font-weight: 600;
   cursor: pointer;
@@ -100,9 +101,13 @@ html, body {
   box-shadow: 0 2px 5px rgba(0,0,0,0.5);
   display: flex;
   align-items: center;
+  justify-content: center;     /* 讓選單文字在按鈕正中間置中 */
   gap: 4px;
+  width: 100%;                 /* 讓它在選項選單中自動填滿寬度 */
+  margin-bottom: 8px;          /* 增加按鈕之間的上下間距 */
 }
-.music-btn:hover {
+
+.music-btn:hover, .menu-row-btn:hover {
   filter: brightness(1.2);
   box-shadow: 0 0 8px rgba(212, 175, 55, 0.4);
 }
