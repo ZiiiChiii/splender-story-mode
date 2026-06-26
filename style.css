@@ -455,3 +455,25 @@ html, body {
 
 #left-earned-nobles #earned-nobles-layer .noble-reqs {
     font-size: 0.5rem;
+
+  /* 🎯 讓首席輔助官內的卡牌與貴族卡牌完美同寬高 */
+
+/* 1. 鎖定輔助官顯示層的結構 */
+#guide-assistant-container #assistant-display-layer {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+/* 2. 精準控制輔助官卡片尺寸，直接套用與貴族一模一樣的 1:1 正方形和大小 */
+#guide-assistant-container #assistant-display-layer .noble-card {
+    width: 75px;        /* 與側邊欄或矩陣中的貴族卡片尺寸看齊 */
+    height: 75px;
+    min-width: 75px;    /* 防止被彈性擠壓變形 */
+    aspect-ratio: 1 / 1;
+}
+
+/* 3. 微調卡片內容 */
+#guide-assistant-container #assistant-display-layer .noble-overlay {
+    padding: 4px;
+}
