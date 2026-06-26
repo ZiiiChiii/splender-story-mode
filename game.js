@@ -787,3 +787,37 @@ window.storyModule = {
         }
     }
 };
+
+// 🎵 全域背景音樂開關控制器
+window.handleMusicToggle = function() {
+  if (!CoreState) return;
+  const state = CoreState.get();
+  
+  // 切換狀態
+  state.settings.isMusicMuted = !state.settings.isMusicMuted;
+  
+  // 即時控制 HTML5 Audio 標籤
+  const audioEl = document.getElementById('bg-music');
+  if (audioEl) {
+    if (state.settings.isMusicMuted) {
+      audioEl.pause();
+    } else {
+      audioEl.play().catch(() => {});
+    }
+  }
+  
+  // 重新整理選項視窗的文字顯示
+  if (window.openGameOptionsModal) window.openGameOptionsModal();
+};
+
+// 🔊 全域遊戲音效開關控制器
+window.handleSfxToggle = function() {
+  if (!CoreState) return;
+  const state = CoreState.get();
+  
+  // 切換狀態
+  state.settings.isSfxMuted = !state.settings.isSfxMuted;
+  
+  // 重新整理選項視窗的文字顯示
+  if (window.openGameOptionsModal) window.openGameOptionsModal();
+};
