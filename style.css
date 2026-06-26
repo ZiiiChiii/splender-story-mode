@@ -423,3 +423,32 @@ html, body {
   .reserved-section .card { min-height: 40px !important; }
   .reserved-section .grid-4 { display: grid !important; grid-template-columns: repeat(2, 1fr) !important; flex-direction: unset !important; flex: unset !important; }
 }
+
+/* 🎯 側邊欄版面重組：優雅縮短交易局，為已拜訪貴族留出空間 */
+
+/* 1. 使用父子選擇器提高權重，設定鑄幣局高度為視窗高度的 45% */
+.shell #guide-actions {
+    height: 45vh;
+    margin-bottom: 10px;
+}
+
+/* 2. 設定左側已拜訪貴族區的高度 */
+.shell #left-earned-nobles {
+    height: 35vh;
+}
+
+/* 3. 調整被玩家收購的貴族卡片尺寸，讓它們在 150px 寬度的側邊欄裡呈長條狀排列 */
+#left-earned-nobles #earned-nobles-layer .noble-card {
+    min-width: 100%;
+    width: 100%;
+    height: 55px; /* 縮小為精緻的扁型小長條，非常省空間 */
+}
+
+/* 4. 微調卡片內部的文字與內容防止因為太小而擠壓變形 */
+#left-earned-nobles #earned-nobles-layer .noble-overlay {
+    padding: 2px;
+}
+
+#left-earned-nobles #earned-nobles-layer .noble-reqs {
+    font-size: 0.5rem;
+}
