@@ -199,7 +199,7 @@ html, body {
 .earned-noble-mini span { font-size: 0.52rem; color: #ffe099; white-space: nowrap; }
 
 .action-panel { background: transparent; border: none; border-radius: var(--radius); box-shadow: none; }
-.act-group { width: 100%; background: #1a1512; padding: 4px; border-radius: var(--radius-sm); border: 1px solid #2d241f; }
+.act-group { width: 100%; background: transparent; padding: 4px; border-radius: var(--radius-sm); border: none; }
 
 .token-container-cell { display: flex; align-items: center; gap: 4px; }
 .token-btn { padding: 0; border: 1px solid #3a3028; background: #120e0c; border-radius: 50%; cursor: pointer; transition: all 0.15s ease; box-shadow: 0 2px 4px rgba(0,0,0,0.5); }
