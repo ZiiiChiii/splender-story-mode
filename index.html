@@ -12,6 +12,18 @@
 
 <script src="https://cdn.jsdelivr.net/npm/gsap@3.12.5/dist/gsap.min.js"></script>
 <style>
+          /* 🪙 橋接修復：直接將交易局按鈕的類別名稱綁定寶石圖片 */
+    .token-btn {
+        background-size: cover !important;
+        background-position: center !important;
+        background-repeat: no-repeat !important;
+    }
+    .token-btn-w { background-image: url('https://i.ibb.co/ZpJqvt5d/white.png') !important; }
+    .token-btn-u { background-image: url('https://i.ibb.co/4nGkn3HP/sapphire.png') !important; }
+    .token-btn-g { background-image: url('https://i.ibb.co/0pVz7WV5/green.png') !important; }
+    .token-btn-r { background-image: url('https://i.ibb.co/wZ9gmt1p/red.png') !important; }
+    .token-btn-k { background-image: url('https://i.ibb.co/y72gvDj/black.png') !important; }
+    .token-btn-o { background-image: url('https://i.ibb.co/PZ1dZDyH/gold.png') !important; }
       /* 📥 視覺小說故事劇場專專屬樣式 */
     #story-layer {
         position: fixed;
@@ -47,18 +59,6 @@
     .story-click-hint { position: absolute; bottom: 12px; right: 25px; font-size: 0.85rem; color: #f1c40f; animation: storyArrowBlink 0.8s infinite alternate; }
     @keyframes storyArrowBlink { from { opacity: 0.3; transform: translateY(0); } to { opacity: 1; transform: translateY(-3px); } }
 
-    /* 🪙 修正鑄幣交易局按鈕圖片失效之覆蓋樣式 */
-    .token-btn {
-        background-size: cover !important;
-        background-position: center !important;
-        background-repeat: no-repeat !important;
-    }
-    .bg-w { background-image: url('https://i.ibb.co/ZpJqvt5d/white.png') !important; }
-    .bg-u { background-image: url('https://i.ibb.co/4nGkn3HP/sapphire.png') !important; }
-    .bg-g { background-image: url('https://i.ibb.co/0pVz7WV5/green.png') !important; }
-    .bg-r { background-image: url('https://i.ibb.co/wZ9gmt1p/red.png') !important; }
-    .bg-k { background-image: url('https://i.ibb.co/y72gvDj/black.png') !important; }
-    .bg-o { background-image: url('https://i.ibb.co/PZ1dZDyH/gold.png') !important; }
 </style>
 </head>
 <body>
