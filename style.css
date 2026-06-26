@@ -144,7 +144,6 @@ html, body {
 .nobles-section { margin-bottom: 2px; border: 2px solid transparent; border-radius: var(--radius); padding: 1px; flex-shrink: 0; }
 .nobles-grid { display: flex; gap: 6px; overflow-x: auto; }
 
-/* 修改 1：放大貴族圖卡為 163px (原 65px 的 2.5 倍) */
 .noble-card {
   position: relative;
   background: #110e0c;
@@ -215,13 +214,23 @@ html, body {
 
 .board-matrix { display: flex; flex-direction: column; gap: 2px; }
 .board-row { display: flex; flex-direction: column; gap: 1px; }
-.grid-4 { display: grid; grid-template-columns: repeat(4, 1fr); gap: 3px; }
 
-/* 修改 2：新增縮小發展卡為 3/5 的 transform 設定 */
+/* 修改位置：在 .grid-4 規則加入 align-items: start 防止拉伸拉長 */
+.grid-4 { display: grid; grid-template-columns: repeat(4, 1fr); gap: 3px; grid-auto-rows: 0; align-items: start; }
+
+#row-lv1, #row-lv2, #row-lv3 {
+  flex: none !important;
+}
+
+#row-lv1 .card, #row-lv2 .card, #row-lv3 .card {
+  height: 0;
+  padding-bottom: 100%;
+  position: relative;
+}
+
+/* 修改位置：將 height: 100% 更換為 height: auto */
 .card {
-  background: var(--card-bg); background-size: cover; background-position: center; border: 1px solid var(--card-border); border-radius: var(--radius-sm); display: flex; flex-direction: column; justify-content: space-between; height: 100%; position: relative; box-shadow: 0 4px 8px rgba(0,0,0,0.5); overflow: hidden;
-  transform: scale(0.6);
-  transform-origin: top left;
+  background: var(--card-bg); background-size: cover; background-position: center; border: 1px solid var(--card-border); border-radius: var(--radius-sm); display: flex; flex-direction: column; justify-content: space-between; height: auto; position: relative; box-shadow: 0 4px 8px rgba(0,0,0,0.5); overflow: hidden;
 }
 .card-content-wrapper { display: flex; flex-direction: column; justify-content: space-between; width: 100%; height: 100%; flex: 1; padding: 3px; background: linear-gradient(180deg, rgba(16, 12, 10, 0.75) 0%, rgba(16, 12, 10, 0.2) 50%, rgba(16, 12, 10, 0.85) 100%); }
 
@@ -304,9 +313,7 @@ html, body {
 .tutorial-highlight { position: relative !important; z-index: 10000001 !important; pointer-events: auto !important; }
 #floating-tutorial-widget { position: fixed !important; z-index: 10000002 !important; pointer-events: auto !important; }
 
-/* ═══════════════════════════════════════════════
-   @media (max-width: 430px) 區塊
-   ═══════════════════════════════════════════════ */
+/* ── @media (max-width: 430px) 區塊 ── */
 @media (max-width: 430px) {
   html, body {
     padding: 2px !important;
@@ -334,12 +341,10 @@ html, body {
   .ach-badge-title { font-size: 0.52rem; }
   .ach-latest-display { font-size: 0.6rem; }
 
-  /* 修改 3：同步更新手機版 media query 內的貴族卡尺寸為 130px (原 52px 的 2.5 倍) */
   .nobles-section { margin-bottom: 2px !important; padding: 1px !important; flex-shrink: 0 !important; }
   .noble-card { min-width: 130px; height: 130px; flex-shrink: 0; }
   .noble-pts { font-size: 0.62rem; }
 
-  /* 鑄幣交易局縮小 */
   #guide-actions {
     width: 65px !important;
     padding: 4px 2px !important;
@@ -348,7 +353,6 @@ html, body {
   .token-btn { width: 16px !important; height: 16px !important; background-size: 12px 12px !important; }
   .token-count-label { font-size: 0.45rem !important; }
 
-  /* 主遊戲橫向排版 */
   .matrix-reserved-wrapper {
     display: flex !important;
     flex-direction: row !important;
@@ -407,7 +411,6 @@ html, body {
   .section-title { font-size: 0.55rem !important; }
   .deck-count { font-size: 0.5rem !important; }
 
-  /* 底部金庫 */
   .dashboard-container {
     gap: 3px !important;
     margin-bottom: 2px !important;
@@ -417,7 +420,6 @@ html, body {
   .res-circle { width: 13px; height: 13px; }
   .res-count { font-size: 0.68rem; }
 
-  /* 保留區 */
   .reserved-section { width: 130px !important; flex-shrink: 0 !important; }
   .reserved-section .card { min-height: 40px !important; }
   .reserved-section .grid-4 { display: grid !important; grid-template-columns: repeat(2, 1fr) !important; flex-direction: unset !important; flex: unset !important; }
