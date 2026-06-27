@@ -282,7 +282,7 @@ window.render = function() {
     } else {
       bannerZone.style.display = 'flex';
       
-  // ── 🏆 1. 單人模式：重構回歸的經典動畫排隊播放器 ──
+ // ── 🏆 1. 單人模式：安全全域化動畫排隊播放器 ──
       if (isSingleMode) {
         bannerBadge.textContent = "榮譽成就";
         bannerBadge.style.backgroundColor = 'rgba(230, 126, 34, 0.2)';
@@ -292,13 +292,12 @@ window.render = function() {
         // 即時計算總數
         let unlCount = fullState.achievements ? Object.keys(fullState.achievements).length : 0;
         
-        // 🚀 核心動畫排隊控制器：如果佇列裡面有東西，且目前沒有在播動畫
-        if (fullState.pendingAchievementsQueue && fullState.pendingAchievementsQueue.length > 0 && !isSfxBannerPlaying) {
-          isSfxBannerPlaying = true;
+        // 🚀 治本修正：使用 window.isSfxBannerPlaying，確保全域絕對找得到
+        if (fullState.pendingAchievementsQueue && fullState.pendingAchievementsQueue.length > 0 && !window.isSfxBannerPlaying) {
+          window.isSfxBannerPlaying = true; // 鎖定紅綠燈
           
           // 抽出隊伍中的第一個成就
           const currentAch = fullState.pendingAchievementsQueue.shift();
-          
           let tierText = { easy: "簡單", normal: "中階", hard: "進階", expert: "困難", master: "神人" }[currentAch.tier];
           
           // 渲染畫面
@@ -318,14 +317,15 @@ window.render = function() {
           
           // 1.5秒後釋放紅綠燈，並更新 State 讓下一個成就排隊浮現
           setTimeout(() => {
-            isSfxBannerPlaying = false;
-            CoreState.set(fullState); // 再次驅動 render 檢查下一個
+            window.isSfxBannerPlaying = false; // 解鎖
+            CoreState.set(fullState); // 再次驅動 render 檢查佇列
           }, 1500);
           
-        } else if (!isSfxBannerPlaying) {
-          // 如果沒有成就正在解鎖，則顯示平常的常駐清單文字
+        } else if (!window.isSfxBannerPlaying) {
+          // 如果沒有成就正在播放，則顯示平常的常駐計數
           bannerText.innerHTML = `🏆 當前已斬獲 <span style="color:#ffcc00; font-weight:800;">${unlCount} / 30</span> 項皇家勳章！<span style="color:var(--text-muted); font-size:0.55rem; margin-left:6px;">[ 💡 點此可開啟榮譽堂查看完整清單 ]</span>`;
-        
+        }
+      }
       } else if (isStoryMode) {
         const currentLvl = fullState.storyProgress?.currentLevel || 1;
         const mission = window.STORY_MISSIONS ? window.STORY_MISSIONS[currentLvl - 1] : null;
