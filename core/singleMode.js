@@ -100,7 +100,6 @@ export const SingleMode = {
     } catch(e) {
       console.error("加載人才庫存檔失敗", e);
     }
-  }
 };
 
   saveCurrentProgress() {
