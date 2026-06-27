@@ -294,8 +294,7 @@ window.render = function() {
         if (!window.isSfxBannerPlaying) {
           let unlCount = fullState.achievements ? Object.keys(fullState.achievements).length : 0;
           bannerText.innerHTML = `🏆 當前已斬獲 <span style="color:#ffcc00; font-weight:800;">${unlCount} / 30</span> 項皇家勳章！<span style="color:var(--text-muted); font-size:0.55rem; margin-left:6px;">[ 💡 點此可開啟榮譽堂查看完整清單 ]</span>`;
-        }
-      }          
+       
           // 抽出隊伍中的第一個成就
           const currentAch = fullState.pendingAchievementsQueue.shift();
           let tierText = { easy: "簡單", normal: "中階", hard: "進階", expert: "困難", master: "神人" }[currentAch.tier];
@@ -324,7 +323,8 @@ window.render = function() {
         } else if (!window.isSfxBannerPlaying) {
           // 如果沒有成就正在播放，則顯示平常的常駐計數
           bannerText.innerHTML = `🏆 當前已斬獲 <span style="color:#ffcc00; font-weight:800;">${unlCount} / 30</span> 項皇家勳章！<span style="color:var(--text-muted); font-size:0.55rem; margin-left:6px;">[ 💡 點此可開啟榮譽堂查看完整清單 ]</span>`;
-        }
+        } 
+      }     
 
       // ── 📜 2. 故事模式：保持原有的進度與關卡條件即時刷新 ──
       } else if (isStoryMode) {
