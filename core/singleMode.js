@@ -29,7 +29,7 @@ export const ALL_ACHIEVEMENTS = [
   { id: 22, symbol: "🥂", title: "上流社會", desc: "成功通關，且分數來源有 9 分（或以上）是來自於貴族板塊。", tier: "expert", color: "var(--diff-expert)" },
   { id: 23, symbol: "🔋", title: "黃金絕緣體", desc: "成功通關，且通關當下持建立的寶石中完全沒有黃金。", tier: "expert", color: "var(--diff-expert)" },
   { id: 24, symbol: "🗺️", title: "全色制霸", desc: "5 種普通顏色的發展卡，每種顏色都至少擁有 3 張。", tier: "expert", color: "var(--diff-expert)" },
-  { id: 25, symbol: "👥", title: "雙喜臨門", desc: "在單人局遊戲中，成功吸引裝飾兩位（或以上）的貴族拜訪。", tier: "expert", color: "var(--diff-expert)" },
+  { id: 25, symbol: "👥", title: "雙喜臨門", desc: "在單人局遊戲中，成功吸引裝飾裝進兩位（或以上）的貴族拜訪。", tier: "expert", color: "var(--diff-expert)" },
   { id: 26, symbol: "🧠", title: "精算大師", desc: "成功通關，且總消耗回合數小於 25 回合。", tier: "expert", color: "var(--diff-expert)" },
   
   { id: 27, symbol: "💥", title: "厚積薄發", desc: "在單一回合內，同時靠購買卡片+貴族拜訪，一舉獲得 6 分以上。", tier: "master", color: "var(--diff-master)" },
@@ -39,10 +39,9 @@ export const ALL_ACHIEVEMENTS = [
 ];
 
 export const SingleMode = {
-  // 🎯 治本修正 1：移除原本檔案內的 local 變數，改為從全域 State 拿取/初始化追蹤數據
+  // 💾 1. 安全獲取局內數據追蹤器
   getTracker() {
     const state = CoreState.get();
-    // 如果全域狀態裡還沒有追蹤器，就幫它初始化一個
     if (!state.singlePlayerTracker) {
       state.singlePlayerTracker = {
         hasReservedThisGame: false,
@@ -56,82 +55,83 @@ export const SingleMode = {
     return state.singlePlayerTracker;
   },
 
-  // 🎯 治本修正 2：將解鎖成就與全域 State 記憶體即時綁定
-  checkAndUnlock(achId, achName) {
+  // 💾 2. 安全獲取已解鎖成就集合 (轉換為 Set 方便局內比對)
+  getUnlockedSet() {
     const state = CoreState.get();
-    
-    // 初始化全域記憶體中的成就槽
     if (!state.achievements) {
       const archive = localStorage.getItem('splendor_achievements_v1');
       state.achievements = archive ? JSON.parse(archive) : {};
     }
-
-    // 如果還沒解鎖過，發動即時解鎖
-    if (!state.achievements[achId]) {
-      state.achievements[achId] = true;
-      
-      // 🚀 精髓：把通知文字即時塞進記憶體，讓 game.js 的 render() 萬分之一秒內抓到
-      state.latestAchievementAlert = `🎉 剛解鎖：【<span style="color:#2ecc71; font-weight:800;">${achName}</span>】！`;
-      
-      // 同步寫入硬碟備份
-      localStorage.setItem('splendor_achievements_v1', JSON.stringify(state.achievements));
-      
-      // 推送更新，發動全域同步渲染
-      CoreState.set(state);
-    }
+    return new Set(Object.keys(state.achievements).map(Number));
   },
 
-  // 🎯 治本修正 3：讓數據加載歸數據，不越權插手前端 UI
+  // 💾 3. 數據與存檔加載歸一化（完美修復括號漏掉）
   loadTalentPool() {
     const savedProgress = localStorage.getItem('splendor_saved_progress_2026');
     if (!savedProgress) return;
-    
     try {
       const data = JSON.parse(savedProgress);
       const state = CoreState.get();
-      
-      // 乾淨地將歷史資料同步回全域 State
       state.settings.difficulty = data.difficulty || 'easy';
       state.settings.talentPool = data.talentPool || [];
       state.settings.selectedAssistant = data.selectedAssistant || null;
-      
       CoreState.set(state);
-      // 💡 提示：原本的 UI 渲染（renderActiveAssistantUI）請移到 game.js 的 render 內依據 state 觸發！
     } catch(e) {
       console.error("加載人才庫存檔失敗", e);
     }
-}
+  },
 
   saveCurrentProgress() {
-    const s = CoreState.get().settings;
+    const state = CoreState.get();
+    const s = state.settings;
     const progressData = { difficulty: s.difficulty, talentPool: s.talentPool, selectedAssistant: s.selectedAssistant };
     localStorage.setItem('splendor_saved_progress_2026', JSON.stringify(progressData));
     alert('💾 皇家進度已成功保存！');
   },
 
+  // 🎯 核心重構：讓成就解鎖完全走 CoreState 即時廣播
   triggerAchievementUnlock(id) {
-    if (this.unlockedAchievementIds.has(id)) return;
-    this.unlockedAchievementIds.add(id);
-    
+    const unlockedSet = this.getUnlockedSet();
+    if (unlockedSet.has(id)) return;
+
+    const state = CoreState.get();
+    if (!state.achievements) state.achievements = {};
+    state.achievements[id] = true; // 即時寫入全域狀態記憶體
+
     const found = ALL_ACHIEVEMENTS.find(a => a.id === id);
     if (found) {
+      // 即時塞入即時動態欄位更新文字，排除非同步時間差
+      state.latestAchievementAlert = `當前已斬獲 <span style="color:#ffcc00; font-weight:800;">${Object.keys(state.achievements).length} / 30</span> 項皇家勳章！`;
+      
       const latestEl = document.getElementById('ach-latest-field');
-      if (latestEl) latestEl.innerHTML = `<span style="color:${found.color}; font-weight:800;">${found.symbol} [解鎖] ${found.title} — ${found.desc}</span>`;
+      if (latestEl) {
+        latestEl.innerHTML = `<span style="color:${found.color}; font-weight:800;">${found.symbol} [解鎖] ${found.title} — ${found.desc}</span>`;
+      }
     }
-    
-    if (id !== 30 && this.unlockedAchievementIds.size >= 20) {
+
+    // 璀璨大師連鎖判定 (扣除 30 號自身，滿 20 個自動開 30)
+    const currentCount = Object.keys(state.achievements).filter(k => Number(k) !== 30).length;
+    if (id !== 30 && currentCount >= 20) {
+      localStorage.setItem('splendor_achievements_v1', JSON.stringify(state.achievements));
       this.triggerAchievementUnlock(30);
+      return;
     }
+
+    // 保存至本地硬碟存檔
+    localStorage.setItem('splendor_achievements_v1', JSON.stringify(state.achievements));
+    CoreState.set(state); // 🚀 推送全域 render()，即時重繪畫面！
 
     if (typeof window.playAchievementSfx === 'function') {
       window.playAchievementSfx(found ? found.tier : 'easy');
     }
   },
 
+  // 🎯 核心重構：將局內即時監聽與全域 State 對齊
   auditInstantAchievements(actionType, meta) {
     const state = CoreState.get();
     if (state.mode !== 'singlePlayer') return; 
     const p = state.player;
+    const tracker = this.getTracker();
 
     if (actionType === "takeDiff" && meta.count === 3) this.triggerAchievementUnlock(1);
     if (actionType === "takeSame") this.triggerAchievementUnlock(2);
@@ -149,7 +149,7 @@ export const SingleMode = {
 
     if (actionType === "buy") {
       this.triggerAchievementUnlock(3);
-      if (!this.sessionTracker.goldUsedInThisPurchase) this.triggerAchievementUnlock(6);
+      if (!tracker.goldUsedInThisPurchase) this.triggerAchievementUnlock(6);
       if (meta.totalGemsSpent === 0) this.triggerAchievementUnlock(8);
       if (meta.card.points > 0) this.triggerAchievementUnlock(13);
       if (meta.level === "lv3") this.triggerAchievementUnlock(14);
@@ -159,15 +159,17 @@ export const SingleMode = {
     }
   },
 
+  // 🎯 核心重構：局末結算對齊
   auditEndGameAchievements() {
     const state = CoreState.get();
     if (state.mode !== 'singlePlayer') return;
     const p = state.player;
+    const tracker = this.getTracker();
     const totalTurns = state.turn - 1;
 
-    if (this.sessionTracker.purchasedCardsCountLv1 >= 8) this.triggerAchievementUnlock(12);
+    if (tracker.purchasedCardsCountLv1 >= 8) this.triggerAchievementUnlock(12);
     if (totalTurns < 35) this.triggerAchievementUnlock(19);
-    if (!this.sessionTracker.hasReservedThisGame) this.triggerAchievementUnlock(20);
+    if (!tracker.hasReservedThisGame) this.triggerAchievementUnlock(20);
 
     const earnedNobles = state.nobles.filter(n => n.completed);
     if (earnedNobles.length === 0) this.triggerAchievementUnlock(21);
@@ -188,11 +190,14 @@ export const SingleMode = {
     }
   },
 
+  // 🎯 核心重構：讓歷程記錄面版完美連動全域 State
   openAchievementHistory() {
     const container = document.getElementById('ach-matrix-injector');
+    const unlockedSet = this.getUnlockedSet();
+    
     if (container) {
       container.innerHTML = ALL_ACHIEVEMENTS.map(a => {
-        const unlocked = this.unlockedAchievementIds.has(a.id);
+        const unlocked = unlockedSet.has(a.id);
         let tierName = { easy: "簡單", normal: "中階", hard: "進階", expert: "困難", master: "神人" }[a.tier];
         return `
           <div class="ach-item-row ${unlocked ? 'unlocked' : ''}" style="border-left: 4px solid ${a.color}; margin-bottom: 6px;">
@@ -207,7 +212,7 @@ export const SingleMode = {
     }
     const statsEl = document.getElementById('ach-stats-field');
     if (statsEl) { 
-      statsEl.textContent = `${this.unlockedAchievementIds.size} / ${ALL_ACHIEVEMENTS.length}`; 
+      statsEl.textContent = `${unlockedSet.size} / ${ALL_ACHIEVEMENTS.length}`; 
       statsEl.style.display = ''; 
     }
     document.getElementById('ach-history-modal-container')?.classList.add('show');
@@ -219,12 +224,10 @@ export const SingleMode = {
     if (statsEl) statsEl.style.display = 'none';
   },
 
-  // 實體化輔助官選擇 UI 渲染
   renderTalentPoolModalUI() {
     const container = document.getElementById('talent-pool-modal-layer');
     if (!container) return;
     
-    // 預設提供基本輔助官陣列
     const assistants = [
       { id: "ast1", name: "內政官 傑洛米", img: "https://i.ibb.co/zHGC8vsm/image.png" },
       { id: "ast2", name: "財政卿 薇多莉亞", img: "https://i.ibb.co/GQ2Yh0yH/image.png" }
