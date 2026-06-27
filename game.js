@@ -282,7 +282,7 @@ window.render = function() {
     } else {
       bannerZone.style.display = 'flex';
       
- // ── 🏆 1. 單人模式：安全全域化動畫排隊播放器 ──
+      // ── 🏆 1. 單人模式：安全全域化動畫排隊播放器 ──
       if (isSingleMode) {
         bannerBadge.textContent = "榮譽成就";
         bannerBadge.style.backgroundColor = 'rgba(230, 126, 34, 0.2)';
@@ -292,7 +292,7 @@ window.render = function() {
         // 即時計算總數
         let unlCount = fullState.achievements ? Object.keys(fullState.achievements).length : 0;
         
-        // 🚀 治本修正：使用 window.isSfxBannerPlaying，確保全域絕對找得到
+        // 🚀 核心動畫排隊控制器：如果佇列有東西，且目前沒有在播動畫
         if (fullState.pendingAchievementsQueue && fullState.pendingAchievementsQueue.length > 0 && !window.isSfxBannerPlaying) {
           window.isSfxBannerPlaying = true; // 鎖定紅綠燈
           
@@ -325,7 +325,8 @@ window.render = function() {
           // 如果沒有成就正在播放，則顯示平常的常駐計數
           bannerText.innerHTML = `🏆 當前已斬獲 <span style="color:#ffcc00; font-weight:800;">${unlCount} / 30</span> 項皇家勳章！<span style="color:var(--text-muted); font-size:0.55rem; margin-left:6px;">[ 💡 點此可開啟榮譽堂查看完整清單 ]</span>`;
         }
-      }
+
+      // ── 📜 2. 故事模式：保持原有的進度與關卡條件即時刷新 ──
       } else if (isStoryMode) {
         const currentLvl = fullState.storyProgress?.currentLevel || 1;
         const mission = window.STORY_MISSIONS ? window.STORY_MISSIONS[currentLvl - 1] : null;
@@ -333,8 +334,8 @@ window.render = function() {
         bannerZone.style.cursor = 'pointer';
         if (mission) {
           bannerBadge.textContent = `第 ${currentLvl} 關 任務`;
-          bannerBadge.style.backgroundColor = 'rgba(212, 175, 55, 0.2)';
           bannerBadge.style.borderColor = '#d4af37';
+          bannerBadge.style.backgroundColor = 'rgba(212, 175, 55, 0.2)';
           
           let conditionText = mission.winCondition.targetScore ? `威望達到 ${mission.winCondition.targetScore} 分` : '特定條件';
           if (mission.id === 2) conditionText = "達到15分，且紅寶石限制少於8顆";
