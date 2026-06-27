@@ -793,10 +793,7 @@ window.handleMusicToggle = function() {
     } else {
       audioEl.play().catch(() => {});
     }
-  }
   
-  if (window.openGameOptionsModal) window.openGameOptionsModal();
-
 // 🔊 全域遊戲音效開關控制器
 window.handleSfxToggle = function() {
   const currentCore = window.CoreState || CoreState;
