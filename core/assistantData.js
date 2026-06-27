@@ -63,10 +63,13 @@ export const AssistantManager = {
     const ast = ASSISTANTS_DATABASE[currentSelected];
 
     if (ast) {
-      layer.innerHTML = `
-        <div class="earned-noble-mini" title="${ast.desc}">
-          <img src="${ast.img}">
-          <span style="font-size:0.55rem; font-weight:700;">${ast.name} (隨行)</span>
+     layer.innerHTML = `
+        <div title="${ast.desc}" style="width:100%; display:flex; flex-direction:column; align-items:center; gap:3px;">
+          <img src="${ast.img}" style="width:80%; aspect-ratio:1/1; object-fit:cover; border-radius:4px; border:1px solid rgba(212,175,55,0.4);">
+          <div style="width:100%; text-align:center; line-height:1.3;">
+            <div style="font-size:0.48rem; color:#ffe099; font-weight:700;">${ast.name.split(' ')[0]}</div>
+            <div style="font-size:0.52rem; color:#fff; font-weight:700;">${ast.name.split(' ')[1] || ''}</div>
+          </div>
         </div>
       `;
     } else {
