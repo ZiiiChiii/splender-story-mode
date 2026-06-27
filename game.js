@@ -327,7 +327,7 @@ window.render = function() {
       }     
 
       // ── 📜 2. 故事模式：保持原有的進度與關卡條件即時刷新 ──
-      } else if (isStoryMode) {
+      else if (isStoryMode) {
         const currentLvl = fullState.storyProgress?.currentLevel || 1;
         const mission = window.STORY_MISSIONS ? window.STORY_MISSIONS[currentLvl - 1] : null;
         
