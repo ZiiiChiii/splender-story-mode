@@ -152,7 +152,7 @@ html, body {
 .diff-opt-btn { padding: 8px 4px; font-size: 0.75rem; font-weight: 700; background: #1a1410; border: 1px solid #4a3a30; color: #968a7f; border-radius: 4px; cursor: pointer; transition: all 0.2s ease; }
 
 .nobles-section { margin-bottom: 2px; border: 2px solid transparent; border-radius: var(--radius); padding: 1px; flex-shrink: 0; }
-.nobles-grid { display: flex; gap: 6px; overflow-x: auto; }
+.nobles-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 6px; }
 
 .noble-card {
   position: relative;
