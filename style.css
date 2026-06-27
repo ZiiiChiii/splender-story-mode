@@ -165,7 +165,7 @@ html, body {
 
   /* 🎯 治本修正：解鎖 163px 的限制，讓它完美對齊寶石卡 */
   width: 100%;           /* 寬度自動填滿欄位 */
-  max-width: 28px;      /* 鎖定跟寶石卡一模一樣的最大寬度 */
+  max-width: 120px;      /* 鎖定跟寶石卡一模一樣的最大寬度 */
   height: auto;          /* 高度交給比例 */
   aspect-ratio: 1 / 1;   /* 鎖定完美的 1:1 正方形 */
 }
@@ -394,7 +394,7 @@ html, body {
   /* 貴族區 */
   .nobles-section { margin-bottom: 0 !important; padding: 1px 0 !important; flex-shrink: 0 !important; }
   .nobles-grid { gap: 4px !important; }
- .noble-card { min-width: 0 !important; max-width: 28px !important; width: 28px !important; height: 28px !important; flex-shrink: 0 !important; }
+ .noble-card { min-width: 0 !important; max-width: calc((100vw - 86px) / 4) !important; width: calc((100vw - 86px) / 4) !important; height: calc((100vw - 86px) / 4) !important; flex-shrink: 0 !important; }
   .noble-pts { font-size: 0.58rem !important; }
   .noble-reqs { font-size: 0.36rem !important; }
 
