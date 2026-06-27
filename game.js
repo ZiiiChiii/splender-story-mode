@@ -325,10 +325,9 @@ window.render = function() {
           // 如果沒有成就正在播放，則顯示平常的常駐計數
           bannerText.innerHTML = `🏆 當前已斬獲 <span style="color:#ffcc00; font-weight:800;">${unlCount} / 30</span> 項皇家勳章！<span style="color:var(--text-muted); font-size:0.55rem; margin-left:6px;">[ 💡 點此可開啟榮譽堂查看完整清單 ]</span>`;
         } 
-      }     
-
+      } else if (isStoryMode) {
       // ── 📜 2. 故事模式：保持原有的進度與關卡條件即時刷新 ──
-      else if (isStoryMode) {
+     
         const currentLvl = fullState.storyProgress?.currentLevel || 1;
         const mission = window.STORY_MISSIONS ? window.STORY_MISSIONS[currentLvl - 1] : null;
         
