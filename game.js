@@ -291,10 +291,11 @@ window.render = function() {
         
         // 即時計算總數
        // 如果目前全域沒有在播放特殊成就動畫，就顯示平常的常駐進度
-        if (!window.isSfxBannerPlaying) {
+       if (!window.isSfxBannerPlaying) {
           let unlCount = fullState.achievements ? Object.keys(fullState.achievements).length : 0;
           bannerText.innerHTML = `🏆 當前已斬獲 <span style="color:#ffcc00; font-weight:800;">${unlCount} / 30</span> 項皇家勳章！<span style="color:var(--text-muted); font-size:0.55rem; margin-left:6px;">[ 💡 點此可開啟榮譽堂查看完整清單 ]</span>`;
-       
+        }
+      }
           // 抽出隊伍中的第一個成就
           const currentAch = fullState.pendingAchievementsQueue.shift();
           let tierText = { easy: "簡單", normal: "中階", hard: "進階", expert: "困難", master: "神人" }[currentAch.tier];
