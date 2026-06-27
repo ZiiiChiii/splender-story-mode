@@ -1,7 +1,7 @@
 // core/singleMode.js
 import { CoreState } from './state.js';
 
-const ALL_ACHIEVEMENTS = [
+export const ALL_ACHIEVEMENTS = [
   { id: 1, symbol: "💰", title: "第一桶金", desc: "在單一回合中，一口氣拿取 3 枚不同顏色的普通寶石。", tier: "easy", color: "var(--diff-easy)" },
   { id: 2, symbol: "💎", title: "專一的收藏家", desc: "在單一回合中，拿取 2 枚相同顏色的普通寶石。", tier: "easy", color: "var(--diff-easy)" },
   { id: 3, symbol: "🏪", title: "開張大吉", desc: "成功購買第一張發展卡。", tier: "easy", color: "var(--diff-easy)" },
@@ -39,29 +39,69 @@ const ALL_ACHIEVEMENTS = [
 ];
 
 export const SingleMode = {
-  unlockedAchievementIds: new Set(),
-  sessionTracker: {
-    hasReservedThisGame: false,
-    purchasedCardsCount: 0,
-    purchasedCardsCountLv1: 0, 
-    lv1CardsCountBeforeTurn10: 0,
-    singleTurnScoreGained: 0,
-    goldUsedInThisPurchase: false
+  // 🎯 治本修正 1：移除原本檔案內的 local 變數，改為從全域 State 拿取/初始化追蹤數據
+  getTracker() {
+    const state = CoreState.get();
+    // 如果全域狀態裡還沒有追蹤器，就幫它初始化一個
+    if (!state.singlePlayerTracker) {
+      state.singlePlayerTracker = {
+        hasReservedThisGame: false,
+        purchasedCardsCount: 0,
+        purchasedCardsCountLv1: 0, 
+        lv1CardsCountBeforeTurn10: 0,
+        goldUsedInThisPurchase: false
+      };
+      CoreState.set(state);
+    }
+    return state.singlePlayerTracker;
   },
 
-  loadTalentPool() {
-    const savedProgress = localStorage.getItem('splendor_saved_progress_2026');
-    const s = CoreState.get().settings;
-    if (savedProgress) {
-      try {
-        const data = JSON.parse(savedProgress);
-        s.difficulty = data.difficulty || 'easy';
-        s.talentPool = data.talentPool || [];
-        s.selectedAssistant = data.selectedAssistant || null;
-        this.renderActiveAssistantUI();
-      } catch(e) {}
+  // 🎯 治本修正 2：將解鎖成就與全域 State 記憶體即時綁定
+  checkAndUnlock(achId, achName) {
+    const state = CoreState.get();
+    
+    // 初始化全域記憶體中的成就槽
+    if (!state.achievements) {
+      const archive = localStorage.getItem('splendor_achievements_v1');
+      state.achievements = archive ? JSON.parse(archive) : {};
+    }
+
+    // 如果還沒解鎖過，發動即時解鎖
+    if (!state.achievements[achId]) {
+      state.achievements[achId] = true;
+      
+      // 🚀 精髓：把通知文字即時塞進記憶體，讓 game.js 的 render() 萬分之一秒內抓到
+      state.latestAchievementAlert = `🎉 剛解鎖：【<span style="color:#2ecc71; font-weight:800;">${achName}</span>】！`;
+      
+      // 同步寫入硬碟備份
+      localStorage.setItem('splendor_achievements_v1', JSON.stringify(state.achievements));
+      
+      // 推送更新，發動全域同步渲染
+      CoreState.set(state);
     }
   },
+
+  // 🎯 治本修正 3：讓數據加載歸數據，不越權插手前端 UI
+  loadTalentPool() {
+    const savedProgress = localStorage.getItem('splendor_saved_progress_2026');
+    if (!savedProgress) return;
+    
+    try {
+      const data = JSON.parse(savedProgress);
+      const state = CoreState.get();
+      
+      // 乾淨地將歷史資料同步回全域 State
+      state.settings.difficulty = data.difficulty || 'easy';
+      state.settings.talentPool = data.talentPool || [];
+      state.settings.selectedAssistant = data.selectedAssistant || null;
+      
+      CoreState.set(state);
+      // 💡 提示：原本的 UI 渲染（renderActiveAssistantUI）請移到 game.js 的 render 內依據 state 觸發！
+    } catch(e) {
+      console.error("加載人才庫存檔失敗", e);
+    }
+  }
+};
 
   saveCurrentProgress() {
     const s = CoreState.get().settings;
