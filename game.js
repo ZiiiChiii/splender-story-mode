@@ -913,5 +913,4 @@ window.handleSfxToggle = function() {
 
 }, 200); // 每 200 毫秒高速巡邏一次記憶體佇列
   
-  if (window.openGameOptionsModal) window.openGameOptionsModal();
-};
+  
