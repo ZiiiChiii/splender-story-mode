@@ -867,7 +867,7 @@ setInterval(() => {
   bannerText.style.filter = 'brightness(1.5)';
   void bannerText.offsetWidth;
   setTimeout(() => {
-    bannerText.style.transition = 'opacity 1.3s cubic-bezier(0.25, 1, 0.5, 1), filter 0.5s ease';
+    bannerText.style.transition = 'opacity 2.5s cubic-bezier(0.25, 1, 0.5, 1), filter 0.5s ease';
     bannerText.style.opacity = '0.3';
     bannerText.style.filter = 'brightness(1)';
   }, 200);
@@ -879,14 +879,12 @@ setInterval(() => {
   setTimeout(() => {
     window.isSfxBannerPlaying = false;
     if (fullState.pendingAchievementsQueue.length === 0) {
-      let unlCount = fullState.achievements ? Object.keys(fullState.achievements).length : 0;
       bannerText.style.transition = 'opacity 0.3s ease';
       bannerText.style.opacity = '1';
-      bannerText.innerHTML = `🏆 當前已斬獲 <span style="color:#ffcc00; font-weight:800;">${unlCount} / 30</span> 項皇家勳章！<span style="color:var(--text-muted); font-size:0.55rem; margin-left:6px;">[ 💡 點此可開啟榮譽堂查看完整清單 ]</span>`;
     } else {
       CoreState.set(fullState);
     }
-  }, 1500);
+  }, 2500);
 }, 200);
 
   window.handleSfxToggle = function() {
