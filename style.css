@@ -206,6 +206,19 @@ html, body {
 .cap-bar { font-size: 0.58rem; color: #738a7c; margin-top: 2px; text-align: left; font-family: 'Orbitron', sans-serif; font-weight: 600; padding-left: 4px; }
 
 .earned-nobles-panel { background: rgba(30, 24, 20, 0.6); border: 1px solid rgba(212, 175, 55, 0.2); border-radius: var(--radius); padding: 4px; display: flex; flex-direction: column; gap: 2px; }
+/* 首席輔助官面板 */
+#guide-assistant-container {
+  width: auto;
+  flex-shrink: 0;
+  min-width: 120px;
+}
+
+/* 已拜訪貴族面板 */
+#left-earned-nobles {
+  width: 100%;
+  flex: 1;
+  overflow-y: auto;
+}
 .earned-nobles-title { font-size: 0.55rem; font-weight: 700; color: #d4af37; text-transform: uppercase; letter-spacing: 0.05em; border-bottom: 1px solid rgba(212, 175, 55, 0.1); padding-bottom: 1px; }
 .earned-nobles-list { display: flex; gap: 2px; flex-wrap: wrap; overflow-y: auto; }
 .earned-noble-mini { display: flex; align-items: center; gap: 2px; background: rgba(0,0,0,0.4); padding: 1px 3px; border-radius: var(--radius-sm); border: 1px solid rgba(212, 175, 55, 0.3); }
@@ -451,9 +464,21 @@ html, body {
   .res-bonus { font-size: 0.45rem !important; }
   #cap-txt { font-size: 0.46rem !important; margin-top: 1px !important; }
 
-  /* 輔助官 + 貴族面板 */
-  .earned-nobles-panel { flex: 0.8 !important; min-width: 0 !important; max-width: 90px !important; padding: 3px !important; }
+   /* 首席輔助官面板 - 手機版 */
+  #guide-assistant-container {
+    min-width: 0 !important;
+    width: 100% !important;
+    padding: 2px !important;
+  }
 
+  /* 已拜訪貴族面板 - 手機版 */
+  #left-earned-nobles {
+    width: 100% !important;
+    max-width: none !important;
+    flex: 1 !important;
+    padding: 3px !important;
+  }
+  
   /* 保留手牌區：覆蓋 inline min-width:320px */
   #guide-reserved {
     flex: 2.5 !important;
