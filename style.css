@@ -378,10 +378,16 @@ html, body {
   }
 
   /* 左側鑄幣交易局：覆蓋 inline width:150px */
-  #guide-actions {
+  #left-sidebar {
     width: 62px !important;
-    padding: 4px 2px !important;
     flex-shrink: 0 !important;
+    gap: 4px !important;
+  }
+
+  #left-earned-nobles {
+    width: 100% !important;
+    max-width: none !important;
+    box-sizing: border-box !important;
   }
   #guide-actions > div:first-child { display: none !important; }
 
