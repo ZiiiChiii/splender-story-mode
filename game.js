@@ -779,44 +779,6 @@ window.addEventListener('DOMContentLoaded', async () => {
 
 window.addEventListener('resize', setDynamicVh);
 
-// ── 🎬 皇家成就全自動非同步輪播播放器（頁面載入後常駐運行）──
-setInterval(() => {
-  if (typeof CoreState === 'undefined' || window.isSfxBannerPlaying) return;
-  const fullState = CoreState.get();
-  if (!fullState || !fullState.pendingAchievementsQueue || fullState.pendingAchievementsQueue.length === 0) return;
-  window.isSfxBannerPlaying = true;
-  const bannerText = document.getElementById('dynamic-banner-text');
-  if (!bannerText) { window.isSfxBannerPlaying = false; return; }
-  const currentAch = fullState.pendingAchievementsQueue.shift();
-  let tierText = { easy: "簡單", normal: "中階", hard: "進階", expert: "困難", master: "神人" }[currentAch.tier];
-  bannerText.innerHTML = `<span style="color: ${currentAch.color}; font-weight: 800;">${currentAch.symbol} [${tierText}] ${currentAch.title} — ${currentAch.desc}</span>`;
-  bannerText.style.transition = 'none';
-  bannerText.style.opacity = '1';
-  bannerText.style.filter = 'brightness(1.5)';
-  void bannerText.offsetWidth;
-  setTimeout(() => {
-    bannerText.style.transition = 'opacity 1.3s cubic-bezier(0.25, 1, 0.5, 1), filter 0.5s ease';
-    bannerText.style.opacity = '0.3';
-    bannerText.style.filter = 'brightness(1)';
-  }, 200);
-  const targetSFX = document.getElementById(`sfx-ach-${currentAch.tier}`);
-  if (targetSFX && !window.isSfxMuted) {
-    targetSFX.currentTime = 0;
-    targetSFX.play().catch(() => {});
-  }
-  setTimeout(() => {
-    window.isSfxBannerPlaying = false;
-    if (fullState.pendingAchievementsQueue.length === 0) {
-      let unlCount = fullState.achievements ? Object.keys(fullState.achievements).length : 0;
-      bannerText.style.transition = 'opacity 0.3s ease';
-      bannerText.style.opacity = '1';
-      bannerText.innerHTML = `🏆 當前已斬獲 <span style="color:#ffcc00; font-weight:800;">${unlCount} / 30</span> 項皇家勳章！<span style="color:var(--text-muted); font-size:0.55rem; margin-left:6px;">[ 💡 點此可開啟榮譽堂查看完整清單 ]</span>`;
-    } else {
-      CoreState.set(fullState);
-    }
-  }, 1500);
-}, 200);
-
 window.storyModule = {
     gameStages: {
         1: { chapter: "👑 第一章：微光村的石匠（第 1 - 5 關）", title: "第 1 關：初入礦脈", bg: "微光村的後山藏著廢棄的紅岩礦床。老內政官傑洛米提著油燈攔住你，不屑地看著你手中的劣質鑿子，要你證明基本的經商手段。", condition: "25回合內威望達到15分（無AI）", name: "內政官 傑洛米", text: "年輕人，這片紅岩礦不歡迎空有熱血的傻瓜。在 25 回合內拿到 15 分，我就承認你是個合格的學徒。" },
@@ -886,4 +848,40 @@ window.handleSfxToggle = function() {
   
   state.settings.isSfxMuted = !state.settings.isSfxMuted;
 
-  
+  // ── 🎬 皇家成就全自動非同步輪播播放器（頁面載入後常駐運行）──
+setInterval(() => {
+  if (typeof CoreState === 'undefined' || window.isSfxBannerPlaying) return;
+  const fullState = CoreState.get();
+  if (!fullState || !fullState.pendingAchievementsQueue || fullState.pendingAchievementsQueue.length === 0) return;
+  window.isSfxBannerPlaying = true;
+  const bannerText = document.getElementById('dynamic-banner-text');
+  if (!bannerText) { window.isSfxBannerPlaying = false; return; }
+  const currentAch = fullState.pendingAchievementsQueue.shift();
+  let tierText = { easy: "簡單", normal: "中階", hard: "進階", expert: "困難", master: "神人" }[currentAch.tier];
+  bannerText.innerHTML = `<span style="color: ${currentAch.color}; font-weight: 800;">${currentAch.symbol} [${tierText}] ${currentAch.title} — ${currentAch.desc}</span>`;
+  bannerText.style.transition = 'none';
+  bannerText.style.opacity = '1';
+  bannerText.style.filter = 'brightness(1.5)';
+  void bannerText.offsetWidth;
+  setTimeout(() => {
+    bannerText.style.transition = 'opacity 1.3s cubic-bezier(0.25, 1, 0.5, 1), filter 0.5s ease';
+    bannerText.style.opacity = '0.3';
+    bannerText.style.filter = 'brightness(1)';
+  }, 200);
+  const targetSFX = document.getElementById(`sfx-ach-${currentAch.tier}`);
+  if (targetSFX && !window.isSfxMuted) {
+    targetSFX.currentTime = 0;
+    targetSFX.play().catch(() => {});
+  }
+  setTimeout(() => {
+    window.isSfxBannerPlaying = false;
+    if (fullState.pendingAchievementsQueue.length === 0) {
+      let unlCount = fullState.achievements ? Object.keys(fullState.achievements).length : 0;
+      bannerText.style.transition = 'opacity 0.3s ease';
+      bannerText.style.opacity = '1';
+      bannerText.innerHTML = `🏆 當前已斬獲 <span style="color:#ffcc00; font-weight:800;">${unlCount} / 30</span> 項皇家勳章！<span style="color:var(--text-muted); font-size:0.55rem; margin-left:6px;">[ 💡 點此可開啟榮譽堂查看完整清單 ]</span>`;
+    } else {
+      CoreState.set(fullState);
+    }
+  }, 1500);
+}, 200);
