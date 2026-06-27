@@ -282,16 +282,26 @@ window.render = function() {
     } else {
       bannerZone.style.display = 'flex';
       
+      // ── 🏆 1. 單人模式：修正為從全域記憶體即時獲取成就數量 ──
       if (isSingleMode) {
         bannerBadge.textContent = "榮譽成就";
         bannerBadge.style.backgroundColor = 'rgba(230, 126, 34, 0.2)';
         bannerBadge.style.borderColor = '#e67e22';
         bannerZone.style.cursor = 'pointer';
         
-        const archive = localStorage.getItem('splendor_achievements_v1');
+        // 🎯 治本修正：優先使用記憶體狀態中的成就清單，若後台還沒綁定才退回讀取硬碟，徹底消滅非同步時間差
         let unlCount = 0;
-        if (archive) { try { unlCount = Object.keys(JSON.parse(archive)).length; } catch(e){} }
-        bannerText.innerHTML = `🏆 當前已斬獲 <span style="color:#ffcc00; font-weight:800;">${unlCount} / 30</span> 項皇家勳章！<span style="color:var(--text-muted); font-size:0.55rem; margin-left:6px;">[ 💡 點此可開啟榮譽堂查看完整清單 ]</span>`;
+        if (fullState.achievements) {
+          unlCount = Object.keys(fullState.achievements).length;
+        } else {
+          // 安全降級防禦
+          const archive = localStorage.getItem('splendor_achievements_v1');
+          if (archive) { try { unlCount = Object.keys(JSON.parse(archive)).length; } catch(e){} }
+        }
+        
+        // 🚀 即時渲染最新動態
+        const latestMsg = fullState.latestAchievementAlert || `當前已斬獲 <span style="color:#ffcc00; font-weight:800;">${unlCount} / 30</span> 項皇家勳章！`;
+        bannerText.innerHTML = `🏆 ${latestMsg} <span style="color:var(--text-muted); font-size:0.55rem; margin-left:6px;">[ 💡 點此可開啟榮譽堂查看完整清單 ]</span>`; 
         
       } else if (isStoryMode) {
         const currentLvl = fullState.storyProgress?.currentLevel || 1;
