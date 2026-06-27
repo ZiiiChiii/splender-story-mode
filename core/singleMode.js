@@ -81,7 +81,7 @@ export const SingleMode = {
     }
   },
 
-  saveCurrentProgress() {
+ saveCurrentProgress() {
     const state = CoreState.get();
     const s = state.settings;
     const progressData = { difficulty: s.difficulty, talentPool: s.talentPool, selectedAssistant: s.selectedAssistant };
@@ -89,26 +89,25 @@ export const SingleMode = {
     alert('💾 皇家進度已成功保存！');
   },
 
-  // 🎯 核心重構：讓成就解鎖完全走 CoreState 即時廣播
- triggerAchievementUnlock(id) {
+  // 🎯 核心重構：讓成就解鎖完全走 CoreState 記憶體，並推入全域動畫佇列
+  triggerAchievementUnlock(id) {
     const unlockedSet = this.getUnlockedSet();
     if (unlockedSet.has(id)) return;
 
     const state = CoreState.get();
     if (!state.achievements) state.achievements = {};
-    state.achievements[id] = true; // 1. 寫入全域記憶體
+    state.achievements[id] = true; 
 
     const found = ALL_ACHIEVEMENTS.find(a => a.id === id);
     if (found) {
-      // 2. 🚀 治本新設定：不要直接塞文字，而是把這顆「成就彈藥」塞進全域排隊佇列
+      // 🚀 壓進全域動畫佇列，交給 game.js 輪播
       if (!state.pendingAchievementsQueue) state.pendingAchievementsQueue = [];
       state.pendingAchievementsQueue.push(found);
       
-      // 更新計數文字存檔
       state.latestAchievementAlert = `當前已斬獲 <span style="color:#ffcc00; font-weight:800;">${Object.keys(state.achievements).length} / 30</span> 項皇家勳章！`;
     }
 
-    // 璀璨大師連鎖判定
+    // 璀璨大師連鎖判定 (滿 20 個自動開 30)
     const currentCount = Object.keys(state.achievements).filter(k => Number(k) !== 30).length;
     if (id !== 30 && currentCount >= 20) {
       localStorage.setItem('splendor_achievements_v1', JSON.stringify(state.achievements));
@@ -117,15 +116,10 @@ export const SingleMode = {
     }
 
     localStorage.setItem('splendor_achievements_v1', JSON.stringify(state.achievements));
-    CoreState.set(state); // 3. 廣播觸發 game.js 的 render
+    CoreState.set(state); // 廣播發動 game.js 的 render() 播放動畫
   },
 
-    if (typeof window.playAchievementSfx === 'function') {
-      window.playAchievementSfx(found ? found.tier : 'easy');
-    }
-  },
-
-  // 🎯 核心重構：將局內即時監聽與全域 State 對齊
+  // 🎯 核心重構：將局內即時監聽與新架構對齊
   auditInstantAchievements(actionType, meta) {
     const state = CoreState.get();
     if (state.mode !== 'singlePlayer') return; 
@@ -189,7 +183,7 @@ export const SingleMode = {
     }
   },
 
-  // 🎯 核心重構：讓歷程記錄面版完美連動全域 State
+  // 🎯 核心重構：歷史面板連動
   openAchievementHistory() {
     const container = document.getElementById('ach-matrix-injector');
     const unlockedSet = this.getUnlockedSet();
