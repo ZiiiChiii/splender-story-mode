@@ -734,7 +734,8 @@ window.addEventListener('DOMContentLoaded', async () => {
   SingleMode.loadTalentPool();
   ActionDispatcher.dispatch('INIT_GAME');
   document.getElementById('welcome-back-modal').classList.add('show');
-  
+});
+
 window.addEventListener('resize', setDynamicVh);
 
 window.storyModule = {
