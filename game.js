@@ -886,31 +886,4 @@ window.handleSfxToggle = function() {
   
   state.settings.isSfxMuted = !state.settings.isSfxMuted;
 
-
-
-  // 6. 🔊 播放對應難度的古典音效
-  const targetSFX = document.getElementById(`sfx-ach-${currentAch.tier}`);
-  if (targetSFX && !window.isSfxMuted) {
-    targetSFX.currentTime = 0;
-    targetSFX.play().catch(() => {});
-  }
-
-  // 7. 🔒 鎖定 1.5 秒後謝幕，並釋放紅綠燈讓下一個自動亮起
-  setTimeout(() => {
-    window.isSfxBannerPlaying = false;
-    
-    // 如果這已經是最後一個成就了，就把常駐計數文字還給玩家
-    if (fullState.pendingAchievementsQueue.length === 0) {
-      let unlCount = fullState.achievements ? Object.keys(fullState.achievements).length : 0;
-      bannerText.style.transition = 'opacity 0.3s ease';
-      bannerText.style.opacity = '1';
-      bannerText.innerHTML = `🏆 當前已斬獲 <span style="color:#ffcc00; font-weight:800;">${unlCount} / 30</span> 項皇家勳章！<span style="color:var(--text-muted); font-size:0.55rem; margin-left:6px;">[ 💡 點此可開啟榮譽堂查看完整清單 ]</span>`;
-    } else {
-      // 如果後面還有在排隊的，維持半透明，交給下一次迴圈瞬間亮起
-      CoreState.set(fullState);
-    }
-  }, 1500);
-
-}, 200); // 每 200 毫秒高速巡邏一次記憶體佇列
-  
   
