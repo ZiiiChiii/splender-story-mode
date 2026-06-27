@@ -45,7 +45,6 @@ html, body {
 
 .shell {
   max-width: 780px; 
-  align-self: flex-start; /* 新增這行適配寬螢幕 */
   margin: 0 auto;
   height: 100%;
   display: flex;
@@ -192,7 +191,7 @@ html, body {
   border-radius: var(--radius);
   padding: 6px;
 }
-.res-grid { display: flex; justify-content: space-around; align-items: center; gap: 4px; }
+.res-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 3px 6px; align-items: center; }
 .res-block { background: none; border: none; padding: 0; text-align: center; position: relative; display: flex; align-items: center; gap: 4px; }
 .res-circle {
   width: 20px; height: 20px; border-radius: 50%;
@@ -244,7 +243,7 @@ html, body {
 .board-row { display: flex; flex-direction: column; gap: 1px; }
 
 /* 修改位置：在 .grid-4 規則加入 align-items: start 防止拉伸拉長 */
-.grid-4 { display: grid; grid-template-columns: repeat(4, minmax(0, 120px)); gap: 3px; grid-auto-rows: 0; align-items: start; justify-content: start; }
+.grid-4 { display: grid; grid-template-columns: repeat(4, 1fr); gap: 3px; grid-auto-rows: 0; align-items: start; }
 
 #row-lv1, #row-lv2, #row-lv3 {
   flex: none !important;
