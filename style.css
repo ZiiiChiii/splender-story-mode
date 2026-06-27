@@ -44,7 +44,7 @@ html, body {
 }
 
 .shell {
-  max-width: 1160px; 
+  max-width: 780px; 
   align-self: flex-start; /* 新增這行適配寬螢幕 */
   margin: 0 auto;
   height: 100%;
