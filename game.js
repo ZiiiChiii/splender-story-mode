@@ -794,8 +794,10 @@ window.handleMusicToggle = function() {
     } else {
       audioEl.play().catch(() => {});
     }
+  }
+};
 
-  // ── 🎬 皇家成就全自動非同步輪播播放器（頁面載入後常駐運行）──
+// ── 🎬 皇家成就全自動非同步輪播播放器（頁面載入後常駐運行）──
 setInterval(() => {
   if (typeof CoreState === 'undefined' || window.isSfxBannerPlaying) return;
   const fullState = CoreState.get();
@@ -830,9 +832,8 @@ setInterval(() => {
     }
   }, 2500);
 }, 200);
-};
-  
-  // 🔊 全域遊戲音效開關控制器
+
+// 🔊 全域遊戲音效開關控制器
 window.handleSfxToggle = function() {
   const currentCore = window.CoreState || CoreState;
   if (!currentCore) return;
