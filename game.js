@@ -885,3 +885,10 @@ setInterval(() => {
     }
   }, 1500);
 }, 200);
+window.handleSfxToggle = function() {
+  const currentCore = window.CoreState || CoreState;
+  if (!currentCore) return;
+  const state = currentCore.get();
+  state.settings.isSfxMuted = !state.settings.isSfxMuted;
+  if (window.openGameOptionsModal) window.openGameOptionsModal();
+};
