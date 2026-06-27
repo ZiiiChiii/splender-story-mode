@@ -14,14 +14,6 @@ const CUSTOM_CARD_IMAGES = {
   k: ["https://i.ibb.co/6cKPW5Ff/1.jpg", "https://i.ibb.co/7tRFCqBb/2.jpg", "https://i.ibb.co/gbGqKfnv/3.jpg", "https://i.ibb.co/zHS6cht3/4.jpg", "https://i.ibb.co/SwrD6WdV/5.jpg"]
 };
 
-const TUTORIAL_STEPS_DATA = [
-  { elementId: "guide-actions", title: "🟢 第一步：行動挑選面板", text: "輪到您的回合時，可以選擇拿取 3 個不同顏色或 2 個同色籌碼。" },
-  { elementId: "guide-dashboard", title: "🪙 第二步：皇家金庫資產欄", text: "左側為持有的籌碼與卡片減免產量，注意背包籌碼總上限為 10 顆！" },
-  { elementId: "guide-matrix", title: "💎 第三步：核心產業卡片矩陣", text: "可在此花費籌碼收購或保留卡片。左上為威望分數，右上是永久寶石產量。" },
-  { elementId: "guide-nobles", title: "⚜️ 第四步：貴族覲見區", text: "當發展卡累積達到貴族所需的永久產量時，貴族會前來拜訪並贈予 3 分！" },
-  { elementId: "guide-reserved", title: "🔒 第五步：機密保留契約", text: "可保留卡牌入此區並獲得 1 顆黃金。保留上限為 3 張。" }
-];
-
 // ==========================================
 // 2. 音效與動畫全域追蹤暫存器
 // ==========================================
@@ -62,7 +54,6 @@ window.playAchievementSfx = function(tier) {
 
 let lastRenderedCardIds = new Set();
 let lastPlayerState = null;
-let currentTutorialStep = 0;
 
 let activeFlyingCardIds = new Set();
 let isAnimating = false; 
@@ -718,30 +709,6 @@ window.closeTalentPoolModal = () => {
 window.openAchievementHistory = () => SingleMode.openAchievementHistory();
 window.closeAchievementHistory = () => SingleMode.closeAchievementHistory();
 window.saveCurrentProgress = () => SingleMode.saveCurrentProgress();
-window.startFloatingTutorial = () => { document.getElementById('tutorial-start-modal').classList.remove('show'); hideWelcomeModal(); document.getElementById('floating-tutorial-widget').style.display = 'block'; showStepData(0); };
-window.hideWelcomeModal = () => { document.getElementById('welcome-back-modal').style.display = 'none'; if (!CoreState.get().settings.isMusicMuted && audioEl) audioEl.play().catch(() => {}); };
-
-function showStepData(stepIdx) {
-  currentTutorialStep = stepIdx;
-  TUTORIAL_STEPS_DATA.forEach((s, i) => document.getElementById(s.elementId)?.classList.toggle('tutorial-highlight', i === stepIdx));
-  const step = TUTORIAL_STEPS_DATA[stepIdx];
-  if (step) {
-    document.getElementById(step.elementId)?.scrollIntoView({ behavior: 'smooth', block: 'center' });
-    document.getElementById('floating-tutorial-widget-header').textContent = step.title;
-    document.getElementById('floating-tutorial-text').textContent = step.text;
-  }
-  document.getElementById('floating-tutorial-dots').innerHTML = TUTORIAL_STEPS_DATA.map((_, i) => `<div class="t-dot ${i === stepIdx ? 'active' : ''}\"></div>`).join('');
-  document.getElementById('floating-tutorial-next-btn').textContent = stepIdx === TUTORIAL_STEPS_DATA.length - 1 ? "進入大會堂" : "下一步";
-}
-
-window.nextFloatingStep = () => {
-  if (currentTutorialStep < TUTORIAL_STEPS_DATA.length - 1) showStepData(currentTutorialStep + 1);
-  else {
-    TUTORIAL_STEPS_DATA.forEach(s => document.getElementById(s.elementId)?.classList.remove('tutorial-highlight'));
-    document.getElementById('floating-tutorial-widget').style.display = 'none';
-    localStorage.setItem('splendor_tutorial_completed_2026', 'true');
-  }
-};
 
 window.addEventListener('DOMContentLoaded', async () => {
   setDynamicVh();
@@ -766,10 +733,7 @@ window.addEventListener('DOMContentLoaded', async () => {
   await loadCoreModules();
   SingleMode.loadTalentPool();
   ActionDispatcher.dispatch('INIT_GAME');
-  if (!localStorage.getItem('splendor_tutorial_completed_2026')) {
-    document.getElementById('tutorial-start-modal').classList.add('show');
-  } else {
-    document.getElementById('welcome-back-modal').classList.add('show');
+  document.getElementById('welcome-back-modal').classList.add('show');
   }
 });
 
