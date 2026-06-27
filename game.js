@@ -290,12 +290,12 @@ window.render = function() {
         bannerZone.style.cursor = 'pointer';
         
         // 即時計算總數
-        let unlCount = fullState.achievements ? Object.keys(fullState.achievements).length : 0;
-        
-        // 🚀 核心動畫排隊控制器：如果佇列有東西，且目前沒有在播動畫
-        if (fullState.pendingAchievementsQueue && fullState.pendingAchievementsQueue.length > 0 && !window.isSfxBannerPlaying) {
-          window.isSfxBannerPlaying = true; // 鎖定紅綠燈
-          
+       // 如果目前全域沒有在播放特殊成就動畫，就顯示平常的常駐進度
+        if (!window.isSfxBannerPlaying) {
+          let unlCount = fullState.achievements ? Object.keys(fullState.achievements).length : 0;
+          bannerText.innerHTML = `🏆 當前已斬獲 <span style="color:#ffcc00; font-weight:800;">${unlCount} / 30</span> 項皇家勳章！<span style="color:var(--text-muted); font-size:0.55rem; margin-left:6px;">[ 💡 點此可開啟榮譽堂查看完整清單 ]</span>`;
+        }
+      }          
           // 抽出隊伍中的第一個成就
           const currentAch = fullState.pendingAchievementsQueue.shift();
           let tierText = { easy: "簡單", normal: "中階", hard: "進階", expert: "困難", master: "神人" }[currentAch.tier];
@@ -849,6 +849,67 @@ window.handleSfxToggle = function() {
   const state = currentCore.get();
   
   state.settings.isSfxMuted = !state.settings.isSfxMuted;
+
+  // ── 🎬 皇家成就全自動非同步輪播播放器 ──
+setInterval(() => {
+  // 1. 安全檢查：如果全域大腦或佇列還沒準備好，或者目前已經在播動畫，就略過這次檢查
+  if (typeof CoreState === 'undefined' || window.isSfxBannerPlaying) return;
+  
+  const fullState = CoreState.get();
+  if (!fullState || !fullState.pendingAchievementsQueue || fullState.pendingAchievementsQueue.length === 0) return;
+
+  // 2. 確定有排隊的成就，立刻啟動播映
+  window.isSfxBannerPlaying = true;
+  
+  const bannerText = document.getElementById('dynamic-banner-text');
+  if (!bannerText) { window.isSfxBannerPlaying = false; return; }
+
+  // 3. 彈出佇列中的第一個成就
+  const currentAch = fullState.pendingAchievementsQueue.shift();
+  let tierText = { easy: "簡單", normal: "中階", hard: "進階", expert: "困難", master: "神人" }[currentAch.tier];
+
+  // 4. ✨ 華麗登場：塞入成就文字
+  bannerText.innerHTML = `<span style="color: ${currentAch.color}; font-weight: 800;">${currentAch.symbol} [${tierText}] ${currentAch.title} — ${currentAch.desc}</span>`;
+  
+  // 5. 🔥 CSS 魔法：強制觸發出現並滑入動畫，隨後平滑淡出
+  bannerText.style.transition = 'none';
+  bannerText.style.opacity = '1';
+  bannerText.style.filter = 'brightness(1.5)';
+  
+  // 強制重繪
+  void bannerText.offsetWidth; 
+
+  // 0.2秒後解除發光，進入 1.3 秒的緩慢平滑淡出期
+  setTimeout(() => {
+    bannerText.style.transition = 'opacity 1.3s cubic-bezier(0.25, 1, 0.5, 1), filter 0.5s ease';
+    bannerText.style.opacity = '0.3'; // 緩慢消失到微弱半透明（不全黑，維持優雅微光）
+    bannerText.style.filter = 'brightness(1)';
+  }, 200);
+
+  // 6. 🔊 播放對應難度的古典音效
+  const targetSFX = document.getElementById(`sfx-ach-${currentAch.tier}`);
+  if (targetSFX && !window.isSfxMuted) {
+    targetSFX.currentTime = 0;
+    targetSFX.play().catch(() => {});
+  }
+
+  // 7. 🔒 鎖定 1.5 秒後謝幕，並釋放紅綠燈讓下一個自動亮起
+  setTimeout(() => {
+    window.isSfxBannerPlaying = false;
+    
+    // 如果這已經是最後一個成就了，就把常駐計數文字還給玩家
+    if (fullState.pendingAchievementsQueue.length === 0) {
+      let unlCount = fullState.achievements ? Object.keys(fullState.achievements).length : 0;
+      bannerText.style.transition = 'opacity 0.3s ease';
+      bannerText.style.opacity = '1';
+      bannerText.innerHTML = `🏆 當前已斬獲 <span style="color:#ffcc00; font-weight:800;">${unlCount} / 30</span> 項皇家勳章！<span style="color:var(--text-muted); font-size:0.55rem; margin-left:6px;">[ 💡 點此可開啟榮譽堂查看完整清單 ]</span>`;
+    } else {
+      // 如果後面還有在排隊的，維持半透明，交給下一次迴圈瞬間亮起
+      CoreState.set(fullState);
+    }
+  }, 1500);
+
+}, 200); // 每 200 毫秒高速巡邏一次記憶體佇列
   
   if (window.openGameOptionsModal) window.openGameOptionsModal();
 };
