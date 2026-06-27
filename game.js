@@ -794,17 +794,6 @@ window.handleMusicToggle = function() {
     } else {
       audioEl.play().catch(() => {});
     }
-  
-// 🔊 全域遊戲音效開關控制器
-window.handleSfxToggle = function() {
-  const currentCore = window.CoreState || CoreState;
-  if (!currentCore) return;
-  const state = currentCore.get();
-  
-  state.settings.isSfxMuted = !state.settings.isSfxMuted;
-
-  if (window.openGameOptionsModal) window.openGameOptionsModal();
-};
 
   // ── 🎬 皇家成就全自動非同步輪播播放器（頁面載入後常駐運行）──
 setInterval(() => {
@@ -841,3 +830,13 @@ setInterval(() => {
     }
   }, 2500);
 }, 200);
+};
+  
+  // 🔊 全域遊戲音效開關控制器
+window.handleSfxToggle = function() {
+  const currentCore = window.CoreState || CoreState;
+  if (!currentCore) return;
+  const state = currentCore.get();
+  state.settings.isSfxMuted = !state.settings.isSfxMuted;
+  if (window.openGameOptionsModal) window.openGameOptionsModal();
+};
