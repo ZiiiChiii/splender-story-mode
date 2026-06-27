@@ -291,11 +291,8 @@ window.render = function() {
         
         // 即時計算總數
        // 如果目前全域沒有在播放特殊成就動畫，就顯示平常的常駐進度
-       if (!window.isSfxBannerPlaying) {
-          let unlCount = fullState.achievements ? Object.keys(fullState.achievements).length : 0;
-          bannerText.innerHTML = `🏆 當前已斬獲 <span style="color:#ffcc00; font-weight:800;">${unlCount} / 30</span> 項皇家勳章！<span style="color:var(--text-muted); font-size:0.55rem; margin-left:6px;">[ 💡 點此可開啟榮譽堂查看完整清單 ]</span>`;
-        }
-      }
+      if (fullState.pendingAchievementsQueue && fullState.pendingAchievementsQueue.length > 0 && !window.isSfxBannerPlaying) {
+          window.isSfxBannerPlaying = true;
           // 抽出隊伍中的第一個成就
           const currentAch = fullState.pendingAchievementsQueue.shift();
           let tierText = { easy: "簡單", normal: "中階", hard: "進階", expert: "困難", master: "神人" }[currentAch.tier];
@@ -317,16 +314,17 @@ window.render = function() {
           
           // 1.5秒後釋放紅綠燈，並更新 State 讓下一個成就排隊浮現
           setTimeout(() => {
-            window.isSfxBannerPlaying = false; // 解鎖
-            CoreState.set(fullState); // 再次驅動 render 檢查佇列
+            window.isSfxBannerPlaying = false;
+            CoreState.set(fullState);
           }, 1500);
           
         } else if (!window.isSfxBannerPlaying) {
           // 如果沒有成就正在播放，則顯示平常的常駐計數
+          let unlCount = fullState.achievements ? Object.keys(fullState.achievements).length : 0;
           bannerText.innerHTML = `🏆 當前已斬獲 <span style="color:#ffcc00; font-weight:800;">${unlCount} / 30</span> 項皇家勳章！<span style="color:var(--text-muted); font-size:0.55rem; margin-left:6px;">[ 💡 點此可開啟榮譽堂查看完整清單 ]</span>`;
-        } 
+        }
       } else if (isStoryMode) {
-      // ── 📜 2. 故事模式：保持原有的進度與關卡條件即時刷新 ──
+      // ── 📜 2. 故事模式
      
         const currentLvl = fullState.storyProgress?.currentLevel || 1;
         const mission = window.STORY_MISSIONS ? window.STORY_MISSIONS[currentLvl - 1] : null;
