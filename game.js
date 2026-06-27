@@ -316,13 +316,9 @@ window.render = function() {
           setTimeout(() => {
             window.isSfxBannerPlaying = false;
             CoreState.set(fullState);
-          }, 1500);
-          
-        } else if (!window.isSfxBannerPlaying) {
-          // 如果沒有成就正在播放，則顯示平常的常駐計數
-          let unlCount = fullState.achievements ? Object.keys(fullState.achievements).length : 0;
-          bannerText.innerHTML = `🏆 當前已斬獲 <span style="color:#ffcc00; font-weight:800;">${unlCount} / 30</span> 項皇家勳章！<span style="color:var(--text-muted); font-size:0.55rem; margin-left:6px;">[ 💡 點此可開啟榮譽堂查看完整清單 ]</span>`;
-        }
+          }, 1500);          
+        } 
+        
       } else if (isStoryMode) {
       // ── 📜 2. 故事模式
      
