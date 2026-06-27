@@ -465,9 +465,11 @@ html, body {
   #cap-txt { font-size: 0.46rem !important; margin-top: 1px !important; }
 
    /* 首席輔助官面板 - 手機版 */
-  #guide-assistant-container {
+ #guide-assistant-container {
+    width: calc((100vw - 86px) / 4) !important;
     min-width: 0 !important;
-    width: 100% !important;
+    max-width: calc((100vw - 86px) / 4) !important;
+    flex-shrink: 0 !important;
     padding: 2px !important;
   }
 
@@ -477,6 +479,7 @@ html, body {
     max-width: none !important;
     flex: 1 !important;
     padding: 3px !important;
+    overflow-y: auto !important;
   }
   
   /* 保留手牌區：覆蓋 inline min-width:320px */
