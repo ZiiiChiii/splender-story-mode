@@ -282,26 +282,49 @@ window.render = function() {
     } else {
       bannerZone.style.display = 'flex';
       
-      // ── 🏆 1. 單人模式：修正為從全域記憶體即時獲取成就數量 ──
+  // ── 🏆 1. 單人模式：重構回歸的經典動畫排隊播放器 ──
       if (isSingleMode) {
         bannerBadge.textContent = "榮譽成就";
         bannerBadge.style.backgroundColor = 'rgba(230, 126, 34, 0.2)';
         bannerBadge.style.borderColor = '#e67e22';
         bannerZone.style.cursor = 'pointer';
         
-        // 🎯 治本修正：優先使用記憶體狀態中的成就清單，若後台還沒綁定才退回讀取硬碟，徹底消滅非同步時間差
-        let unlCount = 0;
-        if (fullState.achievements) {
-          unlCount = Object.keys(fullState.achievements).length;
-        } else {
-          // 安全降級防禦
-          const archive = localStorage.getItem('splendor_achievements_v1');
-          if (archive) { try { unlCount = Object.keys(JSON.parse(archive)).length; } catch(e){} }
-        }
+        // 即時計算總數
+        let unlCount = fullState.achievements ? Object.keys(fullState.achievements).length : 0;
         
-        // 🚀 即時渲染最新動態
-        const latestMsg = fullState.latestAchievementAlert || `當前已斬獲 <span style="color:#ffcc00; font-weight:800;">${unlCount} / 30</span> 項皇家勳章！`;
-        bannerText.innerHTML = `🏆 ${latestMsg} <span style="color:var(--text-muted); font-size:0.55rem; margin-left:6px;">[ 💡 點此可開啟榮譽堂查看完整清單 ]</span>`; 
+        // 🚀 核心動畫排隊控制器：如果佇列裡面有東西，且目前沒有在播動畫
+        if (fullState.pendingAchievementsQueue && fullState.pendingAchievementsQueue.length > 0 && !isSfxBannerPlaying) {
+          isSfxBannerPlaying = true;
+          
+          // 抽出隊伍中的第一個成就
+          const currentAch = fullState.pendingAchievementsQueue.shift();
+          
+          let tierText = { easy: "簡單", normal: "中階", hard: "進階", expert: "困難", master: "神人" }[currentAch.tier];
+          
+          // 渲染畫面
+          bannerText.innerHTML = `<span style="color: ${currentAch.color}; font-weight: 800;">${currentAch.symbol} [${tierText}] ${currentAch.title} — ${currentAch.desc}</span>`;
+          
+          // 經典重繪魔法：重製 CSS 動態外觀
+          bannerText.classList.remove('has-ach');
+          void bannerText.offsetWidth; 
+          bannerText.classList.add('has-ach');
+          
+          // 播放對應難度的古典音效
+          const targetSFX = document.getElementById(`sfx-ach-${currentAch.tier}`);
+          if (targetSFX && !window.isSfxMuted) {
+            targetSFX.currentTime = 0;
+            targetSFX.play().catch(() => {});
+          }
+          
+          // 1.5秒後釋放紅綠燈，並更新 State 讓下一個成就排隊浮現
+          setTimeout(() => {
+            isSfxBannerPlaying = false;
+            CoreState.set(fullState); // 再次驅動 render 檢查下一個
+          }, 1500);
+          
+        } else if (!isSfxBannerPlaying) {
+          // 如果沒有成就正在解鎖，則顯示平常的常駐清單文字
+          bannerText.innerHTML = `🏆 當前已斬獲 <span style="color:#ffcc00; font-weight:800;">${unlCount} / 30</span> 項皇家勳章！<span style="color:var(--text-muted); font-size:0.55rem; margin-left:6px;">[ 💡 點此可開啟榮譽堂查看完整清單 ]</span>`;
         
       } else if (isStoryMode) {
         const currentLvl = fullState.storyProgress?.currentLevel || 1;
