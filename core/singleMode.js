@@ -90,26 +90,25 @@ export const SingleMode = {
   },
 
   // 🎯 核心重構：讓成就解鎖完全走 CoreState 即時廣播
-  triggerAchievementUnlock(id) {
+ triggerAchievementUnlock(id) {
     const unlockedSet = this.getUnlockedSet();
     if (unlockedSet.has(id)) return;
 
     const state = CoreState.get();
     if (!state.achievements) state.achievements = {};
-    state.achievements[id] = true; // 即時寫入全域狀態記憶體
+    state.achievements[id] = true; // 1. 寫入全域記憶體
 
     const found = ALL_ACHIEVEMENTS.find(a => a.id === id);
     if (found) {
-      // 即時塞入即時動態欄位更新文字，排除非同步時間差
-      state.latestAchievementAlert = `當前已斬獲 <span style="color:#ffcc00; font-weight:800;">${Object.keys(state.achievements).length} / 30</span> 項皇家勳章！`;
+      // 2. 🚀 治本新設定：不要直接塞文字，而是把這顆「成就彈藥」塞進全域排隊佇列
+      if (!state.pendingAchievementsQueue) state.pendingAchievementsQueue = [];
+      state.pendingAchievementsQueue.push(found);
       
-      const latestEl = document.getElementById('ach-latest-field');
-      if (latestEl) {
-        latestEl.innerHTML = `<span style="color:${found.color}; font-weight:800;">${found.symbol} [解鎖] ${found.title} — ${found.desc}</span>`;
-      }
+      // 更新計數文字存檔
+      state.latestAchievementAlert = `當前已斬獲 <span style="color:#ffcc00; font-weight:800;">${Object.keys(state.achievements).length} / 30</span> 項皇家勳章！`;
     }
 
-    // 璀璨大師連鎖判定 (扣除 30 號自身，滿 20 個自動開 30)
+    // 璀璨大師連鎖判定
     const currentCount = Object.keys(state.achievements).filter(k => Number(k) !== 30).length;
     if (id !== 30 && currentCount >= 20) {
       localStorage.setItem('splendor_achievements_v1', JSON.stringify(state.achievements));
@@ -117,9 +116,9 @@ export const SingleMode = {
       return;
     }
 
-    // 保存至本地硬碟存檔
     localStorage.setItem('splendor_achievements_v1', JSON.stringify(state.achievements));
-    CoreState.set(state); // 🚀 推送全域 render()，即時重繪畫面！
+    CoreState.set(state); // 3. 廣播觸發 game.js 的 render
+  },
 
     if (typeof window.playAchievementSfx === 'function') {
       window.playAchievementSfx(found ? found.tier : 'easy');
