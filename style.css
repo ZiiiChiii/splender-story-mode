@@ -278,7 +278,7 @@ html, body {
 .reserved-section { background: rgba(0, 0, 0, 0.35); border: 1px dashed #9c7a3c; border-radius: var(--radius); overflow: visible; display: flex; flex-direction: column; }
 #reserved-layer {
   overflow: visible;
-  align-items: end;
+  align-items: start;
   height: auto;
   box-sizing: border-box;
   padding: 4px 4px 8px 4px;
