@@ -841,3 +841,10 @@ window.handleSfxToggle = function() {
   state.settings.isSfxMuted = !state.settings.isSfxMuted;
   if (window.openGameOptionsModal) window.openGameOptionsModal();
 };
+window.hideWelcomeModal = function() {
+  document.getElementById('welcome-back-modal').classList.remove('show');
+  const bg = document.getElementById('bg-music');
+  if (bg && !CoreState.get().settings.isMusicMuted) {
+    bg.play().catch(() => {});
+  }
+};
