@@ -734,16 +734,15 @@ window.addEventListener('DOMContentLoaded', async () => {
   SingleMode.loadTalentPool();
   ActionDispatcher.dispatch('INIT_GAME');
   document.getElementById('welcome-back-modal').classList.add('show');
-});
-// ── 新手教學自動觸發 ──
-setTimeout(() => {
-  const seen = localStorage.getItem('splendor_tutorial_seen');
-  if (!seen) {
-    if (typeof window.startFloatingTutorial === 'function') {
+
+  // ── 新手教學自動觸發（首次進站） ──
+  setTimeout(() => {
+    const seen = localStorage.getItem('splendor_tutorial_seen');
+    if (!seen && typeof window.startFloatingTutorial === 'function') {
       window.startFloatingTutorial();
     }
-  }
-}, 800);
+  }, 800);
+});
 
 window.addEventListener('resize', setDynamicVh);
 
