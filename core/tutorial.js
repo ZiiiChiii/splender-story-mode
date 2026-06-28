@@ -179,28 +179,27 @@ function calcLayout(step) {
   var boxW = boxEl.offsetWidth || 360; 
   var charH = charEl.offsetHeight || 260; // 獲取放大後的立繪高度
   
-  if (upper) {
-    // 元素在上排（對話框在下）：讓立繪底部切入對話框上緣下方 65px，下半身自動被對話框遮住
-    charEl.style.top = (boxTop - charH + 65) + 'px';
-    charEl.style.bottom = 'auto';
-  } else {
-    // 元素在下排（對話框在上）：讓立繪頂部貼近對話框下緣
-    charEl.style.bottom = (boxBottom - charH + 65) + 'px';
-    charEl.style.top = 'auto';
-  }
+  /* 垂直重疊量由原先的 20px~35px 加深至 200px，強制讓大立繪下半身 1/3 被蓋在對話框後面 */
+if (upper) {
+  charEl.style.top = (boxTop - charH + 200) + 'px';
+  charEl.style.bottom = 'auto';
+} else {
+  charEl.style.bottom = (boxBottom - charH + 200) + 'px';
+  charEl.style.top = 'auto';
+}
 
   // 3. 【立繪 X 軸水平貼合】
   if (mob) {
     charEl.style.left = '8px';
     charEl.style.right = 'auto';
   } else {
-    // 電腦版：無縫貼在置中對話框的左側邊緣，並往內重疊一部分
-    var charLeft = (vw / 2) - (boxW / 2) - 135; 
-    if (charLeft < 15) charLeft = 15;
-    
-    charEl.style.left = charLeft + 'px';
-    charEl.style.right = 'auto';
-  }
+  /* 將推開距離由 110px 調整為 380px，精準抵消 3 倍大寬度，使其完美貼在對話框左邊緣 */
+  var charLeft = (vw / 2) - (boxW / 2) - 380;
+  if (charLeft < 5) charLeft = 5;
+  
+  charEl.style.left = charLeft + 'px';
+  charEl.style.right = 'auto';
+}
   charEl.style.transform = 'none';
 }
 // ── 打字機 ────────────────────────────────────────────────────
@@ -354,9 +353,9 @@ function buildDOM() {
       'flex-direction:column;justify-content:flex-end;align-items:center;padding-bottom:20px;',
       'font-family:"Microsoft JhengHei","Heiti TC","Inter",sans-serif;}',
 
-      '#tut-char-wrapper{position:fixed;width:210px;max-width:45vw;pointer-events:none;',
+      '#tut-char-wrapper{position:fixed;width:630px;max-width:85vw;pointer-events:none;',
       'filter:drop-shadow(0 8px 28px rgba(0,0,0,0.9));z-index:10000011;',
-      'transition:top 0.32s ease,bottom 0.32s ease,left 0.32s ease,right 0.32s ease,opacity 0.18s ease;}',
+      'transition:top 0.3s ease,bottom 0.3s ease,left 0.3s ease,right 0.3s ease,opacity 0.3s ease,transform 0.3s ease;}',
       '#tut-char-img{width:100%;object-fit:contain;display:block;}',
       '@keyframes tutCharPop{',
       '0%{transform:translateY(14px) scale(0.95);opacity:0.6;}',
