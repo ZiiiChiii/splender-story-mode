@@ -735,6 +735,15 @@ window.addEventListener('DOMContentLoaded', async () => {
   ActionDispatcher.dispatch('INIT_GAME');
   document.getElementById('welcome-back-modal').classList.add('show');
 });
+// ── 新手教學自動觸發 ──
+setTimeout(() => {
+  const seen = localStorage.getItem('splendor_tutorial_seen');
+  if (!seen) {
+    if (typeof window.startFloatingTutorial === 'function') {
+      window.startFloatingTutorial();
+    }
+  }
+}, 800);
 
 window.addEventListener('resize', setDynamicVh);
 
