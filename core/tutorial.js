@@ -188,18 +188,29 @@ if (upper) {
   charEl.style.top = 'auto';
 }
 
-  // 3. 【立繪 X 軸水平貼合】
+// 3. 【大立繪 X 軸水平貼合】
   if (mob) {
-    charEl.style.left = '8px';
+    charEl.style.left = '-40px'; 
     charEl.style.right = 'auto';
   } else {
-  /* 將推開距離由 110px 調整為 380px，精準抵消 3 倍大寬度，使其完美貼在對話框左邊緣 */
-  var charLeft = (vw / 2) - (boxW / 2) - 380;
-  if (charLeft < 5) charLeft = 5;
-  
-  charEl.style.left = charLeft + 'px';
-  charEl.style.right = 'auto';
-}
+    // 電腦版：智慧避讓邏輯（對話框置中在 vw/2，寬度左右各半為 boxW/2）
+    if (isLeft) {
+      // 💡 當要介紹的區域在左邊：大立繪自動改貼在對話框的「右側」
+      // 計算位置：對話框右邊緣 (vw/2 + boxW/2) 再往左修正一點重疊量 (-30px)
+      var charRightSide = (vw / 2) + (boxW / 2) - 30;
+      
+      charEl.style.left = charRightSide + 'px';
+      charEl.style.right = 'auto';
+    } else {
+      // 💡 當要介紹的區域在右邊（或預設）：大立繪保持貼在對話框的「左側」
+      // 計算位置：對話框左邊緣 (vw/2 - boxW/2) 再往左推開立繪寬度並保留重疊量 (-380px)
+      var charLeftSide = (vw / 2) - (boxW / 2) - 380; 
+      if (charLeftSide < 5) charLeftSide = 5; // 螢幕邊界保險
+      
+      charEl.style.left = charLeftSide + 'px';
+      charEl.style.right = 'auto';
+    }
+  }
   charEl.style.transform = 'none';
 }
 // ── 打字機 ────────────────────────────────────────────────────
