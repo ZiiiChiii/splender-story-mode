@@ -210,6 +210,7 @@ if (upper) {
  } else {
     // 電腦版：智慧避讓邏輯（對話框置中在 vw/2，寬度左右各半為 boxW/2）
     // ✨ 修改這裡：加入特例判斷，如果介紹的目標是金庫相關元素，直接視同 isLeft = true 丟到右邊避讓
+   /* 💡 保持原樣不變：因為我們新的選擇器依然含有 'dashboard' 字眼，判定會完美成立，立繪會乖乖待在右側 */
     var isDashboard = step.el && (step.el.indexOf('dashboard') !== -1 || step.el.indexOf('bank') !== -1);
     
     if (isLeft || isDashboard) {
