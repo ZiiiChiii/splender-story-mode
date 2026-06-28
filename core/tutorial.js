@@ -8,7 +8,7 @@
 (function () {
 
 // ── 立繪 ─────────────────────────────────────────────────────
-var CHAR_IMG = 'https://i.ibb.co/j9MfpTYy';
+var CHAR_IMG = 'https://ibb.co/j9MfpTYy';
 
 // ── 語音佔位（後補真實 URL，換這裡即可） ────────────────────
 var VOICE = 'https://assets.mixkit.co/active_storage/sfx/2073/2073-preview.mp3';
