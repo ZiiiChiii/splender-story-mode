@@ -196,8 +196,8 @@ if (upper) {
     // 電腦版：智慧避讓邏輯（對話框置中在 vw/2，寬度左右各半為 boxW/2）
     if (isLeft) {
       // 💡 當要介紹的區域在左邊：大立繪自動改貼在對話框的「右側」
-      // 計算位置：對話框右邊緣 (vw/2 + boxW/2) 再往左修正一點重疊量 (-30px)
-      var charRightSide = (vw / 2) + (boxW / 2) - 30;
+      // 修正：算式改用對話框右邊緣 (vw/2 + boxW/2) 減去 230px 的重疊量，讓立繪左側邊界無縫貼齊對話框
+      var charRightSide = (vw / 2) + (boxW / 2) - 230;
       
       charEl.style.left = charRightSide + 'px';
       charEl.style.right = 'auto';
