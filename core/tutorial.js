@@ -157,23 +157,32 @@ function calcLayout(step) {
 
   clr(boxEl); clr(charEl);
 
-  // 對話框：元素在上 → 框在下；元素在下 → 框在上
+  // ── 智慧調整 ──
+  // 對話框定位：緊貼在要介紹的項目旁邊（上排或下排），並留 12px 舒適空隙，絕對不擋到項目
   if (upper) {
-    boxEl.style.bottom = '22px'; boxEl.style.top = 'auto';
+    // 元素在上 → 框在元素下方旁邊
+    boxEl.style.top = (rect.bottom + 12) + 'px'; 
+    boxEl.style.bottom = 'auto';
   } else {
-    boxEl.style.top = '18px'; boxEl.style.bottom = 'auto';
+    // 元素在下 → 框在元素上方旁邊
+    boxEl.style.bottom = (vh - rect.top + 12) + 'px'; 
+    boxEl.style.top = 'auto';
   }
   boxEl.style.left      = '50%';
   boxEl.style.transform = 'translateX(-50%)';
 
-  // 立繪：與對話框同側，水平與目標元素錯開
+  // 立繪定位：與對話框保持同側上下高度，並維持原本的左右錯開邏輯
   if (upper) {
-    charEl.style.bottom = mob ? '195px' : '215px';
-    charEl.style.top    = 'auto';
-  } else {
-    charEl.style.top    = mob ? '90px' : '80px';
+    // 元素在上 → 立繪跟著對話框在下方，依附在對話框頂部邊緣
+    charEl.style.top = (rect.bottom - 45) + 'px'; 
     charEl.style.bottom = 'auto';
+  } else {
+    // 元素在下 → 立繪跟著對話框在上方，依附在對話框底部邊緣
+    charEl.style.bottom = (vh - rect.top - 45) + 'px'; 
+    charEl.style.top = 'auto';
   }
+
+  // 保持你原有的立繪水平錯開邏輯，防止擋到左邊或右邊的介紹內容
   if (isLeft) {
     charEl.style.right = mob ? '8px' : '16px';
     charEl.style.left  = 'auto';
