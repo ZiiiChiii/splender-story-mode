@@ -180,32 +180,50 @@ function calcLayout(step) {
   boxEl.style.transform = 'translateX(-50%)';
 
   // 2. 【立繪水平與垂直連接計算】
+  var boxTop, boxBottom;
+  if (upper) {
+    boxTop = rect.bottom + 12;
+    if (rect.top < 30) { boxTop = rect.bottom + 55; }
+    boxEl.style.top = boxTop + 'px'; 
+    boxEl.style.bottom = 'auto';
+  } else {
+    boxBottom = vh - rect.top + 12;
+    boxEl.style.bottom = boxBottom + 'px'; 
+    boxEl.style.top = 'auto';
+  }
+  boxEl.style.left      = '50%';
+  boxEl.style.transform = 'translateX(-50%)';
+
+  // 2. 【立繪完美連接與遮擋計算】
   var boxW = boxEl.offsetWidth || 360; 
+  var charH = charEl.offsetHeight || 240; // 預估放大後的立繪高度
   
   if (upper) {
-    // 元素在上排時，讓立繪基於計算出的 boxTop 進行相對對齊，並加入防外溢安全寬限
-    charEl.style.top = Math.max(10, boxTop - 25) + 'px';
+    // 元素在上排（對話框在下）
+    // 讓立繪的底部故意深入對話框上緣下方約 60px（約立繪的 1/3 高度），使其下半部被對話框遮擋
+    charEl.style.top = (boxTop - charH + 60) + 'px';
     charEl.style.bottom = 'auto';
   } else {
-    // 元素在下排時，立繪依附於對話框底部上緣
-    charEl.style.bottom = (boxBottom - 20) + 'px';
+    // 元素在下排（對話框在上）
+    // 讓立繪的頂部深入對話框下緣上方，計算相對視窗底部的距離
+    charEl.style.bottom = (boxBottom - charH + 60) + 'px';
     charEl.style.top = 'auto';
   }
 
-  // 3. 【立繪 RWD 左右貼框分流修正】
+  // 3. 【立繪左右位置與同時出現動畫】
   if (mob) {
     charEl.style.left = '8px';
     charEl.style.right = 'auto';
   } else {
-    // 電腦版：精準黏在對話框的左側邊界，實現無縫一體化排版
-    var charLeft = (vw / 2) - (boxW / 2) - 120;
-    if (charLeft < 15) charLeft = 15; // 邊界保險
-    
+    // 電腦版：無縫貼在對話框左側
+    var charLeft = (vw / 2) - (boxW / 2) - 130; // 配合立繪放大，向左修正像素避免壓到文字
+    if (charLeft < 15) charLeft = 15;
     charEl.style.left = charLeft + 'px';
     charEl.style.right = 'auto';
   }
+  
+  // 修改進入動畫：與對話框同步淡入，且不使用額外的旋轉或延遲位移
   charEl.style.transform = 'none';
-}
 // ── 打字機 ────────────────────────────────────────────────────
 function typewrite(html) {
   clearTimeout(T.typeTimer);
@@ -357,7 +375,13 @@ function buildDOM() {
       'flex-direction:column;justify-content:flex-end;align-items:center;padding-bottom:20px;',
       'font-family:"Microsoft JhengHei","Heiti TC","Inter",sans-serif;}',
 
-      '#tut-char-wrapper{position:fixed;width:220px;max-width:30vw;pointer-events:none;',
+      '#tut-char-wrapper { 
+  position: fixed; 
+  z-index: 10001; /* 立繪層級在對話框下面一層，會被對話框遮擋下部 */
+  width: 200px;  /* ✨ 放大立繪：由原本的 140px/160px 放大至 200px (手機版會依據 max-width 縮放) */
+  max-width: 45vw;
+  transition: opacity 0.3s ease, top 0.3s ease, bottom 0.3s ease, transform 0.3s ease; /* 與對話框動畫完全同步 */
+}',
       'filter:drop-shadow(0 8px 28px rgba(0,0,0,0.9));z-index:10000011;',
       'transition:top 0.32s ease,bottom 0.32s ease,left 0.32s ease,right 0.32s ease,opacity 0.18s ease;}',
       '#tut-char-img{width:100%;object-fit:contain;display:block;}',
@@ -376,7 +400,11 @@ function buildDOM() {
       'color:#968a7f;border-radius:4px;padding:4px 14px;font-size:0.7rem;cursor:pointer;transition:all 0.2s;}',
       '#tut-skip-btn:hover{color:#ffe099;border-color:#d4af37;}',
 
-      '#tut-box{position:fixed;z-index:10000012;width:88%;max-width:620px;',
+      '#tut-box { 
+  position: fixed; 
+  z-index: 10005; /* 對話框層級在最上面 */
+  transition: opacity 0.3s ease, top 0.3s ease, bottom 0.3s ease;
+}',
       'background:rgba(4,6,10,0.97);border:2px solid #d4af37;',
       'box-shadow:0 0 32px rgba(212,175,55,0.2),0 20px 50px rgba(0,0,0,0.95);',
       'border-radius:12px;padding:22px 24px 16px;cursor:pointer;user-select:none;',
