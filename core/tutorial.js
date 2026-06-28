@@ -12,8 +12,8 @@ var CHAR_IMG = 'https://i.ibb.co/39L2xNMT/1.png';
 
 // ── 語音佔位（後補真實 URL，換這裡即可） ────────────────────
 var VOICE = 'https://assets.mixkit.co/active_storage/sfx/380/380-preview.mp3';
-    VOICE01 = 'https://files.catbox.moe/g28deq.mp3';
-    VOICE02 = 'https://files.catbox.moe/xlgj0p.mp3';
+var VOICE01 = 'https://files.catbox.moe/g28deq.mp3';
+var VOICE02 = 'https://files.catbox.moe/xlgj0p.mp3';
 
 // ── 步驟資料 ─────────────────────────────────────────────────
 // 粗體：用 [[文字]] 標記，渲染時自動變金色粗體
