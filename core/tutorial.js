@@ -171,14 +171,17 @@ function calcLayout(step) {
   boxEl.style.left      = '50%';
   boxEl.style.transform = 'translateX(-50%)';
 
-  // 立繪定位：與對話框保持同側上下高度，並維持原本的左右錯開邏輯
+ // 2. 【立繪位置修正】強制與對話框水平/垂直無縫連接
+  // 獲取對話框渲染後的寬度（一般 max-width 為 380px，若尚未渲染則預估 360px）
+  var boxW = boxEl.offsetWidth || 360; 
+  
   if (upper) {
-    // 元素在上 → 立繪跟著對話框在下方，依附在對話框頂部邊緣
-    charEl.style.top = (rect.bottom - 45) + 'px'; 
+    // 元素在上時，立繪對齊對話框的頂部，並往上挪移突出一部分（貼齊對話框左側）
+    charEl.style.top = (boxTop - 60) + 'px';
     charEl.style.bottom = 'auto';
   } else {
-    // 元素在下 → 立繪跟著對話框在上方，依附在對話框底部邊緣
-    charEl.style.bottom = (vh - rect.top - 45) + 'px'; 
+    // 元素在下時，立繪對齊對話框的底部，並依附在左側
+    charEl.style.bottom = (boxBottom - 20) + 'px';
     charEl.style.top = 'auto';
   }
 
@@ -188,6 +191,18 @@ function calcLayout(step) {
     charEl.style.left  = 'auto';
   } else {
     charEl.style.left  = mob ? '8px' : '16px';
+    charEl.style.right = 'auto';
+  }
+  if (mob) {
+    // 手機版：螢幕太窄，立繪直接固定在左側邊緣，並透過 css 縮小防遮擋
+    charEl.style.left = '8px';
+    charEl.style.right = 'auto';
+  } else {
+    // 電腦版：精準連接在對話框的左側邊緣！
+    // 對話框水平置中在 50%，所以對話框左邊緣的位置是 (vw / 2) - (boxW / 2)
+    // 我們讓立繪的左側再往左調 100px (即 -100)，使其呈現半疊加在對話框左側的完美效果
+    var charLeft = (vw / 2) - (boxW / 2) - 100;
+    charEl.style.left = charLeft + 'px';
     charEl.style.right = 'auto';
   }
   charEl.style.transform = 'none';
