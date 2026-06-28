@@ -123,8 +123,6 @@ function clearHighlight() {
   }
 }
 
-// ── 動態位置：對話框 & 立繪自動躲開目標元素 ──────────────────
-// ── 動態位置：對話框 & 立繪自動躲開目標元素（防外溢修正版） ──────────────────
 function calcLayout(step) {
   var boxEl  = document.getElementById('tut-box');
   var charEl = document.getElementById('tut-char-wrapper');
@@ -148,7 +146,6 @@ function calcLayout(step) {
     charEl.style.transform = mob ? 'none' : 'translateX(-340px)';
   }
 
-  // ✨ 修正 1：嚴格攔截 null 與非目標步驟，防止重複刷屏渲染
   if (!step || !step.el || step.el === '') { setDefault(); return; }
   var el = document.querySelector(step.el);
   if (!el) { setDefault(); return; }
@@ -157,7 +154,7 @@ function calcLayout(step) {
   var targetCenterX = rect.left + rect.width / 2;
   var targetCenterY = rect.top + rect.height / 2;
   var upper = targetCenterY < vh * 0.52;
-  var isLeft = targetCenterX < vw * 0.5; // ✨ 修正 2：補齊原本漏掉宣告的關鍵變數 isLeft
+  var isLeft = targetCenterX < vw * 0.5;
   
   clr(boxEl); clr(charEl);
 
@@ -165,7 +162,6 @@ function calcLayout(step) {
   var boxTop, boxBottom;
   if (upper) {
     boxTop = rect.bottom + 12;
-    // 🛡️ 安全防護：介紹頂部狀態欄時，特別拉大下移間距，確保立繪頭頂不會被推到視窗外
     if (rect.top < 30) {
       boxTop = rect.bottom + 55; 
     }
@@ -179,51 +175,34 @@ function calcLayout(step) {
   boxEl.style.left      = '50%';
   boxEl.style.transform = 'translateX(-50%)';
 
-  // 2. 【立繪水平與垂直連接計算】
-  var boxTop, boxBottom;
-  if (upper) {
-    boxTop = rect.bottom + 12;
-    if (rect.top < 30) { boxTop = rect.bottom + 55; }
-    boxEl.style.top = boxTop + 'px'; 
-    boxEl.style.bottom = 'auto';
-  } else {
-    boxBottom = vh - rect.top + 12;
-    boxEl.style.bottom = boxBottom + 'px'; 
-    boxEl.style.top = 'auto';
-  }
-  boxEl.style.left      = '50%';
-  boxEl.style.transform = 'translateX(-50%)';
-
-  // 2. 【立繪完美連接與遮擋計算】
+  // 2. 【立繪完美連接與後層遮擋計算】
   var boxW = boxEl.offsetWidth || 360; 
-  var charH = charEl.offsetHeight || 240; // 預估放大後的立繪高度
+  var charH = charEl.offsetHeight || 260; // 獲取放大後的立繪高度
   
   if (upper) {
-    // 元素在上排（對話框在下）
-    // 讓立繪的底部故意深入對話框上緣下方約 60px（約立繪的 1/3 高度），使其下半部被對話框遮擋
-    charEl.style.top = (boxTop - charH + 60) + 'px';
+    // 元素在上排（對話框在下）：讓立繪底部切入對話框上緣下方 65px，下半身自動被對話框遮住
+    charEl.style.top = (boxTop - charH + 65) + 'px';
     charEl.style.bottom = 'auto';
   } else {
-    // 元素在下排（對話框在上）
-    // 讓立繪的頂部深入對話框下緣上方，計算相對視窗底部的距離
-    charEl.style.bottom = (boxBottom - charH + 60) + 'px';
+    // 元素在下排（對話框在上）：讓立繪頂部貼近對話框下緣
+    charEl.style.bottom = (boxBottom - charH + 65) + 'px';
     charEl.style.top = 'auto';
   }
 
-  // 3. 【立繪左右位置與同時出現動畫】
+  // 3. 【立繪 X 軸水平貼合】
   if (mob) {
     charEl.style.left = '8px';
     charEl.style.right = 'auto';
   } else {
-    // 電腦版：無縫貼在對話框左側
-    var charLeft = (vw / 2) - (boxW / 2) - 130; // 配合立繪放大，向左修正像素避免壓到文字
+    // 電腦版：無縫貼在置中對話框的左側邊緣，並往內重疊一部分
+    var charLeft = (vw / 2) - (boxW / 2) - 135; 
     if (charLeft < 15) charLeft = 15;
+    
     charEl.style.left = charLeft + 'px';
     charEl.style.right = 'auto';
   }
-  
-  // 修改進入動畫：與對話框同步淡入，且不使用額外的旋轉或延遲位移
   charEl.style.transform = 'none';
+}
 // ── 打字機 ────────────────────────────────────────────────────
 function typewrite(html) {
   clearTimeout(T.typeTimer);
