@@ -105,11 +105,20 @@ function doHighlight(sel, color) {
   T.prevEl = el;
   el._os = el.style.boxShadow;
   el._oz = el.style.zIndex;
-  var c = color || '#d4af37';
-  el.style.outline       = '2px solid ' + c;
+  
+  // ✨ 修改 1：不用分五彩，一律強制覆蓋為皇家大會堂專屬的「璀璨金色」
+  var goldColor = '#ffcc00'; 
+  
+  el.style.outline       = '3px solid ' + goldColor;
   el.style.outlineOffset = '4px';
-  el.style.boxShadow     = '0 0 0 4px ' + c + '22, 0 0 24px ' + c + '66';
-  el.style.zIndex        = '10000001';
+  
+  // ✨ 修改 2：核心聚光燈策略！利用「0 0 0 9999px rgba(0,0,0,0.82)」這組巨大的擴散陰影，
+  // 直接把被介紹區域「以外」的全螢幕四周強行完全黑化黯淡，並給予目標 40px 的強烈金色發光特效！
+  el.style.boxShadow     = '0 0 0 4px rgba(255,204,0,0.25), 0 0 40px rgba(255,204,0,0.85), 0 0 0 9999px rgba(3,5,8,0.82)';
+  
+  // ✨ 修改 3：層級拉高到僅次於對話框，確保浮出在所有黑面遮罩最上層
+  el.style.zIndex        = '10000001'; 
+  
   el.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
 }
 
