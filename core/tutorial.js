@@ -192,10 +192,13 @@ if (upper) {
   if (mob) {
     charEl.style.left = '-40px'; 
     charEl.style.right = 'auto';
-  } else {
+ } else {
     // 電腦版：智慧避讓邏輯（對話框置中在 vw/2，寬度左右各半為 boxW/2）
-    if (isLeft) {
-      // 💡 當要介紹的區域在左邊：大立繪自動改貼在對話框的「右側」
+    // ✨ 修改這裡：加入特例判斷，如果介紹的目標是金庫相關元素，直接視同 isLeft = true 丟到右邊避讓
+    var isDashboard = step.el && (step.el.indexOf('dashboard') !== -1 || step.el.indexOf('bank') !== -1);
+    
+    if (isLeft || isDashboard) {
+      // 💡 當要介紹的區域在左邊，或是正在介紹金庫：大立繪自動改貼在對話框的「右側」
       // 修正：算式改用對話框右邊緣 (vw/2 + boxW/2) 減去 230px 的重疊量，讓立繪左側邊界無縫貼齊對話框
       var charRightSide = (vw / 2) + (boxW / 2) - 230;
       
