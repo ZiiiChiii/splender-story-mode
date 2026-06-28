@@ -760,7 +760,6 @@ window.addEventListener('DOMContentLoaded', async () => {
       window.startFloatingTutorial();
     }
   }, 800);
-});
 
 window.addEventListener('resize', setDynamicVh);
 
