@@ -21,7 +21,7 @@ var STEPS = [
   // 階段一
   { phase:'階段一：認識環境',
     text:'嗨！我是你的貿易顧問翠席兒。',
-    el:null, color:null, voice:VOICE },
+    el:null, color:null, voice:https://assets.mixkit.co/active_storage/sfx/380/380-preview.mp3 },
 
   { phase:'階段一：認識環境',
     text:'今天我們的目標很簡單：在 [[28 回合]] 內拿到 [[15 分威望]]，贏下這場比賽！',
