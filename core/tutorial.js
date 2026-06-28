@@ -381,7 +381,7 @@ function buildDOM() {
   width: 200px;  /* ✨ 放大立繪：由原本的 140px/160px 放大至 200px (手機版會依據 max-width 縮放) */
   max-width: 45vw;
   transition: opacity 0.3s ease, top 0.3s ease, bottom 0.3s ease, transform 0.3s ease; /* 與對話框動畫完全同步 */
-}',
+}
       'filter:drop-shadow(0 8px 28px rgba(0,0,0,0.9));z-index:10000011;',
       'transition:top 0.32s ease,bottom 0.32s ease,left 0.32s ease,right 0.32s ease,opacity 0.18s ease;}',
       '#tut-char-img{width:100%;object-fit:contain;display:block;}',
@@ -404,7 +404,7 @@ function buildDOM() {
   position: fixed; 
   z-index: 10005; /* 對話框層級在最上面 */
   transition: opacity 0.3s ease, top 0.3s ease, bottom 0.3s ease;
-}',
+}
       'background:rgba(4,6,10,0.97);border:2px solid #d4af37;',
       'box-shadow:0 0 32px rgba(212,175,55,0.2),0 20px 50px rgba(0,0,0,0.95);',
       'border-radius:12px;padding:22px 24px 16px;cursor:pointer;user-select:none;',
