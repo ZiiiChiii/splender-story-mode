@@ -61,7 +61,7 @@ var STEPS = [
 
   { phase:'階段三：收購與保留',
     text:'點擊「收購」買下它！[[寶石卡片本身還能讓你以後買卡永久減免 1 顆相同顏色的成本]]。買越多，後面買卡越便宜！',
-    el:'#res-layer', color:'#2ecc71', voice:VOICE },
+    el:'#guide-matrix', color:'#d4af37', voice:VOICE },
 
   { phase:'階段三：收購與保留',
     text:'如果想買的卡片怕被對手搶走，點擊「保留」就能鎖進你的手牌，還能免費拿到 [[1 顆萬能的黃金籌碼]]（當作任何顏色的百搭寶石）！',
@@ -103,6 +103,8 @@ function doHighlight(sel, color) {
     T.prevEl.style.outlineOffset= '';
     T.prevEl.style.boxShadow    = T.prevEl._os || '';
     T.prevEl.style.zIndex       = T.prevEl._oz || '';
+    T.prevEl.style.position     = T.prevEl._op || ''; // ✨ 清除自訂 position
+    T.prevEl.style.isolation    = T.prevEl._oi || ''; // ✨ 清除自訂 isolation
     T.prevEl = null;
   }
   if (!sel) return;
@@ -111,18 +113,19 @@ function doHighlight(sel, color) {
   T.prevEl = el;
   el._os = el.style.boxShadow;
   el._oz = el.style.zIndex;
+  el._op = el.style.position;
+  el._oi = el.style.isolation;
   
-  // ✨ 修改 1：不用分五彩，一律強制覆蓋為皇家大會堂專屬的「璀璨金色」
   var goldColor = '#ffcc00'; 
   
+  // ✨ 修正 1：調整陰影參數與暗度，讓亮度與其他所有區域介紹時維持完全一致的舒適感
   el.style.outline       = '3px solid ' + goldColor;
   el.style.outlineOffset = '4px';
+  el.style.boxShadow     = '0 0 0 4px rgba(255,204,0,0.2), 0 0 25px rgba(255,204,0,0.65), 0 0 0 9999px rgba(5,3,2,0.78)';
   
-  // ✨ 修改 2：核心聚光燈策略！利用「0 0 0 9999px rgba(0,0,0,0.82)」這組巨大的擴散陰影，
-  // 直接把被介紹區域「以外」的全螢幕四周強行完全黑化黯淡，並給予目標 40px 的強烈金色發光特效！
-  el.style.boxShadow     = '0 0 0 4px rgba(255,204,0,0.25), 0 0 40px rgba(255,204,0,0.85), 0 0 0 9999px rgba(3,5,8,0.82)';
-  
-  // ✨ 修改 3：層級拉高到僅次於對話框，確保浮出在所有黑面遮罩最上層
+  // ✨ 修正 2：層級與堆疊歸一化！強行加入 position 與 isolation，確保底部的金庫、牌庫能突破 Flex 容器邊界，完美浮出至最上層
+  el.style.position      = 'relative';
+  el.style.isolation     = 'isolate';
   el.style.zIndex        = '10000001'; 
   
   el.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
