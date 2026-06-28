@@ -12,6 +12,8 @@ var CHAR_IMG = 'https://i.ibb.co/39L2xNMT/1.png';
 
 // ── 語音佔位（後補真實 URL，換這裡即可） ────────────────────
 var VOICE = 'https://assets.mixkit.co/active_storage/sfx/380/380-preview.mp3';
+    VOICE01 = 'https://assets.mixkit.co/active_storage/sfx/380/380-preview.mp3';
+    VOICE02 = 'https://assets.mixkit.co/active_storage/sfx/380/380-preview.mp3';
 
 // ── 步驟資料 ─────────────────────────────────────────────────
 // 粗體：用 [[文字]] 標記，渲染時自動變金色粗體
@@ -21,7 +23,11 @@ var STEPS = [
   // 階段一
   { phase:'階段一：認識環境',
     text:'嗨！我是你的貿易顧問翠席兒。',
-    el:null, color:null, voice:VOICE },
+    el:null, color:null, voice:VOICE01 },
+
+   { phase:'階段一：認識環境',
+    text:'歡迎來到黃家寶石交易殿堂。',
+    el:null, color:null, voice:VOICE02 },
 
   { phase:'階段一：認識環境',
     text:'今天我們的目標很簡單：在 [[28 回合]] 內拿到 [[15 分威望]]，贏下這場比賽！',
@@ -46,7 +52,7 @@ var STEPS = [
 
   { phase:'階段二：拿取籌碼',
     text:'拿到的籌碼會放進你底部的金庫。[[大數字是寶石數量，小數字是買到的卡片數量]]。記住，身上最多只能塞 [[10 顆寶石]]，拿太多會放不下！',
-    el:'#guide-dashboard', color:'#f1c40f', voice:VOICE },
+    el:'#guide-dashboard .dashboard', color:'#ffcc00', voice:VOICE },
 
   // 階段三
   { phase:'階段三：收購與保留',
