@@ -59,6 +59,31 @@
     .story-click-hint { position: absolute; bottom: 12px; right: 25px; font-size: 0.85rem; color: #f1c40f; animation: storyArrowBlink 0.8s infinite alternate; }
     @keyframes storyArrowBlink { from { opacity: 0.3; transform: translateY(0); } to { opacity: 1; transform: translateY(-3px); } }
 
+          /* 📥 遊戲初始化預載入畫面樣式 */
+#game-preloader {
+    position: fixed; inset: 0; z-index: 20000000;
+    background: #0a140f; display: flex; flex-direction: column;
+    justify-content: center; align-items: center; gap: 20px;
+    opacity: 1; transition: opacity 0.5s ease;
+}
+.loader-diamond {
+    width: 64px; height: 64px;
+    background-image: url('https://i.ibb.co/ZpJqvt5d/white.png');
+    background-size: cover; background-position: center;
+    animation: preloaderSpin 2s linear infinite;
+}
+.loader-text {
+    font-family: 'Cinzel', serif; font-size: 1.2rem;
+    color: #ffe099; letter-spacing: 0.1em;
+}
+#preloader-enter-btn {
+    opacity: 0; pointer-events: none; transform: translateY(10px);
+    transition: opacity 0.4s ease, transform 0.4s ease;
+}
+@keyframes preloaderSpin {
+    from { transform: rotateY(0deg); }
+    to { transform: rotateY(360deg); }
+}
 </style>
 </head>
 <body>
@@ -79,7 +104,11 @@
 <audio id="sfx-ach-master" src="https://assets.mixkit.co/active_storage/sfx/2059/2059-preview.mp3"></audio>
 
 <div id="effects-layer"></div>
-
+<div id="game-preloader">
+    <div class="loader-diamond"></div>
+    <div class="loader-text" id="preloader-status-text">大會堂資產載入中...</div>
+    <button id="preloader-enter-btn" class="btn-replay" style="max-width: 200px;" onclick="window.enterGameFromPreloader()">進入皇家大會堂</button>
+</div>
 <div id="story-layer">
     <div class="story-chapter-title" id="story-chapter-title">章節加載中...</div>
     <div class="story-intro-panel" id="story-intro-panel">背景故事加載中...</div>
