@@ -874,3 +874,20 @@ window.hideWelcomeModal = function() {
     bg.play().catch(() => {});
   }
 };
+function finishTutorialAndPlayMusic() {
+  // 1. 標記新手教學已看過，下次進網頁就會直接走歡迎彈窗
+  localStorage.setItem('splendor_tutorial_seen', 'true');
+  
+  // 2. 關閉教學視窗與所有高亮特效
+  document.getElementById('floating-tutorial-widget').style.display = 'none';
+  const highlighted = document.querySelectorAll('.tutorial-highlight');
+  highlighted.forEach(el => el.classList.remove('tutorial-highlight'));
+
+  // 3. 觸發第一次點擊的音樂播放權限（此時玩家有點擊「結束教學」按鈕，符合瀏覽器安全政策）
+  const bg = document.getElementById('bg-music');
+  if (bg && !CoreState.get().settings.isMusicMuted) {
+    bg.play().catch((err) => {
+      console.log("音樂播放受阻：", err);
+    });
+  }
+}
