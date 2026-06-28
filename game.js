@@ -715,21 +715,15 @@ window.addEventListener('DOMContentLoaded', async () => {
   if (typeof window.render === 'function') window.render();
   
   // 2. 檢查是否為第一次進入網頁
- const seen = localStorage.getItem('splendor_tutorial_seen');
+  const seen = localStorage.getItem('splendor_tutorial_seen');
   const welcomeModal = document.getElementById('welcome-back-modal');
   
   if (!seen) {
-   // 【第一次進入網頁】：絕對不顯示歡迎彈窗，直接強制啟動翠席兒教學
+    // ✨ 修改後：首次登入時，在 DOM 加載完畢後「什麼都不做」（不跳歡迎，也不開啟教學）
+    // 讓畫面保持在純淨的加載頁面看鑽石旋轉
     if (welcomeModal) {
       welcomeModal.classList.remove('show');
-      welcomeModal.style.display = 'none'; // 雙重保險防禦
-    }
-
-    if (typeof window.startFloatingTutorial === 'function') {
-      // 稍微延遲 300ms，等介面與翠席兒的立繪加載完畢後亮麗登場
-      setTimeout(() => {
-        window.startFloatingTutorial();
-      }, 300);
+      welcomeModal.style.display = 'none';
     }
   } else {
     // 【第二次以上進入】：不觸發教學，維持原本邏輯顯示歡迎彈窗
