@@ -759,15 +759,36 @@ window.addEventListener('DOMContentLoaded', async () => {
   await loadCoreModules();
   SingleMode.loadTalentPool();
   ActionDispatcher.dispatch('INIT_GAME');
-  document.getElementById('welcome-back-modal').classList.add('show');
+  
+  // ✨ 修改這裡：收集遊戲中所有需要快取的圖片網址（包含 5 色卡片首圖、貴族、籌碼、輔助官立繪）
+  const imagesToCache = [
+    'https://i.ibb.co/ZpJqvt5d/white.png', 'https://i.ibb.co/4nGkn3HP/sapphire.png',
+    'https://i.ibb.co/0pVz7WV5/green.png', 'https://i.ibb.co/wZ9gmt1p/red.png',
+    'https://i.ibb.co/y72gvDj/black.png', 'https://i.ibb.co/PZ1dZDyH/gold.png',
+    'https://i.ibb.co/zHGC8vsm/image.png', 'https://i.ibb.co/QvHvZZWc/image.png',
+    'https://i.ibb.co/hzw3Vfm/image.png', 'https://i.ibb.co/nNSjxvvd/image.png',
+    'https://i.ibb.co/GQ2Yh0yH/image.png', 'https://i.ibb.co/39L2xNMT/1.png'
+  ];
 
-  // ── 新手教學自動觸發（首次進站） ──
-  setTimeout(() => {
-    const seen = localStorage.getItem('splendor_tutorial_seen');
-    if (!seen && typeof window.startFloatingTutorial === 'function') {
-      window.startFloatingTutorial();
-    }
-  }, 800);
+  // 動態非同步 Image 載入器，確保瀏覽器成功將圖片存入使用者快取中
+  let loadedCount = 0;
+  imagesToCache.forEach(url => {
+    const img = new Image();
+    img.src = url;
+    img.onload = img.onerror = () => {
+      loadedCount++;
+      if (loadedCount === imagesToCache.length) {
+        // 當所有圖片全部快取完畢，文字改變並浮現進入按鈕
+        document.getElementById('preloader-status-text').textContent = "資產加載完畢！";
+        const enterBtn = document.getElementById('preloader-enter-btn');
+        if (enterBtn) {
+          enterBtn.style.opacity = '1';
+          enterBtn.style.pointerEvents = 'auto';
+          enterBtn.style.transform = 'translateY(0)';
+        }
+      }
+    };
+  });
 
 window.addEventListener('resize', setDynamicVh);
 
@@ -900,3 +921,33 @@ function finishTutorialAndPlayMusic() {
     });
   }
 }
+// ✨ 全域橋接函式：點擊進入按鈕後淡出載入畫面，並精準啟動新手教學或歡迎彈窗
+window.enterGameFromPreloader = function() {
+  const preloader = document.getElementById('game-preloader');
+  if (preloader) {
+    preloader.style.opacity = '0';
+    preloader.style.pointerEvents = 'none';
+    setTimeout(() => preloader.remove(), 500); // 500ms 淡出後完全從 DOM 拔除釋放記憶體
+  }
+
+  // 接續你原有的核心檢查分流
+  const seen = localStorage.getItem('splendor_tutorial_seen');
+  const welcomeModal = document.getElementById('welcome-back-modal');
+
+  if (!seen) {
+    // 【首次進入】：隱藏歡迎回來，直接啟動翠席兒教學（此時有點擊動作，語音及音樂權限全數解鎖）
+    if (welcomeModal) {
+      welcomeModal.classList.remove('show');
+      welcomeModal.style.display = 'none';
+    }
+    if (typeof window.startFloatingTutorial === 'function') {
+      window.startFloatingTutorial();
+    }
+  } else {
+    // 【非首次進入】：正常開啟歡迎回來欄位
+    if (welcomeModal) {
+      welcomeModal.classList.add('show');
+      welcomeModal.style.display = 'flex';
+    }
+  }
+};
