@@ -147,25 +147,32 @@ function calcLayout(step) {
     charEl.style.transform = mob ? 'none' : 'translateX(-340px)';
   }
 
-  if (!step.el) { setDefault(); return; }
+  if (!step.el || step.el === '') { setDefault(); return; }
   var el = document.querySelector(step.el);
   if (!el) { setDefault(); return; }
 
   var rect  = el.getBoundingClientRect();
-  var upper = (rect.top + rect.height / 2) < vh * 0.52;
-  var isLeft= (rect.left + rect.width  / 2) < vw * 0.5;
-
+  var targetCenterY = rect.top + rect.height / 2;
+  var upper = targetCenterY < vh * 0.52;
+  
   clr(boxEl); clr(charEl);
 
   // ── 智慧調整 ──
   // 對話框定位：緊貼在要介紹的項目旁邊（上排或下排），並留 12px 舒適空隙，絕對不擋到項目
+  var boxTop, boxBottom;
   if (upper) {
     // 元素在上 → 框在元素下方旁邊
-    boxEl.style.top = (rect.bottom + 12) + 'px'; 
+    boxTop = rect.bottom + 12;
+    // 🛡️ 安全防護：如果介紹頂部狀態欄（rect.top接近0），為對話框跟立繪保留足夠下移空間，防止噴出螢幕外
+    if (rect.top < 30) {
+      boxTop = rect.bottom + 55; 
+    }
+    boxEl.style.top = boxTop + 'px'; 
     boxEl.style.bottom = 'auto';
   } else {
-    // 元素在下 → 框在元素上方旁邊
-    boxEl.style.bottom = (vh - rect.top + 12) + 'px'; 
+    // 元素在下排 -> 框在元素上方
+    boxBottom = vh - rect.top + 12;
+    boxEl.style.bottom = boxBottom + 'px'; 
     boxEl.style.top = 'auto';
   }
   boxEl.style.left      = '50%';
@@ -177,7 +184,7 @@ function calcLayout(step) {
   
   if (upper) {
     // 元素在上時，立繪對齊對話框的頂部，並往上挪移突出一部分（貼齊對話框左側）
-    charEl.style.top = (boxTop - 60) + 'px';
+    charEl.style.top = (boxTop - 35) + 'px';
     charEl.style.bottom = 'auto';
   } else {
     // 元素在下時，立繪對齊對話框的底部，並依附在左側
@@ -201,7 +208,11 @@ function calcLayout(step) {
     // 電腦版：精準連接在對話框的左側邊緣！
     // 對話框水平置中在 50%，所以對話框左邊緣的位置是 (vw / 2) - (boxW / 2)
     // 我們讓立繪的左側再往左調 100px (即 -100)，使其呈現半疊加在對話框左側的完美效果
-    var charLeft = (vw / 2) - (boxW / 2) - 100;
+    var charLeft = (vw / 2) - (boxW / 2) - 110;
+    
+    // 🛡️ 安全防護：防止在大螢幕或特定解析度下計算出負值或貼死邊界
+    if (charLeft < 10) charLeft = 10;
+    
     charEl.style.left = charLeft + 'px';
     charEl.style.right = 'auto';
   }
