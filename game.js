@@ -712,7 +712,25 @@ window.saveCurrentProgress = () => SingleMode.saveCurrentProgress();
 
 window.addEventListener('DOMContentLoaded', async () => {
   setDynamicVh();
+  if (typeof window.render === 'function') window.render();
   
+  // 2. 檢查是否為第一次進入網頁
+  const seen = localStorage.getItem('splendor_tutorial_seen');
+  
+  if (!seen) {
+    // 【第一次進入】：不顯示歡迎彈窗，直接強行啟動翠席兒教學
+    document.getElementById('welcome-back-modal').classList.remove('show');
+    if (typeof window.startFloatingTutorial === 'function') {
+      // 稍微延遲 300ms 確保畫面渲染完畢後翠席兒亮麗登場
+      setTimeout(() => {
+        window.startFloatingTutorial();
+      }, 300);
+    }
+  } else {
+    // 【非第一次進入】：維持原樣，顯示歡迎回來彈窗
+    document.getElementById('welcome-back-modal').classList.add('show');
+  }
+});
   audioEl = document.getElementById('bg-music');
   sfxGemEl = document.getElementById('sfx-gem');
   sfxBuyEl = document.getElementById('sfx-buy');
