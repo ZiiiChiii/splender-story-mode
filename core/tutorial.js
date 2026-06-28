@@ -124,6 +124,7 @@ function clearHighlight() {
 }
 
 // ── 動態位置：對話框 & 立繪自動躲開目標元素 ──────────────────
+// ── 動態位置：對話框 & 立繪自動躲開目標元素（防外溢修正版） ──────────────────
 function calcLayout(step) {
   var boxEl  = document.getElementById('tut-box');
   var charEl = document.getElementById('tut-char-wrapper');
@@ -147,30 +148,30 @@ function calcLayout(step) {
     charEl.style.transform = mob ? 'none' : 'translateX(-340px)';
   }
 
-  if (!step.el || step.el === '') { setDefault(); return; }
+  // ✨ 修正 1：嚴格攔截 null 與非目標步驟，防止重複刷屏渲染
+  if (!step || !step.el || step.el === '') { setDefault(); return; }
   var el = document.querySelector(step.el);
   if (!el) { setDefault(); return; }
 
   var rect  = el.getBoundingClientRect();
+  var targetCenterX = rect.left + rect.width / 2;
   var targetCenterY = rect.top + rect.height / 2;
   var upper = targetCenterY < vh * 0.52;
+  var isLeft = targetCenterX < vw * 0.5; // ✨ 修正 2：補齊原本漏掉宣告的關鍵變數 isLeft
   
   clr(boxEl); clr(charEl);
 
-  // ── 智慧調整 ──
-  // 對話框定位：緊貼在要介紹的項目旁邊（上排或下排），並留 12px 舒適空隙，絕對不擋到項目
+  // 1. 【對話框智慧貼邊定位】
   var boxTop, boxBottom;
   if (upper) {
-    // 元素在上 → 框在元素下方旁邊
     boxTop = rect.bottom + 12;
-    // 🛡️ 安全防護：如果介紹頂部狀態欄（rect.top接近0），為對話框跟立繪保留足夠下移空間，防止噴出螢幕外
+    // 🛡️ 安全防護：介紹頂部狀態欄時，特別拉大下移間距，確保立繪頭頂不會被推到視窗外
     if (rect.top < 30) {
       boxTop = rect.bottom + 55; 
     }
     boxEl.style.top = boxTop + 'px'; 
     boxEl.style.bottom = 'auto';
   } else {
-    // 元素在下排 -> 框在元素上方
     boxBottom = vh - rect.top + 12;
     boxEl.style.bottom = boxBottom + 'px'; 
     boxEl.style.top = 'auto';
@@ -178,47 +179,33 @@ function calcLayout(step) {
   boxEl.style.left      = '50%';
   boxEl.style.transform = 'translateX(-50%)';
 
- // 2. 【立繪位置修正】強制與對話框水平/垂直無縫連接
-  // 獲取對話框渲染後的寬度（一般 max-width 為 380px，若尚未渲染則預估 360px）
+  // 2. 【立繪水平與垂直連接計算】
   var boxW = boxEl.offsetWidth || 360; 
   
   if (upper) {
-    // 元素在上時，立繪對齊對話框的頂部，並往上挪移突出一部分（貼齊對話框左側）
-    charEl.style.top = (boxTop - 35) + 'px';
+    // 元素在上排時，讓立繪基於計算出的 boxTop 進行相對對齊，並加入防外溢安全寬限
+    charEl.style.top = Math.max(10, boxTop - 25) + 'px';
     charEl.style.bottom = 'auto';
   } else {
-    // 元素在下時，立繪對齊對話框的底部，並依附在左側
+    // 元素在下排時，立繪依附於對話框底部上緣
     charEl.style.bottom = (boxBottom - 20) + 'px';
     charEl.style.top = 'auto';
   }
 
-  // 保持你原有的立繪水平錯開邏輯，防止擋到左邊或右邊的介紹內容
-  if (isLeft) {
-    charEl.style.right = mob ? '8px' : '16px';
-    charEl.style.left  = 'auto';
-  } else {
-    charEl.style.left  = mob ? '8px' : '16px';
-    charEl.style.right = 'auto';
-  }
+  // 3. 【立繪 RWD 左右貼框分流修正】
   if (mob) {
-    // 手機版：螢幕太窄，立繪直接固定在左側邊緣，並透過 css 縮小防遮擋
     charEl.style.left = '8px';
     charEl.style.right = 'auto';
   } else {
-    // 電腦版：精準連接在對話框的左側邊緣！
-    // 對話框水平置中在 50%，所以對話框左邊緣的位置是 (vw / 2) - (boxW / 2)
-    // 我們讓立繪的左側再往左調 100px (即 -100)，使其呈現半疊加在對話框左側的完美效果
-    var charLeft = (vw / 2) - (boxW / 2) - 110;
-    
-    // 🛡️ 安全防護：防止在大螢幕或特定解析度下計算出負值或貼死邊界
-    if (charLeft < 10) charLeft = 10;
+    // 電腦版：精準黏在對話框的左側邊界，實現無縫一體化排版
+    var charLeft = (vw / 2) - (boxW / 2) - 120;
+    if (charLeft < 15) charLeft = 15; // 邊界保險
     
     charEl.style.left = charLeft + 'px';
     charEl.style.right = 'auto';
   }
   charEl.style.transform = 'none';
 }
-
 // ── 打字機 ────────────────────────────────────────────────────
 function typewrite(html) {
   clearTimeout(T.typeTimer);
