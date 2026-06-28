@@ -715,20 +715,28 @@ window.addEventListener('DOMContentLoaded', async () => {
   if (typeof window.render === 'function') window.render();
   
   // 2. 檢查是否為第一次進入網頁
-  const seen = localStorage.getItem('splendor_tutorial_seen');
+ const seen = localStorage.getItem('splendor_tutorial_seen');
+  const welcomeModal = document.getElementById('welcome-back-modal');
   
   if (!seen) {
-    // 【第一次進入】：不顯示歡迎彈窗，直接強行啟動翠席兒教學
-    document.getElementById('welcome-back-modal').classList.remove('show');
+   // 【第一次進入網頁】：絕對不顯示歡迎彈窗，直接強制啟動翠席兒教學
+    if (welcomeModal) {
+      welcomeModal.classList.remove('show');
+      welcomeModal.style.display = 'none'; // 雙重保險防禦
+    }
+
     if (typeof window.startFloatingTutorial === 'function') {
-      // 稍微延遲 300ms 確保畫面渲染完畢後翠席兒亮麗登場
+      // 稍微延遲 300ms，等介面與翠席兒的立繪加載完畢後亮麗登場
       setTimeout(() => {
         window.startFloatingTutorial();
       }, 300);
     }
   } else {
-    // 【非第一次進入】：維持原樣，顯示歡迎回來彈窗
-    document.getElementById('welcome-back-modal').classList.add('show');
+    // 【第二次以上進入】：不觸發教學，維持原本邏輯顯示歡迎彈窗
+    if (welcomeModal) {
+      welcomeModal.classList.add('show');
+      welcomeModal.style.display = 'flex'; 
+    }
   }
 });
   audioEl = document.getElementById('bg-music');
@@ -874,15 +882,17 @@ window.hideWelcomeModal = function() {
   }
 };
 function finishTutorialAndPlayMusic() {
-  // 1. 標記新手教學已看過，下次進網頁就會直接走歡迎彈窗
+ // 1. 標記新手教學已看過，以後再次進網頁就會改成跳出「歡迎回來」
   localStorage.setItem('splendor_tutorial_seen', 'true');
   
-  // 2. 關閉教學視窗與所有高亮特效
-  document.getElementById('floating-tutorial-widget').style.display = 'none';
+  // 2. 隱藏翠席兒的對話框並移除所有外框高亮 (.tutorial-highlight)
+  const tutorialWidget = document.getElementById('floating-tutorial-widget');
+  if (tutorialWidget) tutorialWidget.style.display = 'none';
+  
   const highlighted = document.querySelectorAll('.tutorial-highlight');
   highlighted.forEach(el => el.classList.remove('tutorial-highlight'));
 
-  // 3. 觸發第一次點擊的音樂播放權限（此時玩家有點擊「結束教學」按鈕，符合瀏覽器安全政策）
+  // 3. 首次播放背景音樂（此時玩家有點擊「結束教學」的行為，瀏覽器絕對會放行音訊）
   const bg = document.getElementById('bg-music');
   if (bg && !CoreState.get().settings.isMusicMuted) {
     bg.play().catch((err) => {
