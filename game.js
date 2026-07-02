@@ -853,7 +853,10 @@ setInterval(() => {
   window.isSfxBannerPlaying = true;
   const bannerText = document.getElementById('dynamic-banner-text');
   if (!bannerText) { window.isSfxBannerPlaying = false; return; }
+  
   const currentAch = fullState.pendingAchievementsQueue.shift();
+  CoreState.set(fullState);
+  
   let tierText = { easy: "簡單", normal: "中階", hard: "進階", expert: "困難", master: "神人" }[currentAch.tier];
   bannerText.innerHTML = `<span style="color: ${currentAch.color}; font-weight: 800;">${currentAch.symbol} [${tierText}] ${currentAch.title} — ${currentAch.desc}</span>`;
   bannerText.style.transition = 'none';
@@ -870,13 +873,13 @@ setInterval(() => {
     targetSFX.currentTime = 0;
     targetSFX.play().catch(() => {});
   }
+  
+  // ✨ 修改點 2：這裡的計時器只負責釋放動畫紅綠燈（window.isSfxBannerPlaying），確保畫面乾淨
   setTimeout(() => {
     window.isSfxBannerPlaying = false;
-    if (fullState.pendingAchievementsQueue.length === 0) {
+    if (!fullState.pendingAchievementsQueue || fullState.pendingAchievementsQueue.length === 0) {
       bannerText.style.transition = 'opacity 0.3s ease';
       bannerText.style.opacity = '1';
-    } else {
-      CoreState.set(fullState);
     }
   }, 2500);
 }, 200);
