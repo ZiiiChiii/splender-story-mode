@@ -161,92 +161,81 @@ function calcLayout(step) {
 
   var vw = window.innerWidth, vh = window.innerHeight;
   var mob = vw <= 430;
+  var M = 8; // 螢幕安全邊距
 
   function clr(el) {
     ['top','bottom','left','right','transform'].forEach(function(p){ el.style[p]=''; });
   }
-
-  // 預設：置中下方
-  function setDefault() {
-    clr(boxEl); clr(charEl);
-    boxEl.style.bottom    = '22px';
-    boxEl.style.left      = '50%';
-    boxEl.style.transform = 'translateX(-50%)';
-    charEl.style.bottom   = mob ? '195px' : '215px';
-    charEl.style.left     = mob ? '10px'  : '50%';
-    charEl.style.transform = mob ? 'none' : 'translateX(-340px)';
-  }
-
-  if (!step || !step.el || step.el === '') { setDefault(); return; }
-  var el = document.querySelector(step.el);
-  if (!el) { setDefault(); return; }
-
-  var rect  = el.getBoundingClientRect();
-  var targetCenterX = rect.left + rect.width / 2;
-  var targetCenterY = rect.top + rect.height / 2;
-  var upper = targetCenterY < vh * 0.52;
-  var isLeft = targetCenterX < vw * 0.5;
-  
   clr(boxEl); clr(charEl);
 
-  // 1. 【對話框智慧貼邊定位】
-  var boxTop, boxBottom;
-  if (upper) {
-    boxTop = rect.bottom + 12;
-    if (rect.top < 30) {
-      boxTop = rect.bottom + 55; 
-    }
-    boxEl.style.top = boxTop + 'px'; 
-    boxEl.style.bottom = 'auto';
+  // ── 步驟目標矩形 ──
+  var targetEl = (step && step.el) ? document.querySelector(step.el) : null;
+  var tRect = targetEl ? targetEl.getBoundingClientRect() : null;
+
+  // ── 1) 對話框定位 ──
+  // 超大目標（例如整片牌桌）：貼齊底部停靠，避免蓋住卡牌本體
+  var hugeTarget = tRect && (tRect.height > vh * 0.5 || tRect.width > vw * 0.72);
+
+  if (!tRect || hugeTarget) {
+    boxEl.style.bottom    = '14px';
+    boxEl.style.left      = '50%';
+    boxEl.style.transform = 'translateX(-50%)';
   } else {
-    boxBottom = vh - rect.top + 12;
-    boxEl.style.bottom = boxBottom + 'px'; 
-    boxEl.style.top = 'auto';
-  }
-  boxEl.style.left      = '50%';
-  boxEl.style.transform = 'translateX(-50%)';
-
-  // 2. 【立繪完美連接與後層遮擋計算】
-  var boxW = boxEl.offsetWidth || 360; 
-  var charH = charEl.offsetHeight || 260; // 獲取放大後的立繪高度
-  
-  /* 垂直重疊量由原先的 20px~35px 加深至 200px，強制讓大立繪下半身 1/3 被蓋在對話框後面 */
-if (upper) {
-  charEl.style.top = (boxTop - charH + 200) + 'px';
-  charEl.style.bottom = 'auto';
-} else {
-  charEl.style.bottom = (boxBottom - charH + 200) + 'px';
-  charEl.style.top = 'auto';
-}
-
-// 3. 【大立繪 X 軸水平貼合】
-  if (mob) {
-    charEl.style.left = '-40px'; 
-    charEl.style.right = 'auto';
- } else {
-    // 電腦版：智慧避讓邏輯（對話框置中在 vw/2，寬度左右各半為 boxW/2）
-    // ✨ 修改這裡：加入特例判斷，如果介紹的目標是金庫相關元素，直接視同 isLeft = true 丟到右邊避讓
-   /* 💡 保持原樣不變：因為我們新的選擇器依然含有 'dashboard' 字眼，判定會完美成立，立繪會乖乖待在右側 */
-    var isDashboard = step.el && (step.el.indexOf('dashboard') !== -1 || step.el.indexOf('bank') !== -1);
-    
-    if (isLeft || isDashboard) {
-      // 💡 當要介紹的區域在左邊，或是正在介紹金庫：大立繪自動改貼在對話框的「右側」
-      // 修正：算式改用對話框右邊緣 (vw/2 + boxW/2) 減去 230px 的重疊量，讓立繪左側邊界無縫貼齊對話框
-      var charRightSide = (vw / 2) + (boxW / 2) - 230;
-      
-      charEl.style.left = charRightSide + 'px';
-      charEl.style.right = 'auto';
+    var upper = (tRect.top + tRect.height / 2) < vh * 0.52;
+    if (upper) {
+      var bt = tRect.bottom + 12;
+      if (tRect.top < 30) bt = tRect.bottom + 55;
+      // 對話框自身不可跑出畫面底部
+      var boxH = boxEl.offsetHeight || 200;
+      if (bt + boxH > vh - M) bt = Math.max(M, vh - M - boxH);
+      boxEl.style.top = bt + 'px';
+      boxEl.style.bottom = 'auto';
     } else {
-      // 💡 當要介紹的區域在右邊（或預設）：大立繪保持貼在對話框的「左側」
-      // 計算位置：對話框左邊緣 (vw/2 - boxW/2) 再往左推開立繪寬度並保留重疊量 (-380px)
-      var charLeftSide = (vw / 2) - (boxW / 2) - 380; 
-      if (charLeftSide < 5) charLeftSide = 5; // 螢幕邊界保險
-      
-      charEl.style.left = charLeftSide + 'px';
-      charEl.style.right = 'auto';
+      boxEl.style.bottom = (vh - tRect.top + 12) + 'px';
+      boxEl.style.top = 'auto';
     }
+    boxEl.style.left      = '50%';
+    boxEl.style.transform = 'translateX(-50%)';
   }
+
+  // ── 2) 立繪定位（三原則：完整呈現／貼近對話框／不擋目標區域）──
   charEl.style.transform = 'none';
+  var boxRect = boxEl.getBoundingClientRect(); // 上面樣式已生效，強制回流量測
+  var charW = charEl.offsetWidth  || (mob ? 150 : 340);
+  var charH = charEl.offsetHeight || Math.round(charW * 1.35);
+
+  // 垂直：立繪底部與對話框頂端保留 36px 重疊（視覺相連），再夾回畫面內 → 原則 1 + 2
+  var top = boxRect.top - charH + 36;
+  top = Math.max(M, Math.min(top, vh - charH - M));
+
+  // 水平：預設站在「目標區域的另一側」→ 原則 3；無目標時站對話框左側
+  var preferRight = tRect ? (tRect.left + tRect.width / 2) < vw / 2 : false;
+
+  function leftForSide(right) {
+    var L = right ? (boxRect.right - Math.min(70, charW * 0.25))
+                  : (boxRect.left - charW + Math.min(70, charW * 0.25));
+    return Math.max(M, Math.min(L, vw - charW - M)); // 夾回畫面內 → 原則 1
+  }
+  function overlapArea(L) {
+    if (!tRect) return 0;
+    var r = { left: L, right: L + charW, top: top, bottom: top + charH };
+    var ox = Math.max(0, Math.min(r.right, tRect.right) - Math.max(r.left, tRect.left));
+    var oy = Math.max(0, Math.min(r.bottom, tRect.bottom) - Math.max(r.top, tRect.top));
+    return ox * oy;
+  }
+
+  var left = leftForSide(preferRight);
+  // 若擋到目標區域超過立繪面積 20%，改站另一側；兩側都擋則取遮擋較小的一側
+  var ovA = overlapArea(left);
+  if (ovA > charW * charH * 0.2) {
+    var altLeft = leftForSide(!preferRight);
+    if (overlapArea(altLeft) < ovA) left = altLeft;
+  }
+
+  charEl.style.top  = top + 'px';
+  charEl.style.left = left + 'px';
+  charEl.style.bottom = 'auto';
+  charEl.style.right  = 'auto';
 }
 
 // ── 🎮 互動任務引擎 ───────────────────────────────────────────
@@ -300,6 +289,7 @@ function startTaskWatch(step) {
   stopTaskWatch();
   T.taskDone = false;
   T.taskBase = snapshotPlayer();
+  var noAffordTicks = 0; // 連續偵測到「買不起任何卡」的次數
 
   T.taskTimer = setInterval(function() {
     if (!T.active) { stopTaskWatch(); return; }
@@ -308,6 +298,28 @@ function startTaskWatch(step) {
     if (step.el) {
       var cur = document.querySelector(step.el);
       if (cur && cur !== T.prevEl) doHighlight(step.el, step.color);
+    }
+
+    // 💰 購買任務專屬：全場都買不起時，跳出提示並提供醒目的「跳過購買」選項
+    if (step.task.type === 'buy' && !T.taskDone) {
+      var anyAffordable = document.querySelector('.card[data-affordable="true"]');
+      var goalEl = document.getElementById('tut-task-goal');
+      var skipBtn = document.getElementById('tut-task-skip');
+      if (!anyAffordable) {
+        noAffordTicks++;
+        if (noAffordTicks >= 4 && goalEl) { // 約 1.2 秒確認非重繪空窗
+          goalEl.innerHTML = '💰 目前 <b style="color:#ff7675;">買不起任何卡片</b>' +
+            '——可以先多拿幾回合寶石湊錢，或直接跳過購買步驟繼續教學';
+          if (skipBtn) { skipBtn.classList.add('urgent'); skipBtn.textContent = '⏭ 跳過購買步驟'; }
+        }
+      } else if (noAffordTicks >= 4) {
+        // 湊到錢了 → 恢復原任務指示
+        noAffordTicks = 0;
+        if (goalEl) goalEl.textContent = step.task.goal;
+        if (skipBtn) { skipBtn.classList.remove('urgent'); skipBtn.textContent = '卡關了？跳過此步'; }
+      } else {
+        noAffordTicks = 0;
+      }
     }
 
     if (!T.taskDone && checkTask(step.task.type, T.taskBase)) {
@@ -339,6 +351,15 @@ function onTaskComplete() {
   }, 1100);
 }
 
+// 🔽 收合／展開任務對話框（避免遮擋卡牌）
+function toggleBoxCollapse() {
+  var box = document.getElementById('tut-box');
+  var btn = document.getElementById('tut-collapse-btn');
+  if (!box) return;
+  var collapsed = box.classList.toggle('collapsed');
+  if (btn) btn.textContent = collapsed ? '🔼 展開' : '🔽 收合';
+}
+
 // 任務卡關保險：跳過目前任務
 function skipCurrentTask() {
   var step = STEPS[T.idx];
@@ -367,15 +388,23 @@ function setTaskMode(on, step) {
       goalEl.style.color = '#ffe099';
       goalEl.textContent = step.task.goal;
     }
-    if (skipTaskBtn) skipTaskBtn.style.display = 'inline-block';
+    if (skipTaskBtn) {
+      skipTaskBtn.style.display = 'inline-block';
+      skipTaskBtn.classList.remove('urgent');
+      skipTaskBtn.textContent = '卡關了？跳過此步';
+    }
     if (charEl) charEl.classList.add('task-shrink');   // 立繪縮小避免擋住牌桌
   } else {
     if (ov) ov.classList.remove('task-mode');
     if (nextBtn) nextBtn.style.display = '';
     if (hint) hint.style.display = '';
     if (goalEl) goalEl.style.display = 'none';
-    if (skipTaskBtn) skipTaskBtn.style.display = 'none';
+    if (skipTaskBtn) { skipTaskBtn.style.display = 'none'; skipTaskBtn.classList.remove('urgent'); }
     if (charEl) charEl.classList.remove('task-shrink');
+    var box = document.getElementById('tut-box');
+    var cbtn = document.getElementById('tut-collapse-btn');
+    if (box) box.classList.remove('collapsed');
+    if (cbtn) cbtn.textContent = '🔽 收合';
   }
 }
 
@@ -545,7 +574,7 @@ function buildDOM() {
       'flex-direction:column;justify-content:flex-end;align-items:center;padding-bottom:20px;',
       'font-family:"Microsoft JhengHei","Heiti TC","Inter",sans-serif;}',
 
-      '#tut-char-wrapper{position:fixed;width:630px;max-width:85vw;pointer-events:none;',
+      '#tut-char-wrapper{position:fixed;width:340px;max-width:40vw;pointer-events:none;',
       'filter:drop-shadow(0 8px 28px rgba(0,0,0,0.9));z-index:10000011;',
       'transition:top 0.3s ease,bottom 0.3s ease,left 0.3s ease,right 0.3s ease,opacity 0.3s ease,transform 0.3s ease;}',
       '#tut-char-img{width:100%;object-fit:contain;display:block;}',
@@ -605,9 +634,21 @@ function buildDOM() {
       '#tut-task-skip{display:none;background:none;border:none;color:#968a7f;',
       'font-size:0.68rem;cursor:pointer;text-decoration:underline;padding:4px 8px;}',
       '#tut-task-skip:hover{color:#ffe099;}',
+      '/* 💰 買不起時的醒目跳過鈕 */',
+      '#tut-task-skip.urgent{display:inline-block;background:linear-gradient(135deg,#d4af37,#aa7c11);',
+      'color:#000;font-weight:900;border-radius:6px;text-decoration:none;padding:7px 16px;',
+      'font-size:0.8rem;box-shadow:0 3px 14px rgba(212,175,55,0.45);animation:tutGoalPulse 1s ease-in-out infinite alternate;}',
+      '/* 🔽 任務中對話框可收合，避免遮擋牌桌 */',
+      '#tut-collapse-btn{display:none;position:absolute;top:8px;right:10px;background:rgba(212,175,55,0.15);',
+      'border:1px solid rgba(212,175,55,0.4);color:#ffe099;border-radius:5px;padding:2px 10px;',
+      'font-size:0.68rem;cursor:pointer;z-index:2;}',
+      '#tut-overlay.task-mode #tut-collapse-btn{display:block;}',
+      '#tut-box.collapsed{padding:10px 14px 8px;width:auto;max-width:460px;}',
+      '#tut-box.collapsed #tut-dialogue-text,#tut-box.collapsed #tut-footer{display:none;}',
+      '#tut-box.collapsed #tut-task-goal{margin-top:0;padding-right:64px;}',
       '@media(max-width:430px){#tut-char-wrapper.task-shrink{width:110px!important;}}',
       '@media(max-width:430px){',
-      '#tut-char-wrapper{width:160px;max-width:42vw;}',
+      '#tut-char-wrapper{width:150px;max-width:40vw;}',
       '#tut-box{padding:16px 14px 13px;}',
       '#tut-dialogue-text{font-size:0.85rem;}',
       '#tut-name-tag{font-size:0.82rem;top:-28px;left:14px;padding:4px 14px;}',
@@ -626,6 +667,7 @@ function buildDOM() {
       '<img id="tut-char-img" src="' + CHAR_IMG + '" alt="翠席兒">' +
     '</div>' +
     '<div id="tut-box" onclick="window.__tut.next()">' +
+      '<button id="tut-collapse-btn" onclick="event.stopPropagation();window.__tut.collapse()">🔽 收合</button>' +
       '<div id="tut-name-tag">翠席兒</div>' +
       '<div id="tut-dialogue-text"></div>' +
       '<div id="tut-task-goal"></div>' +
@@ -640,7 +682,7 @@ function buildDOM() {
 }
 
 // ── 掛到 window（避免 module 作用域問題） ─────────────────────
-window.__tut = { next: tutNext, skip: tutClose, skipTask: skipCurrentTask };
+window.__tut = { next: tutNext, skip: tutClose, skipTask: skipCurrentTask, collapse: toggleBoxCollapse };
 
 window.startFloatingTutorial = function() {
   var sm = document.getElementById('tutorial-start-modal');
