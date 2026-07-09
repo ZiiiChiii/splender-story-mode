@@ -938,9 +938,22 @@ window.addEventListener('DOMContentLoaded', async () => {
     'https://i.ibb.co/GQ2Yh0yH/image.png', 'https://i.ibb.co/39L2xNMT/1.png'
   ];
 
+  // 🎵 收集所有音訊資源（背景音樂、操作音效、成就音效）
+  const audioToCache = [
+    audioEl, sfxGemEl, sfxBuyEl, sfxReserveEl, sfxSelectEl, sfxUnselectEl,
+    sfxNobleMale, sfxNobleFemale,
+    ...Object.values(sfxAchievementsMap)
+  ].filter(Boolean);
+
+  // 📊 進度條：圖片 + 音訊全部載入完成才開放進入（無逾時放行）
+  const totalResources = imagesToCache.length + audioToCache.length;
   let loadedCount = 0;
+  const barFill = document.getElementById('preload-bar-fill');
+  const percentTxt = document.getElementById('preload-percent');
+  const statusTxt = document.getElementById('preloader-status-text');
+
   const revealEnterBtn = () => {
-    document.getElementById('preloader-status-text').textContent = "資產加載完畢！";
+    if (statusTxt) statusTxt.textContent = "資產加載完畢！";
     const enterBtn = document.getElementById('preloader-enter-btn');
     if (enterBtn) {
       enterBtn.style.opacity = '1';
@@ -948,16 +961,32 @@ window.addEventListener('DOMContentLoaded', async () => {
       enterBtn.style.transform = 'translateY(0)';
     }
   };
+
+  const onResourceDone = () => {
+    loadedCount++;
+    const pct = Math.min(100, Math.round((loadedCount / totalResources) * 100));
+    if (barFill) barFill.style.width = pct + '%';
+    if (percentTxt) percentTxt.textContent = pct + '%';
+    if (statusTxt) statusTxt.textContent = `大會堂資產載入中... (${loadedCount}/${totalResources})`;
+    if (loadedCount >= totalResources) revealEnterBtn();
+  };
+
   imagesToCache.forEach(url => {
     const img = new Image();
+    img.onload = img.onerror = onResourceDone;
     img.src = url;
-    img.onload = img.onerror = () => {
-      loadedCount++;
-      if (loadedCount === imagesToCache.length) revealEnterBtn();
-    };
   });
-  // 保險絲：外部圖床逾時 6 秒仍未回應時，也放行進入按鈕
-  setTimeout(revealEnterBtn, 6000);
+
+  audioToCache.forEach(el => {
+    let counted = false;
+    const done = () => { if (!counted) { counted = true; onResourceDone(); } };
+    // 已有快取的音訊可能早就可播放
+    if (el.readyState >= 4) { done(); return; }
+    el.addEventListener('canplaythrough', done, { once: true });
+    el.addEventListener('error', done, { once: true });
+    el.preload = 'auto';
+    try { el.load(); } catch (e) { done(); }
+  });
 });
 
 window.addEventListener('resize', setDynamicVh);
