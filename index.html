@@ -66,23 +66,94 @@
     justify-content: center; align-items: center; gap: 20px;
     opacity: 1; transition: opacity 0.5s ease;
 }
-.loader-diamond {
-    width: 64px; height: 64px;
-    background-image: url('https://i.ibb.co/ZpJqvt5d/white.png');
-    background-size: cover; background-position: center;
-    animation: preloaderSpin 2s linear infinite;
+/* 💎 純 CSS 3D 鑽石（八面體，preserve-3d 立體旋轉） */
+.gem-scene {
+    width: 140px; height: 150px; position: relative;
+    perspective: 700px;
+}
+.gem3d {
+    position: absolute; left: 50%; top: 52%; width: 0; height: 0;
+    transform-style: preserve-3d;
+    animation: gemSpin3d 5s linear infinite;
+}
+.gem3d .facet {
+    position: absolute; left: -35px; width: 70px;
+    backface-visibility: visible;
+}
+/* 上半冠部 4 面 */
+.gem3d .facet.top {
+    top: -46px; height: 46px;
+    clip-path: polygon(50% 0, 0 100%, 100% 100%);
+    transform-origin: 50% 100%;
+    background: linear-gradient(180deg, rgba(255,255,255,0.95), rgba(120,220,255,0.55));
+}
+/* 下半亭部 4 面 */
+.gem3d .facet.bottom {
+    top: 0; height: 62px;
+    clip-path: polygon(0 0, 100% 0, 50% 100%);
+    transform-origin: 50% 0%;
+    background: linear-gradient(180deg, rgba(90,200,255,0.75), rgba(20,80,160,0.5));
+}
+.gem3d .facet:nth-child(1) { transform: rotateY(0deg)   translateZ(35px) rotateX(-38deg); }
+.gem3d .facet:nth-child(2) { transform: rotateY(90deg)  translateZ(35px) rotateX(-38deg); filter: brightness(0.82); }
+.gem3d .facet:nth-child(3) { transform: rotateY(180deg) translateZ(35px) rotateX(-38deg); filter: brightness(0.68); }
+.gem3d .facet:nth-child(4) { transform: rotateY(270deg) translateZ(35px) rotateX(-38deg); filter: brightness(0.9); }
+.gem3d .facet:nth-child(5) { transform: rotateY(0deg)   translateZ(35px) rotateX(33deg); }
+.gem3d .facet:nth-child(6) { transform: rotateY(90deg)  translateZ(35px) rotateX(33deg); filter: brightness(0.78); }
+.gem3d .facet:nth-child(7) { transform: rotateY(180deg) translateZ(35px) rotateX(33deg); filter: brightness(0.6); }
+.gem3d .facet:nth-child(8) { transform: rotateY(270deg) translateZ(35px) rotateX(33deg); filter: brightness(0.88); }
+@keyframes gemSpin3d {
+    from { transform: rotateX(-12deg) rotateY(0deg); }
+    to   { transform: rotateX(-12deg) rotateY(360deg); }
+}
+.gem-glow {
+    position: absolute; left: 50%; bottom: -6px; width: 96px; height: 18px;
+    transform: translateX(-50%);
+    background: radial-gradient(ellipse at center, rgba(120,220,255,0.55), transparent 70%);
+    animation: gemGlowPulse 2.4s ease-in-out infinite;
+}
+.gem-sparkle {
+    position: absolute; left: 50%; top: 46%; width: 10px; height: 10px;
+    transform: translate(-50%, -50%);
+    background: radial-gradient(circle, #ffffff, rgba(255,255,255,0) 70%);
+    animation: gemGlowPulse 1.6s ease-in-out infinite alternate;
+    pointer-events: none;
+}
+@keyframes gemGlowPulse {
+    0%, 100% { opacity: 0.45; }
+    50% { opacity: 1; }
 }
 .loader-text {
     font-family: 'Cinzel', serif; font-size: 1.2rem;
     color: #ffe099; letter-spacing: 0.1em;
 }
+/* 📊 資源載入進度條 */
+.preload-bar-track {
+    width: min(320px, 70vw); height: 12px;
+    background: rgba(255,255,255,0.08);
+    border: 1px solid rgba(255, 224, 153, 0.35);
+    border-radius: 999px; overflow: hidden;
+    box-shadow: inset 0 2px 5px rgba(0,0,0,0.6);
+}
+.preload-bar-fill {
+    height: 100%; width: 0%;
+    background: linear-gradient(90deg, #7adcff, #ffe099, #f1c40f);
+    background-size: 200% 100%;
+    border-radius: 999px;
+    transition: width 0.35s ease;
+    animation: preloadShimmer 1.4s linear infinite;
+}
+@keyframes preloadShimmer {
+    from { background-position: 0% 0; }
+    to   { background-position: 200% 0; }
+}
+.preload-percent {
+    font-family: 'Cinzel', serif; font-size: 0.95rem;
+    color: #7adcff; letter-spacing: 0.12em; margin-top: -10px;
+}
 #preloader-enter-btn {
     opacity: 0; pointer-events: none; transform: translateY(10px);
     transition: opacity 0.4s ease, transform 0.4s ease;
-}
-@keyframes preloaderSpin {
-    from { transform: rotateY(0deg); }
-    to { transform: rotateY(360deg); }
 }
 </style>
 </head>
@@ -105,8 +176,21 @@
 
 <div id="effects-layer"></div>
 <div id="game-preloader">
-    <div class="loader-diamond"></div>
+    <div class="gem-scene">
+        <div class="gem3d">
+            <div class="facet top"></div><div class="facet top"></div>
+            <div class="facet top"></div><div class="facet top"></div>
+            <div class="facet bottom"></div><div class="facet bottom"></div>
+            <div class="facet bottom"></div><div class="facet bottom"></div>
+        </div>
+        <div class="gem-sparkle"></div>
+        <div class="gem-glow"></div>
+    </div>
     <div class="loader-text" id="preloader-status-text">大會堂資產載入中...</div>
+    <div class="preload-bar-track">
+        <div class="preload-bar-fill" id="preload-bar-fill"></div>
+    </div>
+    <div class="preload-percent" id="preload-percent">0%</div>
     <button id="preloader-enter-btn" class="btn-replay" style="max-width: 200px;" onclick="window.enterGameFromPreloader()">進入皇家大會堂</button>
 </div>
 <div id="story-layer">
