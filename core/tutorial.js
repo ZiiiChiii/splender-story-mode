@@ -20,17 +20,17 @@ var VOICE02 = 'https://files.catbox.moe/avkjuo.mp3';
 // el   : CSS 選擇器，null = 不高亮
 // color: 光圈顏色
 var STEPS = [
-  // 階段一
+  // 階段一：認識環境（敘述）
   { phase:'階段一：認識環境',
     text:'嗨！我是你的貿易顧問翠席兒。',
     el:null, color:null, voice:VOICE01 },
 
-   { phase:'階段一：認識環境',
+  { phase:'階段一：認識環境',
     text:'歡迎來到黃家寶石交易殿堂。',
     el:null, color:null, voice:VOICE02 },
 
   { phase:'階段一：認識環境',
-    text:'今天我們的目標很簡單：在 [[28 回合]] 內拿到 [[15 分威望]]，贏下這場比賽！',
+    text:'今天我們的目標很簡單：在 [[28 回合]] 內拿到 [[15 分威望]]，贏下這場比賽！這次不用光聽我說——[[我教一步，你就實際操作一步]]！',
     el:null, color:null, voice:VOICE },
 
   { phase:'階段一：認識環境',
@@ -41,44 +41,52 @@ var STEPS = [
     text:'中間這三大排卡片就是我們要搶購的產業，每張卡片上面的寶石就是你購買此卡需要花的 [[籌碼費用]]！',
     el:'#guide-matrix', color:'#2ecc71', voice:VOICE },
 
-  // 階段二
+  // 階段二：拿取籌碼（實戰）
   { phase:'階段二：拿取籌碼',
-    text:'沒有本金不能做生意。',
+    text:'沒有本金不能做生意。接下來換你動手！',
     el:null, color:null, voice:VOICE },
 
   { phase:'階段二：拿取籌碼',
-    text:'來！請先點擊左邊，一次可以拿 [[3 顆不同顏色]] 或是 [[2 顆相同顏色]] 的寶石籌碼！',
-    el:'#guide-actions', color:'#e74c3c', voice:VOICE },
+    text:'請在左側銀行點選 [[3 種不同顏色]] 的寶石，然後按下確認拿取！',
+    el:'#guide-actions', color:'#e74c3c', voice:VOICE,
+    task:{ goal:'🎯 任務：拿取 3 顆不同顏色的寶石籌碼', type:'diff3' } },
 
   { phase:'階段二：拿取籌碼',
-    text:'拿到的籌碼會放進你底部的金庫。[[大數字是寶石數量，小數字是買到的卡片數量]]。記住，身上最多只能塞 [[10 顆寶石]]，拿太多會放不下！',
+    text:'漂亮！拿到的籌碼都放進你底部的金庫了。[[大數字是寶石數量，小數字是買到的卡片數量]]。記住，身上最多只能塞 [[10 顆寶石]]，拿太多會放不下！',
     el:'#guide-dashboard .dashboard', color:'#ffcc00', voice:VOICE },
 
-  // 階段三
+  { phase:'階段二：拿取籌碼',
+    text:'還有另一種拿法：[[連點同一種顏色兩下]]，一次帶走 [[2 顆相同]] 的寶石（該色庫存需 2 顆以上）。試試看！',
+    el:'#guide-actions', color:'#e74c3c', voice:VOICE,
+    task:{ goal:'🎯 任務：一次拿取 2 顆相同顏色的寶石', type:'same2' } },
+
+  // 階段三：收購與保留（實戰）
   { phase:'階段三：收購與保留',
-    text:'注意看！只要你身上的籌碼夠多，買得起的卡片就會亮起 [[收購]] 字樣。',
+    text:'做得好！注意看牌桌：只要你身上的籌碼夠多，買得起的卡片就會亮起 [[收購]] 字樣。[[寶石卡片本身還能讓你以後買卡永久減免 1 顆相同顏色的成本]]！',
     el:'#guide-matrix', color:'#d4af37', voice:VOICE },
 
   { phase:'階段三：收購與保留',
-    text:'點擊「收購」買下它！[[寶石卡片本身還能讓你以後買卡永久減免 1 顆相同顏色的成本]]。買越多，後面買卡越便宜！',
-    el:'#guide-matrix', color:'#d4af37', voice:VOICE },
+    text:'如果想買的卡片怕被搶走，可以先鎖起來。請挑一張喜歡的卡片，點擊 [[保留]]！保留還能免費拿到 [[1 顆萬能的黃金籌碼]]（當作任何顏色的百搭寶石）。',
+    el:'#guide-matrix', color:'#9b59b6', voice:VOICE,
+    task:{ goal:'🎯 任務：保留任意一張卡片（獲得 1 顆黃金）', type:'reserve' } },
 
   { phase:'階段三：收購與保留',
-    text:'如果想買的卡片怕被對手搶走，點擊「保留」就能鎖進你的手牌，還能免費拿到 [[1 顆萬能的黃金籌碼]]（當作任何顏色的百搭寶石）！',
+    text:'這張卡已收進你的手牌區，隨時可以回來買它。要注意的是，不論「拿寶石」、「買卡」或「保留卡片」，[[都計算一個回合]] 喲！',
     el:'#guide-reserved', color:'#9b59b6', voice:VOICE },
 
   { phase:'階段三：收購與保留',
-    text:'要注意的是，不論「拿寶石」、「買卡」或「保留卡片」，[[都計算一個回合]] 喲！',
-    el:null, color:null, voice:VOICE },
+    text:'現在你手上有寶石又有黃金了！去買下第一張產業吧：點擊任何亮起 [[收購]] 的卡片。如果暫時都買不起，就再多拿幾回合寶石湊錢。',
+    el:'#guide-matrix', color:'#d4af37', voice:VOICE,
+    task:{ goal:'🎯 任務：成功收購 1 張卡片（買不起就先多拿寶石）', type:'buy' } },
 
-  // 階段四
+  // 階段四：貴族拜訪（敘述）
   { phase:'階段四：貴族拜訪',
-    text:'當你買下的卡片累積到對應貴族卡顯示的顏色數量，頂層的領主貴族就會 [[自動前來拜訪]]，免費送你 [[3 分]]！',
+    text:'恭喜完成第一筆收購！當你買下的卡片累積到對應貴族卡顯示的顏色數量，頂層的領主貴族就會 [[自動前來拜訪]]，免費送你 [[3 分]]！',
     el:'.nobles-section', color:'#3498db', voice:VOICE },
 
-  // 階段五
+  // 階段五：輔助官特技（敘述）
   { phase:'階段五：輔助官特技',
-    text:'最後，我有強大的隨行特技（像是幫你降低成本或擴大背包）。點擊下方按鈕，我們出發去 [[橫掃戰場]] 吧！',
+    text:'最後，我有強大的隨行特技（像是幫你降低成本或擴大背包）。基礎你都親手練過了，點擊下方按鈕，我們出發去 [[橫掃戰場]] 吧！',
     el:null, color:null, voice:VOICE }
 ];
 
@@ -87,7 +95,10 @@ var T = {
   active: false, idx: 0,
   prevEl: null,
   typeTimer: null, fullText: '', charN: 0, isTyping: false,
-  voiceEl: null
+  voiceEl: null,
+  taskTimer: null,     // 任務輪詢計時器
+  taskBase: null,      // 任務開始時的玩家狀態基準
+  taskDone: false      // 目前任務是否完成
 };
 
 // ── 粗體解析：[[文字]] → <strong> ────────────────────────────
@@ -118,10 +129,12 @@ function doHighlight(sel, color) {
   
   var goldColor = '#ffcc00'; 
   
-  // ✨ 修正 1：調整陰影參數與暗度，讓亮度與其他所有區域介紹時維持完全一致的舒適感
+  // ✨ 任務步驟採用較淺暗幕，讓玩家看清整個牌桌並可自由操作；講解步驟維持原本聚焦暗度
+  var isTaskStep = STEPS[T.idx] && STEPS[T.idx].task;
+  var dimAlpha = isTaskStep ? 0.35 : 0.78;
   el.style.outline       = '3px solid ' + goldColor;
   el.style.outlineOffset = '4px';
-  el.style.boxShadow     = '0 0 0 4px rgba(255,204,0,0.2), 0 0 25px rgba(255,204,0,0.65), 0 0 0 9999px rgba(5,3,2,0.78)';
+  el.style.boxShadow     = '0 0 0 4px rgba(255,204,0,0.2), 0 0 25px rgba(255,204,0,0.65), 0 0 0 9999px rgba(5,3,2,' + dimAlpha + ')';
   
   // ✨ 修正 2：層級與堆疊歸一化！強行加入 position 與 isolation，確保底部的金庫、牌庫能突破 Flex 容器邊界，完美浮出至最上層
   el.style.position      = 'relative';
@@ -235,6 +248,137 @@ if (upper) {
   }
   charEl.style.transform = 'none';
 }
+
+// ── 🎮 互動任務引擎 ───────────────────────────────────────────
+var GEMS = ['w','u','g','r','k'];
+
+function snapshotPlayer() {
+  try {
+    var s = window.CoreState && window.CoreState.get();
+    if (!s || !s.player) return null;
+    var bonusSum = 0;
+    GEMS.forEach(function(c){ bonusSum += (s.player.bonus[c] || 0); });
+    return {
+      tokens: Object.assign({}, s.player.tokens),
+      reserved: (s.player.reserved || []).length,
+      bonusSum: bonusSum
+    };
+  } catch(e) { return null; }
+}
+
+function checkTask(type, base) {
+  var s = window.CoreState && window.CoreState.get();
+  if (!s || !s.player || !base) return false;
+  if (type === 'diff3') {
+    var inc = 0;
+    GEMS.forEach(function(c){
+      if ((s.player.tokens[c] || 0) >= (base.tokens[c] || 0) + 1) inc++;
+    });
+    return inc >= 3;
+  }
+  if (type === 'same2') {
+    return GEMS.some(function(c){
+      return (s.player.tokens[c] || 0) >= (base.tokens[c] || 0) + 2;
+    });
+  }
+  if (type === 'reserve') {
+    return (s.player.reserved || []).length > base.reserved;
+  }
+  if (type === 'buy') {
+    var sum = 0;
+    GEMS.forEach(function(c){ sum += (s.player.bonus[c] || 0); });
+    return sum > base.bonusSum;
+  }
+  return false;
+}
+
+function stopTaskWatch() {
+  if (T.taskTimer) { clearInterval(T.taskTimer); T.taskTimer = null; }
+}
+
+function startTaskWatch(step) {
+  stopTaskWatch();
+  T.taskDone = false;
+  T.taskBase = snapshotPlayer();
+
+  T.taskTimer = setInterval(function() {
+    if (!T.active) { stopTaskWatch(); return; }
+
+    // 遊戲重繪可能替換掉被高亮的元素，遺失時重新套用光圈
+    if (step.el) {
+      var cur = document.querySelector(step.el);
+      if (cur && cur !== T.prevEl) doHighlight(step.el, step.color);
+    }
+
+    if (!T.taskDone && checkTask(step.task.type, T.taskBase)) {
+      T.taskDone = true;
+      stopTaskWatch();
+      onTaskComplete();
+    }
+  }, 300);
+}
+
+function onTaskComplete() {
+  // ✔ 成功回饋：對話框閃出完成訊息 + 音效，稍後自動進入下一步
+  var txtEl = document.getElementById('tut-dialogue-text');
+  clearTimeout(T.typeTimer); T.isTyping = false;
+  if (txtEl) txtEl.innerHTML =
+    '<span style="color:#2ecc71;font-weight:900;font-size:1.15rem;">✔ 任務完成！幹得漂亮！</span>';
+  var goalEl = document.getElementById('tut-task-goal');
+  if (goalEl) { goalEl.style.color = '#2ecc71'; goalEl.textContent = '✔ 已完成'; }
+  try {
+    var sfx = document.getElementById('sfx-buy');
+    if (sfx && !(window.settings && window.settings.isSfxMuted)) {
+      sfx.currentTime = 0; sfx.play().catch(function(){});
+    }
+  } catch(e) {}
+  setTimeout(function() {
+    if (!T.active) return;
+    T.idx++;
+    renderStep();
+  }, 1100);
+}
+
+// 任務卡關保險：跳過目前任務
+function skipCurrentTask() {
+  var step = STEPS[T.idx];
+  if (!step || !step.task || T.taskDone) return;
+  stopTaskWatch();
+  T.taskDone = true;
+  T.idx++;
+  renderStep();
+}
+
+// 依步驟切換「教學講解 / 實戰任務」兩種介面模式
+function setTaskMode(on, step) {
+  var ov = document.getElementById('tut-overlay');
+  var nextBtn = document.getElementById('tut-next-btn');
+  var hint = document.getElementById('tut-hint');
+  var goalEl = document.getElementById('tut-task-goal');
+  var skipTaskBtn = document.getElementById('tut-task-skip');
+  var charEl = document.getElementById('tut-char-wrapper');
+
+  if (on) {
+    if (ov) ov.classList.add('task-mode');            // 背景放行點擊、取消變暗
+    if (nextBtn) nextBtn.style.display = 'none';       // 任務中不能用按鈕跳過
+    if (hint) hint.style.display = 'none';
+    if (goalEl) {
+      goalEl.style.display = 'block';
+      goalEl.style.color = '#ffe099';
+      goalEl.textContent = step.task.goal;
+    }
+    if (skipTaskBtn) skipTaskBtn.style.display = 'inline-block';
+    if (charEl) charEl.classList.add('task-shrink');   // 立繪縮小避免擋住牌桌
+  } else {
+    if (ov) ov.classList.remove('task-mode');
+    if (nextBtn) nextBtn.style.display = '';
+    if (hint) hint.style.display = '';
+    if (goalEl) goalEl.style.display = 'none';
+    if (skipTaskBtn) skipTaskBtn.style.display = 'none';
+    if (charEl) charEl.classList.remove('task-shrink');
+  }
+}
+
 // ── 打字機 ────────────────────────────────────────────────────
 function typewrite(html) {
   clearTimeout(T.typeTimer);
@@ -313,6 +457,15 @@ function renderStep() {
   typewrite(parseBold(step.text));
   updateDots();
 
+  // 🎮 任務步驟：切換為實戰模式並開始偵測玩家操作
+  stopTaskWatch();
+  if (step.task) {
+    setTaskMode(true, step);
+    startTaskWatch(step);
+  } else {
+    setTaskMode(false, step);
+  }
+
   var btn = document.getElementById('tut-next-btn');
   if (btn) btn.textContent = T.idx === STEPS.length - 1 ? '🎉 開始對局！' : '下一步 ▶';
 
@@ -330,6 +483,8 @@ function renderStep() {
 function tutNext() {
   if (!T.active) return;
   if (T.isTyping) { skipType(); return; }
+  var step = STEPS[T.idx];
+  if (step && step.task && !T.taskDone) return; // 任務中：需實際完成操作才前進
   if (T.idx >= STEPS.length - 1) { tutClose(); return; }
   T.idx++;
   renderStep();
@@ -339,6 +494,8 @@ function tutNext() {
 function tutClose() {
   T.active = false;
   clearTimeout(T.typeTimer);
+  stopTaskWatch();
+  setTaskMode(false, null);
   if (T.voiceEl) T.voiceEl.pause();
   clearHighlight();
 
@@ -362,6 +519,8 @@ function tutOpen() {
   T.active = true;
   T.idx    = 0;
   T.prevEl = null;
+  T.taskDone = false;
+  stopTaskWatch();
 
   var ov = document.getElementById('tut-overlay');
   ov.style.display      = 'flex';
@@ -433,6 +592,20 @@ function buildDOM() {
       '#tut-next-btn:hover{filter:brightness(1.15);transform:translateY(-1px);}',
       '#tut-next-btn:active{transform:translateY(1px);}',
 
+      '/* 🎮 實戰任務模式：背景全放行，玩家可直接操作遊戲 */',
+      '#tut-overlay.task-mode{background:transparent!important;pointer-events:none!important;}',
+      '#tut-overlay.task-mode #tut-box{pointer-events:auto;cursor:default;}',
+      '#tut-overlay.task-mode #tut-skip-btn{pointer-events:auto;}',
+      '#tut-char-wrapper.task-shrink{width:220px!important;opacity:0.92;}',
+      '#tut-task-goal{display:none;margin-top:10px;padding:8px 14px;border-radius:8px;',
+      'background:rgba(212,175,55,0.12);border:1px dashed rgba(212,175,55,0.6);',
+      'color:#ffe099;font-weight:800;font-size:0.92rem;letter-spacing:0.04em;',
+      'animation:tutGoalPulse 1.2s ease-in-out infinite alternate;}',
+      '@keyframes tutGoalPulse{from{box-shadow:0 0 0 rgba(212,175,55,0);}to{box-shadow:0 0 16px rgba(212,175,55,0.45);}}',
+      '#tut-task-skip{display:none;background:none;border:none;color:#968a7f;',
+      'font-size:0.68rem;cursor:pointer;text-decoration:underline;padding:4px 8px;}',
+      '#tut-task-skip:hover{color:#ffe099;}',
+      '@media(max-width:430px){#tut-char-wrapper.task-shrink{width:110px!important;}}',
       '@media(max-width:430px){',
       '#tut-char-wrapper{width:160px;max-width:42vw;}',
       '#tut-box{padding:16px 14px 13px;}',
@@ -455,9 +628,11 @@ function buildDOM() {
     '<div id="tut-box" onclick="window.__tut.next()">' +
       '<div id="tut-name-tag">翠席兒</div>' +
       '<div id="tut-dialogue-text"></div>' +
+      '<div id="tut-task-goal"></div>' +
       '<div id="tut-footer">' +
         '<div id="tut-dots"></div>' +
         '<div id="tut-hint">點擊對話框繼續</div>' +
+        '<button id="tut-task-skip" onclick="event.stopPropagation();window.__tut.skipTask()">卡關了？跳過此步</button>' +
         '<button id="tut-next-btn" onclick="event.stopPropagation();window.__tut.next()">下一步 ▶</button>' +
       '</div>' +
     '</div>';
@@ -465,7 +640,7 @@ function buildDOM() {
 }
 
 // ── 掛到 window（避免 module 作用域問題） ─────────────────────
-window.__tut = { next: tutNext, skip: tutClose };
+window.__tut = { next: tutNext, skip: tutClose, skipTask: skipCurrentTask };
 
 window.startFloatingTutorial = function() {
   var sm = document.getElementById('tutorial-start-modal');
