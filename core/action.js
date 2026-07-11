@@ -103,6 +103,11 @@ export const ActionDispatcher = {
 
       case 'SWITCH_MODE':
         state.mode = payload.mode;
+        // 🤖 進入帝國爭霸：先讓玩家選擇對手，選定後才真正開局
+        if (payload.mode === 'vsAI' && typeof window.openAiOpponentModal === 'function') {
+          window.openAiOpponentModal();
+          break;
+        }
         this.setupNewGame();
         break;
 
@@ -602,11 +607,16 @@ export const ActionDispatcher = {
     const modalBox = modal.querySelector('.modal');
     const restartBtn = document.getElementById('btn-restart');
 
-    restartBtn.textContent = "重開新局";
+    const isAiBattle = this.isAiBattle(state);
+    const isVsAiMode = state.mode === 'vsAI';
+
+    // 帝國爭霸：重新開始（維持原對手）＋ 重新選擇對手；其他模式維持單一重開按鈕
+    restartBtn.textContent = isVsAiMode ? '🔁 重新開始（維持原對手）' : '重開新局';
     restartBtn.className = "btn-replay";
     restartBtn.onclick = () => { window.playUniformSfx(); window.restartGame(); };
 
-    const isAiBattle = this.isAiBattle(state);
+    const reselectBtn = document.getElementById('btn-reselect-opponent');
+    if (reselectBtn) reselectBtn.style.display = isVsAiMode ? '' : 'none';
     const diffTxtEl = document.getElementById('modal-diff-result-txt');
     if (diffTxtEl) diffTxtEl.textContent = '';
 
@@ -661,7 +671,9 @@ export const ActionDispatcher = {
     state.turn = 1;
     state.currentTurnOwner = 'player';
     state.aiEnabled = false;
-    state.aiDifficulty = 'normal';
+    // 🤖 帝國爭霸：依玩家所選對手套用 AI 難度；其他模式重置為 normal
+    state.aiDifficulty = (state.mode === 'vsAI' && state.settings.aiOpponent)
+      ? state.settings.aiOpponent.difficulty : 'normal';
     state.ast14TakeUsed = false;
     state.bank = { w: 5, u: 5, g: 5, r: 5, k: 5, o: 5 };
 
