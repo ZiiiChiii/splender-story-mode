@@ -51,7 +51,7 @@
     /* 📱 故事層全面夾制到舞台寬度（桌機/手機呈現一致） */
     .story-chapter-title { position: absolute; top: 24px; color: #f1c40f; font-size: 1.15rem; font-weight: bold; letter-spacing: 2px; text-shadow: 0 2px 10px rgba(0,0,0,0.6); max-width: calc(var(--stage-w, 100vw) - 20px); text-align: center; }
     .story-intro-panel { position: absolute; top: 72px; width: calc(var(--stage-w, 100vw) - 28px); max-width: 720px; background: rgba(0, 0, 0, 0.65); border-left: 4px solid #f1c40f; padding: 12px 14px; color: #ddd; font-size: 0.82rem; line-height: 1.5; border-radius: 0 8px 8px 0; text-align: left; box-sizing: border-box; }
-    .story-character-container { position: absolute; bottom: 176px; width: min(280px, calc(var(--stage-w, 100vw) * 0.68)); height: min(46dvh, 440px); display: flex; justify-content: center; align-items: flex-end; pointer-events: none; }
+    .story-character-container { position: absolute; bottom: 176px; width: min(280px, calc(var(--stage-w, 100vw) * 0.68)); height: min(calc(var(--stage-h, 716px) * 0.6), 440px); display: flex; justify-content: center; align-items: flex-end; pointer-events: none; }
     .story-character-img { max-width: 100%; max-height: 100%; object-fit: contain; }
     .story-dialogue-box { position: relative; width: calc(var(--stage-w, 100vw) - 16px); max-width: 850px; min-height: 148px; height: auto; background: rgba(5, 8, 12, 0.95); border: 2px solid #f1c40f; box-shadow: 0 0 20px rgba(241, 196, 15, 0.2); border-radius: 12px; padding: 18px 18px 26px; color: #fff; cursor: pointer; user-select: none; box-sizing: border-box; }
     .story-name-tag { position: absolute; top: -28px; left: 18px; background: #f1c40f; color: #000; padding: 5px 18px; font-weight: bold; border-radius: 6px 6px 0 0; font-size: 0.95rem; box-shadow: 0 -3px 10px rgba(0,0,0,0.3); }
@@ -340,7 +340,7 @@
 <div class="modal-overlay" id="story-map-modal"></div>
 
 <div class="modal-overlay" id="tutorial-start-modal">
-  <div class="modal" style="max-width: 480px; max-height: 90vh; overflow-y: auto;">
+  <div class="modal" style="max-width: 480px; max-height: calc(var(--stage-h, 716px) - 40px); overflow-y: auto;">
     <span style="font-size:2.2rem;">📜</span>
     <h2 class="modal-title">皇家大會堂：貿易法則</h2>
     <div class="rule-box">
