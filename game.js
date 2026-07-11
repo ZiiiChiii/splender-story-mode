@@ -495,6 +495,32 @@ function renderDashboardGems(targetElementId, actorData, diffs, idPrefix = 'vaul
 }
 
 // ==========================================
+// 🎵 依遊戲模式切換背景音樂
+// ==========================================
+const BG_TRACKS = {
+  default: 'https://assets.mixkit.co/music/785/785.mp3',
+  vsAI:    'https://assets.mixkit.co/music/917/917.mp3'   // 帝國爭霸專屬戰曲
+};
+let _currentBgTrack = null;
+
+function syncBgMusicToMode(mode) {
+  const bg = document.getElementById('bg-music');
+  if (!bg) return;
+  const want = (mode === 'vsAI') ? BG_TRACKS.vsAI : BG_TRACKS.default;
+  if (_currentBgTrack === want) return;
+  _currentBgTrack = want;
+
+  const wasPlaying = !bg.paused;
+  bg.src = want;
+  bg.load();
+
+  let musicMuted = false;
+  try { musicMuted = CoreState.get().settings.isMusicMuted; } catch (e) {}
+  // 原本正在播放才自動續播（不違反瀏覽器自動播放限制，也尊重靜音設定）
+  if (wasPlaying && !musicMuted) bg.play().catch(() => {});
+}
+
+// ==========================================
 // 4. 全域 Render 控制器 (版面模式完全分離)
 // ==========================================
 window.render = function() {
@@ -508,6 +534,9 @@ window.render = function() {
   const isSingleMode = fullState.mode === 'singlePlayer';
   const isvsAI = fullState.mode === 'vsAI';
   const isStoryMode = fullState.mode === 'storyMode';
+
+  // 🎵 模式切換時自動換背景音樂（同曲目時零成本直接返回）
+  syncBgMusicToMode(fullState.mode);
   const isAiBattle = ActionDispatcher.isAiBattle(fullState);
   const isPlayerTurn = fullState.currentTurnOwner === 'player';
 
@@ -626,10 +655,11 @@ window.render = function() {
   if (isAiBattle) {
     document.getElementById('ai-score-txt').textContent = fullState.ai.score;
     // 🤖 AI 金庫同樣計算前後差異，浮動 +N（籌碼）與 +N🛡️（產量）動畫與玩家完全一致
+    // ⚠️ AI 金庫只顯示籌碼 +N；「+N 🛡️」產量徽章動畫在 AI 側一律移除
+    //（買卡動畫本身已足夠表達，且徽章曾因 keyframes 缺失而卡住不消失）
     let aiDiffs = { tokens: {}, bonus: {} };
     if (lastAiState) {
       for (let k in fullState.ai.tokens) aiDiffs.tokens[k] = fullState.ai.tokens[k] - lastAiState.tokens[k];
-      for (let k in fullState.ai.bonus) aiDiffs.bonus[k] = fullState.ai.bonus[k] - lastAiState.bonus[k];
     }
     lastAiState = deepClone(fullState.ai);
     renderDashboardGems('ai-res-layer', fullState.ai, aiDiffs, 'ai-vault-target');
