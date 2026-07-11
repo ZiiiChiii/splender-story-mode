@@ -449,11 +449,11 @@ html, body {
   .deck-count { font-size: 0.46rem !important; }
 
   .grid-4 {
-    flex: 1 !important;
+    flex: 0 0 auto !important;          /* 列高 = 卡牌內容高度 */
     min-height: 0 !important;
     display: grid !important;
     grid-template-columns: repeat(4, 1fr) !important;
-    grid-template-rows: 1fr !important;
+    grid-template-rows: none !important; /* 不再強制撐滿 */
     gap: 3px !important;
   }
 
@@ -462,7 +462,7 @@ html, body {
     width: 100% !important;
     height: 100% !important;
     aspect-ratio: 1 / 1 !important;
-    transform: none !important;
+    /* ⚠️ 不可寫 transform:none !important —— 會壓過 GSAP 行內樣式，殺死可購買漂浮動畫 */
   }
   .card-content-wrapper { padding: 2px !important; }
   .card-pts { font-size: 0.6rem !important; }
@@ -681,7 +681,7 @@ html, body {
 /* ═══════════ 📱 邏輯舞台系統（430×932 + 整體等比縮放） ═══════════ */
 #stage {
   width: 430px;
-  height: 932px;
+  height: 860px; /* 長寬 2:1 */
   flex: 0 0 auto;
   position: relative;
   transform-origin: center center; /* 由 fitStageToPhoneRatio() 設定 scale */
@@ -702,3 +702,14 @@ body.stage-boxed .shell { padding: 4px 6px; box-sizing: border-box; }
 
 /* 進度條與開場元素同樣夾制在舞台寬內 */
 .preload-bar-track { width: min(320px, calc(var(--stage-w, 100vw) * 0.72)); }
+
+
+/* ═══ 📐 卡牌矩陣行距收緊：三列緊湊排列，多餘空間集中於矩陣底部 ═══ */
+#guide-card-rows {
+  gap: 4px !important;
+  justify-content: flex-start !important;
+}
+#guide-card-rows .board-row {
+  flex: 0 0 auto !important;
+  min-height: 0 !important;
+}
