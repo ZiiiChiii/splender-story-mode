@@ -379,7 +379,11 @@ export const ActionDispatcher = {
     const aiEffectiveScore = (state.settings.selectedAssistant === 'ast18')
       ? state.ai.score - state.ai.noblePoints : state.ai.score;
 
-    if (state.player.score >= 15 || aiEffectiveScore >= 15 || state.turn > 28) {
+    // 🌊 簡單對手（翠席兒）：不限回合數，只以 15 分定勝負
+    const noTurnLimit = state.mode === 'vsAI'
+      && state.settings.aiOpponent && state.settings.aiOpponent.difficulty === 'easy';
+
+    if (state.player.score >= 15 || aiEffectiveScore >= 15 || (!noTurnLimit && state.turn > 28)) {
       window.render();
       SingleMode.auditEndGameAchievements();
       this._showEndModal(state, aiEffectiveScore);
