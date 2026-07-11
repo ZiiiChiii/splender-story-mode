@@ -2,6 +2,9 @@
 *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 
 :root {
+  /* 📱 舞台邏輯尺寸預設值：JS 尚未執行時版面即正確（修正重新整理瞬間貴族卡爆大） */
+  --stage-w: 430px;
+  --stage-h: 860px;
   --bg-table:    #16100c;
   --surface:     #1e1915;
   --felt-green:  #0e1c15;
@@ -449,19 +452,21 @@ html, body {
   .deck-count { font-size: 0.46rem !important; }
 
   .grid-4 {
-    flex: 0 0 auto !important;          /* 列高 = 卡牌內容高度 */
+    flex: 0 0 auto !important;           /* 列高 = 卡牌內容高度 */
     min-height: 0 !important;
     display: grid !important;
     grid-template-columns: repeat(4, 1fr) !important;
-    grid-template-rows: none !important; /* 不再強制撐滿 */
+    grid-template-rows: none !important;
+    grid-auto-rows: auto !important;      /* ⚠️ 基礎規則是 0，會把卡牌壓成 1px，必須改回 auto */
     gap: 3px !important;
   }
 
   /* 卡牌正方形 */
   .card {
     width: 100% !important;
-    height: 100% !important;
+    height: auto !important;              /* 高度交給 aspect-ratio 依欄寬決定（原尺寸） */
     aspect-ratio: 1 / 1 !important;
+    max-width: none !important;
     /* ⚠️ 不可寫 transform:none !important —— 會壓過 GSAP 行內樣式，殺死可購買漂浮動畫 */
   }
   .card-content-wrapper { padding: 2px !important; }
