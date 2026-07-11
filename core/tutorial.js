@@ -159,12 +159,14 @@ function calcLayout(step) {
   var charEl = document.getElementById('tut-char-wrapper');
   if (!boxEl || !charEl) return;
 
-  // 📱 一律以舞台矩形為邊界（桌機置中舞台時，立繪/對話框不會跑到舞台外）
+  // 📱 舞台邏輯座標系（430×932）：教學層掛在 #stage 內，
+  // fixed 定位以舞台為包含塊，樣式座標 = 邏輯座標，任何縮放下呈現一致
   var sr = (window.getStageRect && window.getStageRect())
     || { left:0, top:0, right:window.innerWidth, bottom:window.innerHeight,
          width:window.innerWidth, height:window.innerHeight };
+  var toLocal = window.stageLocalRect || function(el){ return el.getBoundingClientRect(); };
   var vw = sr.width, vh = sr.height;
-  var mob = vw <= 430;
+  var mob = true;
   var M = 8; // 舞台安全邊距
 
   function clr(el) {
@@ -172,46 +174,46 @@ function calcLayout(step) {
   }
   clr(boxEl); clr(charEl);
 
-  // ── 步驟目標矩形 ──
+  // ── 步驟目標矩形（舞台邏輯座標）──
   var targetEl = (step && step.el) ? document.querySelector(step.el) : null;
-  var tRect = targetEl ? targetEl.getBoundingClientRect() : null;
+  var tRect = targetEl ? toLocal(targetEl) : null;
 
   // ── 1) 對話框定位 ──
   // 超大目標（例如整片牌桌）：貼齊底部停靠，避免蓋住卡牌本體
   var hugeTarget = tRect && (tRect.height > vh * 0.5 || tRect.width > vw * 0.72);
 
-  var stageCX = sr.left + vw / 2;
+  var stageCX = vw / 2;
   if (!tRect || hugeTarget) {
-    boxEl.style.bottom    = (window.innerHeight - sr.bottom + 14) + 'px';
-    boxEl.style.left      = stageCX + 'px';
+    boxEl.style.bottom    = '14px';
+    boxEl.style.left      = '50%';
     boxEl.style.transform = 'translateX(-50%)';
   } else {
-    var upper = (tRect.top + tRect.height / 2) < sr.top + vh * 0.52;
+    var upper = (tRect.top + tRect.height / 2) < vh * 0.52;
     if (upper) {
       var bt = tRect.bottom + 12;
-      if (tRect.top < sr.top + 30) bt = tRect.bottom + 55;
+      if (tRect.top < 30) bt = tRect.bottom + 55;
       // 對話框自身不可跑出舞台底部
       var boxH = boxEl.offsetHeight || 200;
-      if (bt + boxH > sr.bottom - M) bt = Math.max(sr.top + M, sr.bottom - M - boxH);
+      if (bt + boxH > vh - M) bt = Math.max(M, vh - M - boxH);
       boxEl.style.top = bt + 'px';
       boxEl.style.bottom = 'auto';
     } else {
-      boxEl.style.bottom = (window.innerHeight - tRect.top + 12) + 'px';
+      boxEl.style.bottom = (vh - tRect.top + 12) + 'px';
       boxEl.style.top = 'auto';
     }
-    boxEl.style.left      = stageCX + 'px';
+    boxEl.style.left      = '50%';
     boxEl.style.transform = 'translateX(-50%)';
   }
 
   // ── 2) 立繪定位（三原則：完整呈現／貼近對話框／不擋目標區域）──
   charEl.style.transform = 'none';
-  var boxRect = boxEl.getBoundingClientRect(); // 上面樣式已生效，強制回流量測
+  var boxRect = toLocal(boxEl); // 上面樣式已生效，量測後換算為舞台邏輯座標
   var charW = charEl.offsetWidth  || (mob ? 150 : 340);
   var charH = charEl.offsetHeight || Math.round(charW * 1.35);
 
   // 垂直：立繪底部與對話框頂端保留 36px 重疊（視覺相連），再夾回舞台內 → 原則 1 + 2
   var top = boxRect.top - charH + 36;
-  top = Math.max(sr.top + M, Math.min(top, sr.bottom - charH - M));
+  top = Math.max(M, Math.min(top, vh - charH - M));
 
   // 水平：預設站在「目標區域的另一側」→ 原則 3；無目標時站對話框左側
   var preferRight = tRect ? (tRect.left + tRect.width / 2) < stageCX : false;
@@ -219,7 +221,7 @@ function calcLayout(step) {
   function leftForSide(right) {
     var L = right ? (boxRect.right - Math.min(70, charW * 0.25))
                   : (boxRect.left - charW + Math.min(70, charW * 0.25));
-    return Math.max(sr.left + M, Math.min(L, sr.right - charW - M)); // 夾回舞台內 → 原則 1
+    return Math.max(M, Math.min(L, vw - charW - M)); // 夾回舞台內 → 原則 1
   }
   function overlapArea(L) {
     if (!tRect) return 0;
@@ -693,7 +695,7 @@ function buildDOM() {
         '<button id="tut-next-btn" onclick="event.stopPropagation();window.__tut.next()">下一步 ▶</button>' +
       '</div>' +
     '</div>';
-  document.body.appendChild(ov);
+  (document.getElementById('stage') || document.body).appendChild(ov);
 }
 
 // ── 掛到 window（避免 module 作用域問題） ─────────────────────
