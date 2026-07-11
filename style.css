@@ -530,3 +530,44 @@ html, body {
   85%  { opacity: 1; filter: brightness(1); }
   100% { opacity: 0.85; }
 }
+
+
+/* ⚜️ 皇家榮譽堂（成就歷程）：固定視窗高度 + 內部滾輪，不再整串撐爆畫面 */
+.ach-modal {
+  max-width: 560px !important;
+  max-height: 82dvh;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden; /* 滾動交給內部 .ach-scroll-body */
+  padding: 18px 18px 12px !important;
+}
+.ach-modal-header {
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  margin-bottom: 10px;
+}
+.ach-modal-header .modal-title { margin-bottom: 0; }
+.ach-scroll-body {
+  flex: 1;
+  min-height: 0;               /* flex 子項可收縮的關鍵 */
+  overflow-y: auto;            /* ✨ 可拉動滾輪 */
+  overscroll-behavior: contain;
+  padding-right: 6px;
+  text-align: left;
+}
+/* 華麗滾動條 */
+.ach-scroll-body::-webkit-scrollbar { width: 8px; }
+.ach-scroll-body::-webkit-scrollbar-track { background: rgba(0,0,0,0.35); border-radius: 4px; }
+.ach-scroll-body::-webkit-scrollbar-thumb {
+  background: linear-gradient(180deg, #d4af37, #8a6418);
+  border-radius: 4px;
+}
+.ach-scroll-body::-webkit-scrollbar-thumb:hover { background: #ffe099; }
+.ach-scroll-body { scrollbar-width: thin; scrollbar-color: #d4af37 rgba(0,0,0,0.35); }
+
+@media (max-width: 430px) {
+  .ach-modal { max-height: 86dvh; }
+}
