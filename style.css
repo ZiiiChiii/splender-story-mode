@@ -32,6 +32,11 @@
 }
 
 html, body {
+  /* ⚠️ 此規則同時讓 html 成為 flex 容器，body 變成 flex item。
+     flex item 寬度預設「縮至內容寬」（= 舞台 430px + padding），
+     再配合 body 的 overflow:hidden，會把放大後的舞台左右兩側裁掉。
+     必須強制撐滿視窗寬度。 */
+  width: 100%;
   height: calc(var(--vh, 1vh) * 100);
   min-height: calc(var(--vh, 1vh) * 100);
   /* 📱 舞台置中：桌機時遊戲以手機長寬比呈現於畫面中央 */
