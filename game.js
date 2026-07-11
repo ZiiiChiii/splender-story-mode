@@ -319,15 +319,17 @@ window.animateNoblesEarned = function(nobles, actor = 'player') {
   _nobleAnimRunning++;
   isAnimating = true;
 
-  const vw = window.innerWidth, vh = window.innerHeight;
+  // 📱 一律以「舞台矩形」為展示座標基準（桌機置中舞台時不會飛出舞台外）
+  const stage = window.getStageRect();
+  const vw = stage.width, vh = stage.height;
   const N = nobles.length;
-  const gap = 24;
+  const gap = Math.min(24, vw * 0.05);
 
   // ✨ 放大尺寸依「同時獲得的張數」動態計算：
-  // 三張同時展示時 (寬-邊距-間隔)/3，保證彼此完整並排、絕不重疊；單張則放大到最大 240px
-  const targetW = Math.min(240, Math.max(90, (vw - 40 - (N - 1) * gap) / N));
-  // 展示高度夾在畫面內，放大後上下緣都不出界
-  const cy = Math.max(targetW / 2 + 24, Math.min(vh * 0.42, vh - targetW / 2 - 24));
+  // 三張同時展示時 (舞台寬-邊距-間隔)/3，保證彼此完整並排、絕不重疊；單張上限 240px
+  const targetW = Math.min(240, Math.max(70, (vw - 32 - (N - 1) * gap) / N));
+  // 展示高度夾在舞台內，放大後上下緣都不出界
+  const cy = stage.top + Math.max(targetW / 2 + 24, Math.min(vh * 0.42, vh - targetW / 2 - 24));
 
   const destRect = destEl.getBoundingClientRect();
   const destC = { x: destRect.left + destRect.width / 2, y: destRect.top + destRect.height / 2 };
@@ -348,7 +350,7 @@ window.animateNoblesEarned = function(nobles, actor = 'player') {
     }
     const sr = srcCard
       ? srcCard.getBoundingClientRect()
-      : { left: vw / 2 - 45, top: 60, width: 90, height: 90 };
+      : { left: stage.left + vw / 2 - 45, top: stage.top + 60, width: 90, height: 90 };
 
     // 建立飛行分身
     let flyEl;
@@ -366,8 +368,8 @@ window.animateNoblesEarned = function(nobles, actor = 'player') {
     fxContainer.appendChild(flyEl);
 
     const srcC = { x: sr.left + sr.width / 2, y: sr.top + sr.height / 2 };
-    // 第 i 張的中央展示位（多張時左右均分排開）
-    const showX = vw / 2 + (i - (N - 1) / 2) * (targetW + gap);
+    // 第 i 張的中央展示位（以舞台中心均分排開）
+    const showX = stage.left + vw / 2 + (i - (N - 1) / 2) * (targetW + gap);
     const showScale = targetW / sr.width;
     const destScale = Math.max(0.06, 18 / sr.width);
 
@@ -493,6 +495,47 @@ function renderDashboardGems(targetElementId, actorData, diffs, idPrefix = 'vaul
     });
   }
 }
+
+// ==========================================
+// 📱 手機比例舞台系統：桌機以 9:19.5 手機長寬比置中呈現，與手機開啟完全一致
+// ==========================================
+const STAGE_RATIO = 9 / 19.5;   // 普遍手機直向長寬比
+const STAGE_MAX_W = 430;        // 舞台寬度上限（等同大型手機邏輯寬）
+
+function fitStageToPhoneRatio() {
+  const shell = document.querySelector('.shell');
+  if (!shell) return;
+  const vw = window.innerWidth, vh = window.innerHeight;
+
+  let w, h;
+  if (vw <= 500) {
+    // 真手機 / 窄視窗：填滿畫面（維持原生體驗）
+    w = vw; h = vh;
+    document.body.classList.remove('stage-boxed');
+  } else {
+    // 桌機：以手機長寬比鎖定舞台，置中呈現
+    w = Math.min(STAGE_MAX_W, Math.floor(vh * STAGE_RATIO), vw - 24);
+    h = Math.min(vh - 16, Math.floor(w / STAGE_RATIO));
+    document.body.classList.add('stage-boxed');
+  }
+
+  shell.style.width = w + 'px';
+  shell.style.height = h + 'px';
+  shell.style.maxWidth = w + 'px';
+  document.documentElement.style.setProperty('--stage-w', w + 'px');
+  document.documentElement.style.setProperty('--stage-h', h + 'px');
+}
+
+// 供動畫 / 教學系統取得舞台矩形（fixed 定位元素一律以此為座標基準）
+window.getStageRect = function() {
+  const shell = document.querySelector('.shell');
+  if (shell) return shell.getBoundingClientRect();
+  return { left: 0, top: 0, right: window.innerWidth, bottom: window.innerHeight,
+           width: window.innerWidth, height: window.innerHeight };
+};
+
+window.addEventListener('resize', fitStageToPhoneRatio);
+window.addEventListener('orientationchange', fitStageToPhoneRatio);
 
 // ==========================================
 // 🤖 帝國爭霸：AI 對手選擇系統
