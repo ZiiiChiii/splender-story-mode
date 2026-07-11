@@ -187,12 +187,18 @@ function animateCardFlightToGoldVault(cardId, providesColor, callback, vaultPref
   flyCard.style.position = 'fixed';
   flyCard.style.left = start.left + 'px';
   flyCard.style.top = start.top + 'px';
-  flyCard.style.width = start.width + 'px';
-  flyCard.style.height = start.height + 'px';
+  // ⚠️ 分身帶著 .card 類別，會吃到 style.css 的 width:100% / aspect-ratio !important
+  //    常駐規則而被撐成巨卡（實測 491px）→ 幾何尺寸必須同樣以 !important 鎖死
+  flyCard.style.setProperty('width',  start.width + 'px', 'important');
+  flyCard.style.setProperty('height', start.height + 'px', 'important');
+  flyCard.style.setProperty('max-width', 'none', 'important');
+  flyCard.style.setProperty('aspect-ratio', 'auto', 'important');
+  flyCard.style.transform = 'none';   // 清除源卡片殘留的閒置漂浮 transform
   flyCard.style.margin = '0';
   flyCard.style.zIndex = '10000';
   flyCard.style.pointerEvents = 'none';
-  flyCard.style.boxShadow = `0 0 22px ${fxColor}, 0 0 55px ${fxColor}55`;
+  // 光暈初始為熄滅狀態（兩層陰影格式需與點亮後一致，GSAP 才能平滑補間）
+  flyCard.style.boxShadow = `0 0 0px ${fxColor}00, 0 0 0px ${fxColor}00`;
   flyCard.style.borderRadius = '10px';
 
   gsap.set(flyCard, { transformOrigin: "center center", transformStyle: "preserve-3d", perspective: 800 });
@@ -200,10 +206,15 @@ function animateCardFlightToGoldVault(cardId, providesColor, callback, vaultPref
 
   sourceDom.style.opacity = '0.15';
 
-  // 拋物線控制點：飛行弧頂（弧度收斂，配合 2:1 舞台比例）
+  // 🎬 起飛參數（⚠️ 放大不可過大：上限 1.18 倍，僅作「卡片被拾起」的視覺提示）
+  const LIFT = 26;          // 起飛抬升高度
+  const LIFT_SCALE = 1.18;  // 起飛放大倍率上限
+  const liftedC = { x: startC.x, y: startC.y - LIFT };
+
+  // 拋物線控制點：以「起飛後位置」為起點計算弧頂（銜接第一拍終點，飛行不跳動）
   const ctrl = {
-    x: (startC.x + endC.x) / 2 + (endC.x > startC.x ? -50 : 50),
-    y: Math.min(startC.y, endC.y) - 110
+    x: (liftedC.x + endC.x) / 2 + (endC.x > liftedC.x ? -50 : 50),
+    y: Math.min(liftedC.y, endC.y) - 110
   };
 
   const prog = { t: 0 };
@@ -214,37 +225,39 @@ function animateCardFlightToGoldVault(cardId, providesColor, callback, vaultPref
   // 🎯 終點縮放 = 寶石圖示大小 ÷ 卡片大小（落地時恰好與寶石同尺寸，不多不少）
   const destScale = Math.max(0.06, Math.min(0.3, (end.width * 0.9) / start.width));
 
-  // 第一拍：卡片原尺寸發光微抬（完全不放大）
+  // 第一拍：卡片自原位「飛起 + 輕微放大」，光暈同步點亮
   tl.to(flyCard, {
-    duration: 0.12,
-    scale: 1.0,
-    y: -8,
-    ease: "power1.out"
+    duration: 0.26,
+    scale: LIFT_SCALE,
+    y: -LIFT,
+    boxShadow: `0 0 24px ${fxColor}, 0 0 60px ${fxColor}66`,
+    ease: "back.out(2.2)"
   })
-  // 第二拍：沿貝茲曲線精準飛向對應寶石格，途中 3D 翻轉縮小 + 灑落色彩拖尾
+  // 第二拍：帶著光暈沿貝茲曲線精準飛向「對應顏色」寶石格，途中 3D 翻轉 + 色彩拖尾
   .to(prog, {
     t: 1,
-    duration: 0.72,
+    duration: 0.68,
     ease: "power1.in",
     onUpdate: () => {
       const t = prog.t, mt = 1 - t;
-      const cx = mt * mt * startC.x + 2 * mt * t * ctrl.x + t * t * endC.x;
-      const cy = mt * mt * startC.y + 2 * mt * t * ctrl.y + t * t * endC.y;
+      const cx = mt * mt * liftedC.x + 2 * mt * t * ctrl.x + t * t * endC.x;
+      const cy = mt * mt * liftedC.y + 2 * mt * t * ctrl.y + t * t * endC.y;
       gsap.set(flyCard, { x: cx - startC.x, y: cy - startC.y });
       if (++trailTick % 2 === 0) spawnTrailSparkle(fxContainer, cx, cy, fxColor);
     }
   })
   .to(flyCard, {
-    duration: 0.72,
+    duration: 0.68,
     rotationY: 360,
     rotationX: 24,
     scale: destScale,
-    ease: "power1.out"   /* 提早收縮：起飛不久就快速縮小，落地恰與寶石圖示同大 */
+    ease: "power2.in"   /* 弧頂仍保持放大狀態，接近金庫時才快速收縮 */
   }, "<")
-  // 第三拍：命中瞬間 —— 卡片湮滅、色彩爆裂、金庫寶石格彈跳發光
+  // 第三拍：命中瞬間 —— 卡片縮小沒入金庫、色彩爆裂、寶石格彈跳發光
   .to(flyCard, {
-    duration: 0.1,
+    duration: 0.12,
     opacity: 0,
+    scale: destScale * 0.4,
     ease: "power1.in",
     onComplete: () => {
       flyCard.remove();
