@@ -325,7 +325,7 @@ window.animateNoblesEarned = function(nobles, actor = 'player') {
   _nobleAnimRunning++;
   isAnimating = true;
 
-  // 📱 舞台邏輯座標（恆為 430×932，任何縮放下呈現一致）
+  // 📱 舞台邏輯座標（恆為 430×716，任何縮放下呈現一致）
   const stage = window.getStageRect();
   const vw = stage.width, vh = stage.height;
   const N = nobles.length;
@@ -503,7 +503,7 @@ function renderDashboardGems(targetElementId, actorData, diffs, idPrefix = 'vaul
 }
 
 // ==========================================
-// 📱 邏輯舞台系統：所有版面固定設計在 430×932，整體以 transform: scale 等比縮放。
+// 📱 邏輯舞台系統：所有版面固定設計在 430×716，整體以 transform: scale 等比縮放。
 // 手機 scale≈1 原生呈現；桌機 scale 放大 → 文字/卡牌物理變大，兩端像素級一致。
 // ==========================================
 const STAGE_W = 430;   // 邏輯設計寬
@@ -536,14 +536,14 @@ window.getStageZoom = function() {
   return w > 0 ? w / stage.offsetWidth : 1;
 };
 
-// 舞台邏輯矩形（恆為 0,0 → 430,932）
+// 舞台邏輯矩形（恆為 0,0 → 430,716）
 window.getStageRect = function() {
   return { left: 0, top: 0, right: STAGE_W, bottom: STAGE_H,
            width: STAGE_W, height: STAGE_H };
 };
 
 // 🔑 元素的「舞台區域座標」矩形：
-// 把 getBoundingClientRect 的實體像素換算回 430×932 邏輯座標系。
+// 把 getBoundingClientRect 的實體像素換算回 430×716 邏輯座標系。
 // 舞台內 position:fixed 元素以舞台為包含塊，因此 style.left/top 直接吃這個座標。
 window.stageLocalRect = function(el) {
   const stage = document.getElementById('stage');
@@ -868,7 +868,7 @@ window.render = function() {
 
   const resLayerReserved = document.getElementById('reserved-layer');
   if (player.reserved.length === 0) {
-    resLayerReserved.innerHTML = `<div class="card empty" style="grid-column: span 4; height:100%;">🔒 暫無契約手牌</div>`;
+    resLayerReserved.innerHTML = `<div class="card empty reserved-empty-hint">🔒 暫無契約手牌</div>`;
   } else {
     resLayerReserved.innerHTML = [0, 1, 2, 3].map(i => {
       const card = player.reserved[i];
