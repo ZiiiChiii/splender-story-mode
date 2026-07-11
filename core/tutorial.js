@@ -159,7 +159,7 @@ function calcLayout(step) {
   var charEl = document.getElementById('tut-char-wrapper');
   if (!boxEl || !charEl) return;
 
-  // 📱 舞台邏輯座標系（430×932）：教學層掛在 #stage 內，
+  // 📱 舞台邏輯座標系（430×716）：教學層掛在 #stage 內，
   // fixed 定位以舞台為包含塊，樣式座標 = 邏輯座標，任何縮放下呈現一致
   var sr = (window.getStageRect && window.getStageRect())
     || { left:0, top:0, right:window.innerWidth, bottom:window.innerHeight,
@@ -205,42 +205,87 @@ function calcLayout(step) {
     boxEl.style.transform = 'translateX(-50%)';
   }
 
-  // ── 2) 立繪定位（三原則：完整呈現／貼近對話框／不擋目標區域）──
+  // ── 2) 立繪定位（候選位置計分制）──
+  // 原則優先序：③不可遮擋講解目標（最重罰分）＞②盡量完整顯示（不被裁切、
+  // 不藏到對話框後）＞①緊鄰對話框（所有候選皆以對話框邊緣為錨點，天然滿足）。
+  // 舊版把立繪放在框外側再夾回舞台，會整張疊到對話框正後方（z 低於框）而「看不到」。
   charEl.style.transform = 'none';
   var boxRect = toLocal(boxEl); // 上面樣式已生效，量測後換算為舞台邏輯座標
-  var charW = charEl.offsetWidth  || (mob ? 150 : 340);
-  var charH = charEl.offsetHeight || Math.round(charW * 1.35);
 
-  // 垂直：立繪底部與對話框頂端保留 36px 重疊（視覺相連），再夾回舞台內 → 原則 1 + 2
-  var top = boxRect.top - charH + 36;
-  top = Math.max(M, Math.min(top, vh - charH - M));
-
-  // 水平：預設站在「目標區域的另一側」→ 原則 3；無目標時站對話框左側
-  var preferRight = tRect ? (tRect.left + tRect.width / 2) < stageCX : false;
-
-  function leftForSide(right) {
-    var L = right ? (boxRect.right - Math.min(70, charW * 0.25))
-                  : (boxRect.left - charW + Math.min(70, charW * 0.25));
-    return Math.max(M, Math.min(L, vw - charW - M)); // 夾回舞台內 → 原則 1
-  }
-  function overlapArea(L) {
-    if (!tRect) return 0;
-    var r = { left: L, right: L + charW, top: top, bottom: top + charH };
-    var ox = Math.max(0, Math.min(r.right, tRect.right) - Math.max(r.left, tRect.left));
-    var oy = Math.max(0, Math.min(r.bottom, tRect.bottom) - Math.max(r.top, tRect.top));
+  function rectOverlap(a, b) {
+    var ox = Math.max(0, Math.min(a.right, b.right) - Math.max(a.left, b.left));
+    var oy = Math.max(0, Math.min(a.bottom, b.bottom) - Math.max(a.top, b.top));
     return ox * oy;
   }
 
-  var left = leftForSide(preferRight);
-  // 若擋到目標區域超過立繪面積 20%，改站另一側；兩側都擋則取遮擋較小的一側
-  var ovA = overlapArea(left);
-  if (ovA > charW * charH * 0.2) {
-    var altLeft = leftForSide(!preferRight);
-    if (overlapArea(altLeft) < ovA) left = altLeft;
+  // 立繪長寬比：以實際圖片比例為準（未載入時退回 1.35）
+  var imgEl = document.getElementById('tut-char-img');
+  var ratio = (imgEl && imgEl.naturalWidth > 0)
+    ? (imgEl.naturalHeight / imgEl.naturalWidth) : 1.35;
+
+  // 基準寬 = 目前 CSS 生效寬（任務模式 task-shrink 時自動較小）；
+  // 候選另備 66% 縮小版：全尺寸找不到零遮擋解時自動退縮（原則③ > 完整大小）
+  charEl.style.removeProperty('width');
+  var baseW = charEl.offsetWidth || (mob ? 150 : 190);
+  var sizes = [baseW, Math.round(baseW * 0.66)];
+
+  var OV = 28; // 與對話框邊緣的視覺相連重疊量
+  var preferRight = tRect ? (tRect.left + tRect.width / 2) < stageCX : false;
+
+  // 候選位置生成：
+  // A. 錨定對話框（原則①）：框上緣／下緣 × 框左端／右端
+  // B. 錨定講解目標「外側」：目標上方／下方 × 目標左端／右端
+  //    —— 當目標超大（如整片牌桌）、貼框必遮目標時的退避方案，
+  //       以「離框距離」柔性罰分權衡，一般步驟仍會優先選 A。
+  var cands = [];
+  for (var si = 0; si < sizes.length; si++) {
+    var cw = sizes[si], ch = Math.round(cw * ratio);
+    var vA = [ boxRect.top - ch + OV, boxRect.bottom - OV ];
+    var hA = [ boxRect.left + 6, boxRect.right - cw - 6 ];
+    for (var vi = 0; vi < 2; vi++) for (var hi = 0; hi < 2; hi++) {
+      cands.push({ l: hA[hi], t: vA[vi], cw: cw, ch: ch, si: si });
+    }
+    if (tRect) {
+      var vB = [ tRect.top - ch - 8, tRect.bottom + 8 ];
+      var hB = [ tRect.left, tRect.right - cw ];
+      for (var vj = 0; vj < 2; vj++) for (var hj = 0; hj < 2; hj++) {
+        cands.push({ l: hB[hj], t: vB[vj], cw: cw, ch: ch, si: si });
+      }
+    }
   }
 
-  charEl.style.top  = top + 'px';
-  charEl.style.left = left + 'px';
+  var best = null;
+  for (var ci = 0; ci < cands.length; ci++) {
+    var c = cands[ci];
+    var L    = Math.max(M, Math.min(c.l, vw - c.cw - M));
+    var topC = Math.max(M, Math.min(c.t, vh - c.ch - M));
+    var r = { left: L, right: L + c.cw, top: topC, bottom: topC + c.ch };
+    var area = c.cw * c.ch;
+
+    var ovTarget = tRect ? rectOverlap(r, tRect) / area : 0;          // ③ 遮擋講解目標
+    var hidden   = Math.max(0, rectOverlap(r, boxRect) - c.cw * OV) / area; // ② 藏到框後
+    var gap = Math.max(boxRect.left - r.right, r.left - boxRect.right,
+                       boxRect.top - r.bottom, r.top - boxRect.bottom);     // ① 離框距離
+    var onRight = (L + c.cw / 2) > stageCX;
+
+    var score = ovTarget * 1400                                  // ③ 最重罰分
+              + hidden * 120 + (hidden > 0.45 ? 4000 : 0)        // ② 大半藏住＝看不到，一票否決級
+              + Math.abs(topC - c.t) * 2                         // ② 被夾離錨點＝貼合破壞
+              + Math.min(400, Math.max(0, gap) * 2.5)            // ① 離框柔性罰分（有上限）
+              + c.si * 30                                        //   儘量維持全尺寸
+              + ((onRight === preferRight) ? 0 : 6);             //   美感：優先站目標對側
+
+    if (!best || score < best.score) {
+      best = { score: score, left: L, top: topC, w: c.cw };
+    }
+  }
+
+  if (best.w !== baseW) {
+    // 縮小版需以 !important 蓋過 CSS（含 task-shrink 的 !important 寬度規則）
+    charEl.style.setProperty('width', best.w + 'px', 'important');
+  }
+  charEl.style.top  = best.top + 'px';
+  charEl.style.left = best.left + 'px';
   charEl.style.bottom = 'auto';
   charEl.style.right  = 'auto';
 }
