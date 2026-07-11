@@ -606,17 +606,44 @@ export const ActionDispatcher = {
     restartBtn.className = "btn-replay";
     restartBtn.onclick = () => { window.playUniformSfx(); window.restartGame(); };
 
-    if (state.player.score >= 15 && (state.mode === 'singlePlayer' || state.player.score >= aiEffectiveScore)) {
-      iconEl.textContent = '🏆';
-      titleEl.textContent = '傳奇大師，實至名歸！';
-      bodyEl.textContent = `恭喜您成功在 28 回合內奪得 ${state.player.score} 分威望！`;
+    const isAiBattle = this.isAiBattle(state);
+    const diffTxtEl = document.getElementById('modal-diff-result-txt');
+    if (diffTxtEl) diffTxtEl.textContent = '';
+
+    const playerWin = state.player.score >= 15
+      && (state.mode === 'singlePlayer' || state.player.score >= aiEffectiveScore);
+
+    if (playerWin) {
+      if (isAiBattle) {
+        // 🏆 帝國爭霸：擊敗 AI 的專屬捷報
+        iconEl.textContent = '👑';
+        titleEl.textContent = '帝國爭霸告捷：AI 俯首稱臣！';
+        bodyEl.textContent = `您在第 ${state.turn} 回合率先完成霸業，以威望徹底壓制了 AI 帝國！`;
+        if (diffTxtEl) diffTxtEl.textContent = `最終比分 — 👤 玩家 ${state.player.score} 分 : 🤖 AI ${aiEffectiveScore} 分`;
+      } else {
+        iconEl.textContent = '🏆';
+        titleEl.textContent = '傳奇大師，實至名歸！';
+        bodyEl.textContent = `恭喜您成功在 28 回合內奪得 ${state.player.score} 分威望！`;
+      }
       modalBox.style.borderColor = '#d4af37';
     } else {
-      iconEl.textContent = '⏳';
-      titleEl.textContent = '對局結算，未能在挑戰中勝出！';
-      bodyEl.textContent = state.turn > 28
-        ? `已超過 28 回合的限制。請重整旗鼓，再次挑戰！`
-        : `電腦 AI 率先突破了威望防線。請再次挑戰！`;
+      if (isAiBattle) {
+        // ❌ 帝國爭霸：敗因分流（被 AI 搶先 / 回合耗盡）
+        if (aiEffectiveScore >= 15) {
+          iconEl.textContent = '🤖';
+          titleEl.textContent = '敗北：AI 帝國搶先稱霸！';
+          bodyEl.textContent = `AI 帝國在第 ${state.turn} 回合率先突破 15 分威望防線，您以 ${state.player.score} 分飲恨敗陣。重整商路，捲土重來吧！`;
+        } else {
+          iconEl.textContent = '⏳';
+          titleEl.textContent = '敗北：回合耗盡，霸業未竟！';
+          bodyEl.textContent = `28 回合內雙方皆未完成霸業，您未能壓制 AI 帝國。請重整旗鼓，再次挑戰！`;
+        }
+        if (diffTxtEl) diffTxtEl.textContent = `最終比分 — 👤 玩家 ${state.player.score} 分 : 🤖 AI ${aiEffectiveScore} 分`;
+      } else {
+        iconEl.textContent = '⏳';
+        titleEl.textContent = '對局結算，未能在挑戰中勝出！';
+        bodyEl.textContent = `已超過 28 回合的限制。請重整旗鼓，再次挑戰！`;
+      }
       modalBox.style.borderColor = '#e74c3c';
     }
     modal.classList.add('show');
@@ -626,6 +653,10 @@ export const ActionDispatcher = {
     const state = CoreState.get();
     state.selectedDiff = [];
     state.selectedSame = null;
+
+    // 🤝 輔助官專屬故事模式：成就模式 / 帝國爭霸開局一律清空
+    //（故事模式稍後由關卡設定指派對應輔助官）
+    if (state.mode !== 'storyMode') state.settings.selectedAssistant = null;
 
     state.turn = 1;
     state.currentTurnOwner = 'player';
