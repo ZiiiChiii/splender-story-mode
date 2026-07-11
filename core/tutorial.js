@@ -39,7 +39,7 @@ var STEPS = [
 
   { phase:'階段一：認識環境',
     text:'中間這三大排卡片就是我們要搶購的產業，每張卡片上面的寶石就是你購買此卡需要花的 [[籌碼費用]]！',
-    el:'#guide-matrix', color:'#2ecc71', voice:VOICE },
+    el:'#guide-card-rows', color:'#2ecc71', voice:VOICE },
 
   // 階段二：拿取籌碼（實戰）
   { phase:'階段二：拿取籌碼',
@@ -63,11 +63,11 @@ var STEPS = [
   // 階段三：收購與保留（實戰）
   { phase:'階段三：收購與保留',
     text:'做得好！注意看牌桌：只要你身上的籌碼夠多，買得起的卡片就會亮起 [[收購]] 字樣。[[寶石卡片本身還能讓你以後買卡永久減免 1 顆相同顏色的成本]]！',
-    el:'#guide-matrix', color:'#d4af37', voice:VOICE },
+    el:'#guide-card-rows', color:'#d4af37', voice:VOICE },
 
   { phase:'階段三：收購與保留',
     text:'如果想買的卡片怕被搶走，可以先鎖起來。請挑一張喜歡的卡片，點擊 [[保留]]！保留還能免費拿到 [[1 顆萬能的黃金籌碼]]（當作任何顏色的百搭寶石）。',
-    el:'#guide-matrix', color:'#9b59b6', voice:VOICE,
+    el:'#guide-card-rows', color:'#9b59b6', voice:VOICE,
     task:{ goal:'🎯 任務：保留任意一張卡片（獲得 1 顆黃金）', type:'reserve' } },
 
   { phase:'階段三：收購與保留',
@@ -76,7 +76,7 @@ var STEPS = [
 
   { phase:'階段三：收購與保留',
     text:'現在你手上有寶石又有黃金了！去買下第一張產業吧：點擊任何亮起 [[收購]] 的卡片。如果暫時都買不起，就再多拿幾回合寶石湊錢。',
-    el:'#guide-matrix', color:'#d4af37', voice:VOICE,
+    el:'#guide-card-rows', color:'#d4af37', voice:VOICE,
     task:{ goal:'🎯 任務：成功收購 1 張卡片（買不起就先多拿寶石）', type:'buy' } },
 
   // 階段四：貴族拜訪（敘述）
@@ -544,6 +544,18 @@ function tutClose() {
 
 // ── 開啟 ─────────────────────────────────────────────────────
 function tutOpen() {
+  // 🎵 進入教學引導時播放背景音樂（尊重玩家的音樂靜音設定；
+  //    tutOpen 由玩家點擊觸發，符合瀏覽器自動播放限制）
+  try {
+    var bg = document.getElementById('bg-music');
+    var st = window.CoreState && window.CoreState.get();
+    var musicMuted = st && st.settings && st.settings.isMusicMuted;
+    if (bg && !musicMuted && bg.paused) {
+      bg.volume = 0.5;
+      bg.play().catch(function(){});
+    }
+  } catch (e) {}
+
   if (!document.getElementById('tut-overlay')) buildDOM();
   T.active = true;
   T.idx    = 0;
