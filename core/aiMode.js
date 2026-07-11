@@ -30,13 +30,26 @@ export const AiMode = {
       if (afford.affordable) affordableList.push({ lvl: 'reserved', i, card, afford });
     });
 
-    if (affordableList.length > 0) {
+    // 🌊 簡單（翠席兒）：買得起也有 40% 機率猶豫不買，改去拿籌碼，節奏悠閒
+    const easyHesitates = (diff === 'easy' && Math.random() < 0.4);
+
+    if (affordableList.length > 0 && !easyHesitates) {
       let pick;
-      if (diff === 'normal') {
+      if (diff === 'easy') {
+        // 簡單：挑「分數最低、最便宜」的卡，不搶好牌
+        affordableList.sort((a, b) =>
+          (a.card.points - b.card.points) || (a.lvl.localeCompare(b.lvl)));
+        pick = affordableList[0];
+      } else if (diff === 'normal') {
         // 普通：遇到第一張買得起的就直接收購（原始行為）
         pick = affordableList[0];
+      } else if (diff === 'master') {
+        // 🧠 大師（狄菲克）：以「策略價值」評估 —— 分數、永久寶石產能綜效、實際成本全都算
+        affordableList.sort((a, b) =>
+          this._cardStrategicValue(state, ai, b.card) - this._cardStrategicValue(state, ai, a.card));
+        pick = affordableList[0];
       } else {
-        // 困難以上：優先收購分數最高、等級最高的卡
+        // 困難 / 專家：優先收購分數最高、等級最高的卡
         affordableList.sort((a, b) =>
           (b.card.points - a.card.points) || (b.lvl.localeCompare(a.lvl)));
         pick = affordableList[0];
@@ -46,11 +59,15 @@ export const AiMode = {
       return;
     }
 
-    // ── 步驟 2：買不起 → 拿籌碼 ──
+    // ── 步驟 2：買不起（或簡單 AI 猶豫）→ 拿籌碼 ──
     let targetColors = [];
-    if (diff === 'expert' || diff === 'master') {
-      // 高階 AI：鎖定場上最高分卡片，優先拿它缺少的顏色
-      targetColors = this._pickColorsTowardBestCard(state, ai);
+    if (diff === 'easy') {
+      // 簡單：完全隨機亂拿，毫無規劃
+      const shuffled = GEMS.filter(k => state.bank[k] > 0).sort(() => Math.random() - 0.5);
+      targetColors = shuffled.slice(0, 3);
+    } else if (diff === 'expert' || diff === 'master') {
+      // 高階 AI：鎖定目標卡片，優先拿它缺少的顏色（master 以策略價值選目標）
+      targetColors = this._pickColorsTowardBestCard(state, ai, diff);
     }
     if (targetColors.length < 3) {
       // 補足：拿目前銀行庫存最多的顏色
@@ -130,19 +147,67 @@ export const AiMode = {
     return true;
   },
 
-  // 找出最想買的高分卡，計算缺口顏色
-  _pickColorsTowardBestCard(state, ai) {
-    let best = null, bestScore = -1;
+  // 🧠 策略價值評估（狄菲克・大師專用）：
+  // 「利用永久寶石加快累積」的引擎流 —— 一張卡的價值 =
+  //   分數 + 它提供的永久寶石在未來(牌桌費用+貴族需求)的通用度 + 便宜引擎卡加成 - 實際成本
+  //   前期(產能<6)加重引擎累積權重，滾出產能後轉為衝分收割
+  _cardStrategicValue(state, ai, card) {
+    // 該卡永久寶石顏色的「未來需求量」：牌桌所有卡費用 + 未拜訪貴族需求
+    let demand = 0;
+    for (let lvl of ['lv3', 'lv2', 'lv1']) {
+      for (let c of state.board[lvl]) {
+        if (!c) continue;
+        demand += (c.cost[card.provides] || 0);
+      }
+    }
+    for (let n of (state.nobles || [])) {
+      if (!n || n.completed) continue;
+      demand += (n.req[card.provides] || 0) * 1.5; // 貴族需求加權（送 3 分）
+    }
+
+    // 扣除既有產能後的實際成本
+    let effCost = 0;
+    for (let k of GEMS) {
+      effCost += Math.max(0, (card.cost[k] || 0) - (ai.bonus[k] || 0));
+    }
+
+    // 引擎期 vs 收割期權重切換
+    let engineSize = 0;
+    for (let k of GEMS) engineSize += (ai.bonus[k] || 0);
+    const engineW = engineSize < 6 ? 1.6 : 0.6;   // 前期猛滾產能
+    const pointW  = engineSize < 6 ? 2.2 : 3.6;   // 後期猛衝分數
+
+    const cheapEngineBonus = (card.points === 0 && effCost <= 3) ? 2.5 * engineW : 0;
+
+    return card.points * pointW
+         + demand * 0.22 * engineW
+         + cheapEngineBonus
+         - effCost * 0.55;
+  },
+
+  // 找出最想買的卡，計算缺口顏色（master 以策略價值選目標；expert 以分數選目標）
+  _pickColorsTowardBestCard(state, ai, diff) {
+    let best = null, bestScore = -Infinity;
     for (let lvl of ['lv3', 'lv2', 'lv1']) {
       for (let card of state.board[lvl]) {
         if (!card) continue;
-        // 評分：卡片分數高 + 缺口小的優先
-        let gap = 0;
-        for (let k of GEMS) {
-          const need = Math.max(0, (card.cost[k] || 0) - (ai.bonus[k] || 0) - (ai.tokens[k] || 0));
-          gap += need;
+        let value;
+        if (diff === 'master') {
+          // 🧠 策略價值 - 缺口懲罰：兼顧「值得買」與「拿得到」
+          let gap = 0;
+          for (let k of GEMS) {
+            gap += Math.max(0, (card.cost[k] || 0) - (ai.bonus[k] || 0) - (ai.tokens[k] || 0));
+          }
+          value = this._cardStrategicValue(state, ai, card) - gap * 0.7;
+        } else {
+          // 評分：卡片分數高 + 缺口小的優先
+          let gap = 0;
+          for (let k of GEMS) {
+            const need = Math.max(0, (card.cost[k] || 0) - (ai.bonus[k] || 0) - (ai.tokens[k] || 0));
+            gap += need;
+          }
+          value = card.points * 3 - gap;
         }
-        const value = card.points * 3 - gap;
         if (value > bestScore) { bestScore = value; best = card; }
       }
     }
