@@ -263,6 +263,17 @@ function animateCardFlightToGoldVault(cardId, providesColor, callback) {
 // ==========================================
 // 👑 貴族獲得動畫：飛出 → 中央放大旋轉展示 → 飛入已獲得貴族區
 // ==========================================
+// 🔔 飛入已獲得貴族區音效
+const NOBLE_LAND_SFX_URL = 'https://assets.mixkit.co/active_storage/sfx/2144/2144-preview.mp3';
+function playNobleLandSfx() {
+  if (settings && settings.isSfxMuted) return;
+  try {
+    const a = new Audio(NOBLE_LAND_SFX_URL); // 每次獨立實體，多張貴族連續飛入可重疊播放
+    a.volume = 0.85;
+    a.play().catch(() => {});
+  } catch (e) {}
+}
+
 let _nobleAnimRunning = 0;        // 進行中的貴族動畫批次數
 let _nobleAnimQueue = [];         // 動畫結束後才執行的回呼（例如勝利視窗）
 
@@ -344,7 +355,8 @@ window.animateNoblesEarned = function(nobles) {
 
     const tl = gsap.timeline();
 
-    // 第一幕：所有貴族「同時」飛出至中央，邊飛邊放大並翻轉一圈
+    // 第一幕：所有貴族「同時」旋轉飛出至中央 —— 邊飛邊放大並翻轉整整一圈，
+    // rotationY 收在 360°（= 正面），抵達中央時剛好轉正
     tl.to(flyEl, {
       x: showX - srcC.x,
       y: cy - srcC.y,
@@ -353,16 +365,12 @@ window.animateNoblesEarned = function(nobles) {
       duration: 0.65,
       ease: 'power2.out'
     })
-    // 第二幕：定點華麗展示 —— 續轉一整圈 + 金光呼吸
+    // 第二幕：正面定格展示 0.5 秒（金光僅微幅增亮，卡面保持正對玩家不再旋轉）
     .to(flyEl, {
-      rotationY: '+=360',
-      duration: 1.15,
+      boxShadow: '0 0 40px rgba(255,224,153,1), 0 0 100px rgba(212,175,55,0.65)',
+      duration: 0.5,
       ease: 'sine.inOut'
     })
-    .to(flyEl, {
-      boxShadow: '0 0 46px rgba(255,224,153,1), 0 0 120px rgba(212,175,55,0.7)',
-      duration: 0.55, yoyo: true, repeat: 1, ease: 'sine.inOut'
-    }, '<')
     // 第三幕：依序（間隔 0.14s）俯衝飛入「已獲得貴族區」
     .to(flyEl, {
       x: destC.x - srcC.x,
@@ -379,6 +387,7 @@ window.animateNoblesEarned = function(nobles) {
       ease: 'power1.in',
       onComplete: () => {
         flyEl.remove();
+        playNobleLandSfx(); // 🔔 飛入已獲得貴族區音效
         // 命中：金色爆裂 + 已獲得區彈跳發光
         if (typeof spawnImpactBurst === 'function') {
           spawnImpactBurst(fxContainer, destC.x, destC.y, '#f1c40f');
