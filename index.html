@@ -291,7 +291,7 @@
       <div class="cap-bar" id="cap-txt" style="margin-top: 4px;">背包: 0 / 10</div>
       
       <div id="ai-dashboard-box" style="display:none; border-top:1px dashed rgba(255,255,255,0.15); padding-top:2px; margin-top:2px;">
-        <div style="font-size:0.55rem; color:#e74c3c; font-weight:700; margin-bottom:1px;">🤖 電腦 AI 金庫 (分數: <span id="ai-score-txt">0</span>)</div>
+        <div style="font-size:0.55rem; color:#e74c3c; font-weight:700; margin-bottom:1px;">🤖 <span id="ai-opponent-name">電腦 AI</span> 金庫 (分數: <span id="ai-score-txt">0</span>)</div>
         <div class="res-grid" id="ai-res-layer"></div>
       </div>
      </section>
@@ -385,6 +385,19 @@
   </div>
 </div>
 
+
+<!-- 🤖 帝國爭霸：AI 對手選擇 -->
+<div class="modal-overlay" id="ai-opponent-modal">
+  <div class="modal opponent-modal">
+    <button class="music-btn" style="position:absolute; top:10px; right:10px;" onclick="playUniformSfx(); window.cancelAiOpponentSelect();">✕</button>
+    <h2 class="modal-title">🤖 選擇你的對手</h2>
+    <p style="font-size:0.75rem; color:var(--text-muted); margin-bottom:12px;">點選一位挑戰者，聽聽他們的宣言！</p>
+    <div class="opponent-grid" id="opponent-grid"></div>
+    <div class="opponent-dialogue" id="opponent-dialogue">&nbsp;</div>
+    <button class="btn-primary" id="btn-enter-battle" disabled onclick="playUniformSfx(); window.confirmAiOpponentBattle();">⚔️ 進入對戰</button>
+  </div>
+</div>
+
 <div class="modal-overlay" id="win-modal">
   <div class="modal">
     <span style="font-size:2.5rem;" id="win-modal-icon">🏆</span>
@@ -393,6 +406,7 @@
     <p style="font-size:0.8rem; color:#ffe099; line-height:1.4;" id="modal-diff-result-txt"></p>
     <div style="display:flex; gap:8px; margin-top:12px; justify-content:center;">
       <button class="btn-replay" id="btn-restart" onclick="playUniformSfx(); restartGame();">重開新局</button>
+      <button class="btn-replay" id="btn-reselect-opponent" style="display:none;" onclick="playUniformSfx(); window.reselectAiOpponent();">🔄 重新選擇對手</button>
     </div>
   </div>
 </div>
