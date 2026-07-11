@@ -31,6 +31,10 @@
 html, body {
   height: calc(var(--vh, 1vh) * 100);
   min-height: calc(var(--vh, 1vh) * 100);
+  /* 📱 舞台置中：桌機時遊戲以手機長寬比呈現於畫面中央 */
+  display: flex;
+  justify-content: center;
+  align-items: center;
   background: 
     radial-gradient(circle at 50% 0%, rgba(212, 175, 55, 0.15) 0%, rgba(0, 0, 0, 0) 60%),
     radial-gradient(circle at center, #182e22 0%, #0a140f 80%, #050a07 100%);
@@ -44,7 +48,8 @@ html, body {
 }
 
 .shell {
-  max-width: 780px; 
+  /* 📱 尺寸由 fitStageToPhoneRatio() 動態指定為手機長寬比（9:19.5，上限 430px 寬）*/
+  width: 100%;
   margin: 0 auto;
   height: 100%;
   display: flex;
@@ -353,7 +358,8 @@ html, body {
 #floating-tutorial-widget { position: fixed !important; z-index: 10000002 !important; pointer-events: auto !important; }
 
 /* ── 📱 全新手機版：完美一頁式、零滾動佈局 (max-width: 430px) ── */
-@media (max-width: 430px) {
+/* 📱 舞台恆為手機比例：原 @media(max-width:430px) 規則已常駐生效 */
+
   html, body {
     padding: 2px;
     margin: 0;
@@ -426,7 +432,7 @@ html, body {
   /* 貴族區 */
   .nobles-section { margin-bottom: 0 !important; padding: 1px 0 !important; flex-shrink: 0 !important; }
   .nobles-grid { gap: 4px !important; }
- .noble-card { min-width: 0 !important; max-width: calc((100vw - 86px) / 4) !important; width: calc((100vw - 86px) / 4) !important; height: calc((100vw - 86px) / 4) !important; flex-shrink: 0 !important; }
+ .noble-card { min-width: 0 !important; max-width: calc((var(--stage-w, 100vw) - 86px) / 4) !important; width: calc((var(--stage-w, 100vw) - 86px) / 4) !important; height: calc((var(--stage-w, 100vw) - 86px) / 4) !important; flex-shrink: 0 !important; }
   .noble-pts { font-size: 0.58rem !important; }
   .noble-reqs { font-size: 0.36rem !important; }
 
@@ -485,9 +491,9 @@ html, body {
 
    /* 首席輔助官面板 - 手機版 */
  #guide-assistant-container {
-    width: calc((100vw - 86px) / 4) !important;
+    width: calc((var(--stage-w, 100vw) - 86px) / 4) !important;
     min-width: 0 !important;
-    max-width: calc((100vw - 86px) / 4) !important;
+    max-width: calc((var(--stage-w, 100vw) - 86px) / 4) !important;
     flex-shrink: 0 !important;
     padding: 2px !important;
   }
@@ -514,7 +520,7 @@ html, body {
   .modal-overlay { padding: 8px !important; }
   .modal { max-width: 100% !important; padding: 14px !important; max-height: 88dvh !important; overflow-y: auto !important; }
   .modal-title { font-size: 1rem !important; }
-}
+
 
 
 /* ── 補完：背包容量警示與成就橫幅動畫（原版 CSS 缺漏的類別） ── */
@@ -568,9 +574,10 @@ html, body {
 .ach-scroll-body::-webkit-scrollbar-thumb:hover { background: #ffe099; }
 .ach-scroll-body { scrollbar-width: thin; scrollbar-color: #d4af37 rgba(0,0,0,0.35); }
 
-@media (max-width: 430px) {
+/* 📱 舞台恆為手機比例：原 @media(max-width:430px) 規則已常駐生效 */
+
   .ach-modal { max-height: 86dvh; }
-}
+
 
 
 /* 🛡️ 產量徽章動畫：此 keyframes 原本缺失，導致 +N🛡️ 動畫不會播放、
@@ -592,9 +599,10 @@ html, body {
   background-position: center;
   box-shadow: 0 0 2px rgba(0,0,0,0.8);
 }
-@media (max-width: 430px) {
+/* 📱 舞台恆為手機比例：原 @media(max-width:430px) 規則已常駐生效 */
+
   .cost-dot-square { width: 4px !important; height: 4px !important; }
-}
+
 
 
 /* 🤖 帝國爭霸：對手選擇彈窗 */
@@ -663,7 +671,29 @@ html, body {
   from { box-shadow: 0 4px 14px rgba(212,175,55,0.35); }
   to   { box-shadow: 0 4px 26px rgba(212,175,55,0.75); }
 }
-@media (max-width: 430px) {
+/* 📱 舞台恆為手機比例：原 @media(max-width:430px) 規則已常駐生效 */
+
   .opponent-avatar { width: 64px; height: 84px; }
   .opponent-name { font-size: 0.78rem; }
+
+
+
+/* ═══════════ 📱 手機比例舞台系統 ═══════════ */
+/* 桌機（視窗寬 > 500px）時舞台加上金色外框與光暈，宛如置中的手機畫面 */
+body.stage-boxed .shell {
+  border: 1px solid rgba(212, 175, 55, 0.35);
+  border-radius: 14px;
+  box-shadow: 0 0 40px rgba(212, 175, 55, 0.18), 0 0 120px rgba(0, 0, 0, 0.8);
+  overflow: hidden;
+  padding: 4px 6px;
+  box-sizing: border-box;
+  background: var(--bg-deep, #0d0a07);
 }
+
+/* 所有彈窗寬度不得超過舞台（桌機/手機視覺一致） */
+.modal {
+  max-width: min(560px, calc(var(--stage-w, 430px) - 20px)) !important;
+}
+
+/* 進度條與開場元素同樣夾制在舞台寬內 */
+.preload-bar-track { width: min(320px, calc(var(--stage-w, 100vw) * 0.72)); }
