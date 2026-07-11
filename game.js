@@ -242,6 +242,7 @@ function animateCardFlightToGoldVault(cardId, providesColor, callback) {
       sourceDom.style.opacity = '';
       activeFlyingCardIds.delete(cardId);
 
+      playNobleLandSfx(); // 🔔 寶石卡飛入金庫：與貴族入區相同音效
       spawnImpactBurst(fxContainer, endC.x, endC.y, fxColor);
 
       if (vaultDom) {
@@ -263,12 +264,18 @@ function animateCardFlightToGoldVault(cardId, providesColor, callback) {
 // ==========================================
 // 👑 貴族獲得動畫：飛出 → 中央放大旋轉展示 → 飛入已獲得貴族區
 // ==========================================
-// 🔔 飛入已獲得貴族區音效
+// 🔔 飛入音效（貴族入區 / 寶石卡入庫共用）
+// ⚠️ 修正：settings 並非全域變數（存在於 CoreState 內），原寫法拋出 ReferenceError，
+// 不僅音效沒播，還炸斷 onComplete 鏈導致動畫計數卡死、勝利判定永遠被延後。
 const NOBLE_LAND_SFX_URL = 'https://assets.mixkit.co/active_storage/sfx/2144/2144-preview.mp3';
+const _landSfxBase = new Audio(NOBLE_LAND_SFX_URL); // 預載一次
+_landSfxBase.preload = 'auto';
 function playNobleLandSfx() {
-  if (settings && settings.isSfxMuted) return;
   try {
-    const a = new Audio(NOBLE_LAND_SFX_URL); // 每次獨立實體，多張貴族連續飛入可重疊播放
+    if (CoreState && CoreState.get().settings.isSfxMuted) return;
+  } catch (e) { /* CoreState 未就緒時照常播放 */ }
+  try {
+    const a = _landSfxBase.cloneNode(); // 複製實體：多張連續飛入可重疊播放且免重新下載
     a.volume = 0.85;
     a.play().catch(() => {});
   } catch (e) {}
@@ -319,7 +326,11 @@ window.animateNoblesEarned = function(nobles) {
   const destC = { x: destRect.left + destRect.width / 2, y: destRect.top + destRect.height / 2 };
 
   let finished = 0;
-  const finishOne = () => { if (++finished >= N) _nobleAnimBatchDone(); };
+  let batchClosed = false;
+  const closeBatch = () => { if (!batchClosed) { batchClosed = true; _nobleAnimBatchDone(); } };
+  const finishOne = () => { if (++finished >= N) closeBatch(); };
+  // 🛡️ 保險絲：就算個別補間被外力殺掉，也在理論最長時長後強制收尾，勝利判定絕不卡死
+  setTimeout(closeBatch, (0.65 + 0.5 + 0.55 + 0.1 + N * 0.14) * 1000 + 1500);
 
   nobles.forEach((n, i) => {
     // 從貴族議事堂找到本尊卡片（此刻尚未重繪，仍在原位）
@@ -386,15 +397,17 @@ window.animateNoblesEarned = function(nobles) {
       duration: 0.1,
       ease: 'power1.in',
       onComplete: () => {
-        flyEl.remove();
-        playNobleLandSfx(); // 🔔 飛入已獲得貴族區音效
-        // 命中：金色爆裂 + 已獲得區彈跳發光
-        if (typeof spawnImpactBurst === 'function') {
-          spawnImpactBurst(fxContainer, destC.x, destC.y, '#f1c40f');
-        }
-        gsap.timeline()
-          .fromTo(destEl, { scale: 1 }, { scale: 1.18, duration: 0.14, ease: 'back.out(3)' })
-          .to(destEl, { scale: 1, duration: 0.45, ease: 'elastic.out(1, 0.45)' });
+        // ⚠️ 任何裝飾特效出錯都不得阻斷計數，否則勝利視窗會被永久延後
+        try {
+          flyEl.remove();
+          playNobleLandSfx(); // 🔔 飛入已獲得貴族區音效
+          if (typeof spawnImpactBurst === 'function') {
+            spawnImpactBurst(fxContainer, destC.x, destC.y, '#f1c40f');
+          }
+          gsap.timeline()
+            .fromTo(destEl, { scale: 1 }, { scale: 1.18, duration: 0.14, ease: 'back.out(3)' })
+            .to(destEl, { scale: 1, duration: 0.45, ease: 'elastic.out(1, 0.45)' });
+        } catch (e) { console.error(e); }
         finishOne();
       }
     });
