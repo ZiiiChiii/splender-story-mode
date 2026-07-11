@@ -175,6 +175,8 @@
 <audio id="sfx-ach-expert" src="https://assets.mixkit.co/active_storage/sfx/2063/2063-preview.mp3"></audio>
 <audio id="sfx-ach-master" src="https://assets.mixkit.co/active_storage/sfx/2059/2059-preview.mp3"></audio>
 
+<!-- 📱 邏輯舞台：430×932 固定設計尺寸，JS 依視窗等比縮放（transform: scale） -->
+<div id="stage">
 <div id="effects-layer"></div>
 <div id="game-preloader">
     <div class="gem-scene">
@@ -411,6 +413,7 @@
   </div>
 </div>
 
+</div><!-- /#stage -->
 <script src="core/tutorial.js"></script>
 <script src="game.js" type="module"></script>
 </body>
