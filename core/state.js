@@ -49,7 +49,7 @@ let globalState = {
     isMusicMuted: false,
     isSfxMuted: false,
     talentPool: [],
-    selectedAssistant: 'ast1'
+    selectedAssistant: null   // 輔助官專屬故事模式，非故事模式一律為 null
   }
 };
 
