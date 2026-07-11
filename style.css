@@ -581,3 +581,17 @@ html, body {
   70%  { opacity: 1; transform: translateY(-8px) scale(1); }
   100% { opacity: 0; transform: translateY(-20px) scale(0.9); }
 }
+
+
+/* ⚜️ 貴族需求圖示：正方形（代表所需「卡牌」張數，與圓形籌碼區隔） */
+.cost-dot-square {
+  display: inline-block;
+  width: 6px; height: 6px;
+  border-radius: 1.5px;             /* 方形微圓角 */
+  background-size: cover;
+  background-position: center;
+  box-shadow: 0 0 2px rgba(0,0,0,0.8);
+}
+@media (max-width: 430px) {
+  .cost-dot-square { width: 4px !important; height: 4px !important; }
+}
