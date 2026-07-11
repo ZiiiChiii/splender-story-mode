@@ -100,6 +100,57 @@ function setDynamicVh() {
 // ==========================================
 // 3. GSAP 3D 拋物線飛行與金庫 Bounce 動畫
 // ==========================================
+// 各寶石顏色的特效色票（拖尾、爆裂、光暈共用）
+const GEM_FX_COLORS = { w:'#ffffff', u:'#4aa3ff', g:'#2ecc71', r:'#ff5f52', k:'#c9bde0', o:'#f1c40f' };
+
+// ✦ 拖尾光點
+function spawnTrailSparkle(fxContainer, x, y, color) {
+  const s = document.createElement('div');
+  s.style.cssText = `position:fixed;left:${x}px;top:${y}px;width:8px;height:8px;margin:-4px 0 0 -4px;` +
+    `border-radius:50%;pointer-events:none;z-index:9999;` +
+    `background:radial-gradient(circle, #fff 0%, ${color} 45%, transparent 75%);`;
+  fxContainer.appendChild(s);
+  gsap.to(s, {
+    x: (Math.random() - 0.5) * 36,
+    y: (Math.random() - 0.5) * 36 + 14,
+    scale: 0.2, opacity: 0,
+    duration: 0.5 + Math.random() * 0.3,
+    ease: 'power1.out',
+    onComplete: () => s.remove()
+  });
+}
+
+// 💥 命中金庫：色彩爆裂 + 擴散光環
+function spawnImpactBurst(fxContainer, x, y, color) {
+  // 擴散光環
+  const ring = document.createElement('div');
+  ring.style.cssText = `position:fixed;left:${x}px;top:${y}px;width:14px;height:14px;margin:-7px 0 0 -7px;` +
+    `border-radius:50%;pointer-events:none;z-index:9999;border:3px solid ${color};` +
+    `box-shadow:0 0 14px ${color};`;
+  fxContainer.appendChild(ring);
+  gsap.to(ring, { scale: 4.2, opacity: 0, duration: 0.55, ease: 'power2.out', onComplete: () => ring.remove() });
+
+  // 放射粒子
+  for (let i = 0; i < 12; i++) {
+    const p = document.createElement('div');
+    const size = 5 + Math.random() * 6;
+    p.style.cssText = `position:fixed;left:${x}px;top:${y}px;width:${size}px;height:${size}px;` +
+      `margin:${-size/2}px 0 0 ${-size/2}px;border-radius:50%;pointer-events:none;z-index:9999;` +
+      `background:radial-gradient(circle, #fff 0%, ${color} 55%, transparent 80%);`;
+    fxContainer.appendChild(p);
+    const ang = (Math.PI * 2 * i) / 12 + Math.random() * 0.5;
+    const dist = 34 + Math.random() * 42;
+    gsap.to(p, {
+      x: Math.cos(ang) * dist,
+      y: Math.sin(ang) * dist - 8,
+      scale: 0.15, opacity: 0,
+      duration: 0.5 + Math.random() * 0.35,
+      ease: 'power2.out',
+      onComplete: () => p.remove()
+    });
+  }
+}
+
 function animateCardFlightToGoldVault(cardId, providesColor, callback) {
   const sourceDom = document.getElementById(`dom-card-${cardId}`);
   const vaultDom = document.getElementById(`vault-target-${providesColor}`);
@@ -116,9 +167,14 @@ function animateCardFlightToGoldVault(cardId, providesColor, callback) {
     window._idleTweensMap.delete(flyingCardDomId);
   }
 
+  const fxColor = GEM_FX_COLORS[providesColor] || '#f1c40f';
   const start = sourceDom.getBoundingClientRect();
   const finalTarget = vaultDom || document.getElementById('guide-dashboard') || document.body;
   const end = finalTarget.getBoundingClientRect();
+
+  // ✨ 精準命中：以「起點中心 → 金庫對應寶石格中心」計算，貝茲曲線終點就是寶石格正中央
+  const startC = { x: start.left + start.width / 2, y: start.top + start.height / 2 };
+  const endC   = { x: end.left + end.width / 2,     y: end.top + end.height / 2 };
 
   const flyCard = sourceDom.cloneNode(true);
   flyCard.removeAttribute('id');
@@ -130,34 +186,55 @@ function animateCardFlightToGoldVault(cardId, providesColor, callback) {
   flyCard.style.margin = '0';
   flyCard.style.zIndex = '10000';
   flyCard.style.pointerEvents = 'none';
+  flyCard.style.boxShadow = `0 0 22px ${fxColor}, 0 0 55px ${fxColor}55`;
+  flyCard.style.borderRadius = '10px';
 
   gsap.set(flyCard, { transformOrigin: "center center", transformStyle: "preserve-3d", perspective: 800 });
   fxContainer.appendChild(flyCard);
 
   sourceDom.style.opacity = '0.15';
 
-  const deltaX = (end.left + end.width / 2) - (start.left + start.width / 2);
-  const deltaY = (end.top + end.height / 2) - (start.top + start.height / 2);
+  // 拋物線控制點：飛行弧頂（往上拱、稍微偏向側面，弧線更有拋物感）
+  const ctrl = {
+    x: (startC.x + endC.x) / 2 + (endC.x > startC.x ? -70 : 70),
+    y: Math.min(startC.y, endC.y) - 150
+  };
+
+  const prog = { t: 0 };
+  let trailTick = 0;
 
   const tl = gsap.timeline();
 
+  // 第一拍：卡片彈起發光（蓄力感）
   tl.to(flyCard, {
-    duration: 0.15,
-    scale: 1.12,
-    ease: "power2.out"
+    duration: 0.18,
+    scale: 1.16,
+    y: -14,
+    ease: "back.out(2.5)"
+  })
+  // 第二拍：沿貝茲曲線精準飛向對應寶石格，途中 3D 翻轉縮小 + 灑落色彩拖尾
+  .to(prog, {
+    t: 1,
+    duration: 0.72,
+    ease: "power1.in",
+    onUpdate: () => {
+      const t = prog.t, mt = 1 - t;
+      const cx = mt * mt * startC.x + 2 * mt * t * ctrl.x + t * t * endC.x;
+      const cy = mt * mt * startC.y + 2 * mt * t * ctrl.y + t * t * endC.y;
+      gsap.set(flyCard, { x: cx - startC.x, y: cy - startC.y });
+      if (++trailTick % 2 === 0) spawnTrailSparkle(fxContainer, cx, cy, fxColor);
+    }
   })
   .to(flyCard, {
-    duration: 0.65,
-    x: deltaX,
-    y: deltaY - 90,
-    rotationY: 180,
-    rotationX: 15,
-    scale: 0.15,
-    ease: "power2.inOut"
-  })
+    duration: 0.72,
+    rotationY: 360,
+    rotationX: 24,
+    scale: 0.12,
+    ease: "power2.in"
+  }, "<")
+  // 第三拍：命中瞬間 —— 卡片湮滅、色彩爆裂、金庫寶石格彈跳發光
   .to(flyCard, {
-    duration: 0.15,
-    scale: 0,
+    duration: 0.1,
     opacity: 0,
     ease: "power1.in",
     onComplete: () => {
@@ -165,13 +242,16 @@ function animateCardFlightToGoldVault(cardId, providesColor, callback) {
       sourceDom.style.opacity = '';
       activeFlyingCardIds.delete(cardId);
 
+      spawnImpactBurst(fxContainer, endC.x, endC.y, fxColor);
+
       if (vaultDom) {
+        gsap.timeline()
+          .fromTo(vaultDom, { scale: 1 }, { scale: 1.5, duration: 0.14, ease: "back.out(3)" })
+          .to(vaultDom, { scale: 1, duration: 0.5, ease: "elastic.out(1, 0.4)" });
         gsap.fromTo(vaultDom,
-          { scale: 1 },
-          { scale: 1.35, duration: 0.12, yoyo: true, repeat: 1, ease: "back.out(2)",
-            onComplete: () => { gsap.set(vaultDom, { scale: 1 }); }
-          }
-        );
+          { filter: `drop-shadow(0 0 14px ${fxColor})` },
+          { filter: 'drop-shadow(0 0 0px transparent)', duration: 0.8, ease: 'power2.out',
+            clearProps: 'filter' });
       }
 
       if (callback) callback();
@@ -578,38 +658,56 @@ function setupIdleCardAnimations() {
 
     currentCardIds.add(cardId);
 
-    if (window._idleTweensMap.has(cardId)) {
-      const existingTween = window._idleTweensMap.get(cardId);
-      if (existingTween && !existingTween.killed) {
-        return;
-      }
+    // ✨ 關鍵修正：render() 會整批重建卡片 DOM，舊補間其實綁在「已脫離文件的舊元素」上，
+    // 導致新元素完全沒有漂浮 → 看起來就是被其他動畫打斷後停住。
+    // 唯有補間仍綁在「目前這顆元素」且元素仍在畫面上時才沿用；
+    // 否則殺掉殭屍補間、替新元素接續原本的漂浮相位重建（無縫，不會抖動歸零再重來）。
+    const existing = window._idleTweensMap.get(cardId);
+    if (existing) {
+      const tgt = existing.targets ? existing.targets()[0] : null;
+      if (tgt === el && el.isConnected) return; // 同一顆元素仍活著 → 漂浮完全不中斷
+      const resumeAt = (typeof existing.time === 'function') ? existing.time() : 0;
+      existing.kill();
       window._idleTweensMap.delete(cardId);
+      createIdleFloatTween(el, cardId, i, resumeAt);
+      return;
     }
 
-    gsap.killTweensOf(el);
-    gsap.set(el, { y: 0, rotation: 0 });
-
-    const tween = gsap.to(el, {
-      y: -6,
-      rotation: 0.8,
-      duration: 1.6 + (i % 4) * 0.18,
-      repeat: -1,
-      yoyo: true,
-      ease: "sine.inOut",
-      delay: (i % 4) * 0.3
-    });
-    window._idleTweensMap.set(cardId, tween);
+    createIdleFloatTween(el, cardId, i, 0);
   });
 
+  // 只有「已被買走離場」或「不再買得起」的卡才停止漂浮；
+  // 停止時以 0.3 秒緩緩降回原位，而不是瞬間定格。
   for (const [id, tween] of window._idleTweensMap.entries()) {
     if (!currentCardIds.has(id)) {
+      const tgt = tween.targets ? tween.targets()[0] : null;
       tween.kill();
       window._idleTweensMap.delete(id);
-
-      const el = document.getElementById(id);
-      if (el) gsap.set(el, { y: 0, rotation: 0 });
+      const el = document.getElementById(id) || tgt;
+      if (el && el.isConnected) {
+        gsap.to(el, { y: 0, rotation: 0, duration: 0.3, ease: 'sine.out' });
+      }
     }
   }
+}
+
+// 建立單張卡的漂浮補間；resumeAt > 0 時從原本的相位接續播放（重建 DOM 後視覺無縫）
+function createIdleFloatTween(el, cardId, i, resumeAt) {
+  gsap.killTweensOf(el);
+  const tween = gsap.to(el, {
+    y: -6,
+    rotation: 0.8,
+    duration: 1.6 + (i % 4) * 0.18,
+    repeat: -1,
+    yoyo: true,
+    ease: "sine.inOut",
+    delay: resumeAt > 0 ? 0 : (i % 4) * 0.3
+  });
+  if (resumeAt > 0) {
+    const cycle = tween.duration() * 2; // yoyo 一去一回為一個完整週期
+    tween.time(resumeAt % cycle);
+  }
+  window._idleTweensMap.set(cardId, tween);
 }
 
 window.handleBannerZoneClick = function() {
