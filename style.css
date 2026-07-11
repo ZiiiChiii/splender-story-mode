@@ -4,7 +4,7 @@
 :root {
   /* 📱 舞台邏輯尺寸預設值：JS 尚未執行時版面即正確（修正重新整理瞬間貴族卡爆大） */
   --stage-w: 430px;
-  --stage-h: 860px;
+  --stage-h: 716px;
   --bg-table:    #16100c;
   --surface:     #1e1915;
   --felt-green:  #0e1c15;
@@ -686,7 +686,7 @@ html, body {
 /* ═══════════ 📱 邏輯舞台系統（430×932 + 整體等比縮放） ═══════════ */
 #stage {
   width: 430px;
-  height: 860px; /* 長寬 2:1 */
+  height: 716px; /* 長寬比 2 : 1.2 */
   flex: 0 0 auto;
   position: relative;
   transform-origin: center center; /* 由 fitStageToPhoneRatio() 設定 scale */
