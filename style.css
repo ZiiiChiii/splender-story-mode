@@ -632,8 +632,10 @@ html, body {
 .opponent-diff {
   font-size: 0.62rem; font-weight: 800; padding: 2px 10px; border-radius: 999px;
 }
+.opponent-diff.easy   { background: rgba(74,163,255,0.16); color: #7adcff; border: 1px solid #4aa3ff; }
 .opponent-diff.normal { background: rgba(46,204,113,0.16); color: #2ecc71; border: 1px solid #2ecc71; }
-.opponent-diff.hard   { background: rgba(231,76,60,0.16);  color: #ff7675; border: 1px solid #e74c3c; }
+.opponent-diff.hard,
+.opponent-diff.master { background: rgba(231,76,60,0.16);  color: #ff7675; border: 1px solid #e74c3c; }
 .opponent-dialogue {
   min-height: 2.4em;
   margin-bottom: 12px;
