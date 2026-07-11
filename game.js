@@ -54,6 +54,7 @@ window.playAchievementSfx = function(tier) {
 
 let lastRenderedCardIds = new Set();
 let lastPlayerState = null;
+let lastAiState = null;
 
 let activeFlyingCardIds = new Set();
 let isAnimating = false;
@@ -151,9 +152,9 @@ function spawnImpactBurst(fxContainer, x, y, color) {
   }
 }
 
-function animateCardFlightToGoldVault(cardId, providesColor, callback) {
+function animateCardFlightToGoldVault(cardId, providesColor, callback, vaultPrefix = 'vault-target') {
   const sourceDom = document.getElementById(`dom-card-${cardId}`);
-  const vaultDom = document.getElementById(`vault-target-${providesColor}`);
+  const vaultDom = document.getElementById(`${vaultPrefix}-${providesColor}`);
   const fxContainer = document.getElementById('effects-layer');
 
   if (!sourceDom) { if (callback) callback(); return; }
@@ -169,7 +170,9 @@ function animateCardFlightToGoldVault(cardId, providesColor, callback) {
 
   const fxColor = GEM_FX_COLORS[providesColor] || '#f1c40f';
   const start = sourceDom.getBoundingClientRect();
-  const finalTarget = vaultDom || document.getElementById('guide-dashboard') || document.body;
+  const fallbackDash = (vaultPrefix === 'ai-vault-target')
+    ? document.getElementById('ai-dashboard-box') : document.getElementById('guide-dashboard');
+  const finalTarget = vaultDom || fallbackDash || document.body;
   const end = finalTarget.getBoundingClientRect();
 
   // ✨ 精準命中：以「起點中心 → 金庫對應寶石格中心」計算，貝茲曲線終點就是寶石格正中央
@@ -261,6 +264,8 @@ function animateCardFlightToGoldVault(cardId, providesColor, callback) {
   });
 }
 
+window.animateCardFlightToGoldVault = animateCardFlightToGoldVault;
+
 // ==========================================
 // 👑 貴族獲得動畫：飛出 → 中央放大旋轉展示 → 飛入已獲得貴族區
 // ==========================================
@@ -301,12 +306,14 @@ function _nobleAnimBatchDone() {
   }
 }
 
-window.animateNoblesEarned = function(nobles) {
+window.animateNoblesEarned = function(nobles, actor = 'player') {
   const fxContainer = document.getElementById('effects-layer');
   const noblesLayer = document.getElementById('nobles-layer');
-  const destEl = document.getElementById('earned-nobles-layer')
-              || document.getElementById('left-earned-nobles')
-              || document.body;
+  const destEl = (actor === 'ai')
+    ? (document.getElementById('ai-dashboard-box') || document.body)
+    : (document.getElementById('earned-nobles-layer')
+        || document.getElementById('left-earned-nobles')
+        || document.body);
   if (!fxContainer || !nobles || nobles.length === 0) return;
 
   _nobleAnimRunning++;
@@ -414,7 +421,7 @@ window.animateNoblesEarned = function(nobles) {
   });
 };
 
-function renderDashboardGems(targetElementId, actorData, diffs) {
+function renderDashboardGems(targetElementId, actorData, diffs, idPrefix = 'vault-target') {
   const container = document.getElementById(targetElementId);
   if (!container) return;
 
@@ -422,7 +429,7 @@ function renderDashboardGems(targetElementId, actorData, diffs) {
   container.querySelectorAll('.floating-diff').forEach(span => {
     const block = span.closest('.res-block');
     if (block && block.id) {
-      const color = block.id.replace('vault-target-', '');
+      const color = block.id.replace(idPrefix + '-', '');
       survivingDiffs[color] = survivingDiffs[color] || [];
       span.remove();
       survivingDiffs[color].push(span);
@@ -439,7 +446,7 @@ function renderDashboardGems(targetElementId, actorData, diffs) {
       ? `<span class="floating-permanent-anim">+${diffs.bonus[k]} 🛡️</span>` : '';
 
     html += `
-      <div class="res-block" id="vault-target-${k}">
+      <div class="res-block" id="${idPrefix}-${k}">
         ${bDiffHtml}
         <div class="res-circle ${GEM_CLASSES[k]}"></div>
         <div class="res-text-group">
@@ -456,7 +463,7 @@ function renderDashboardGems(targetElementId, actorData, diffs) {
   container.innerHTML = html;
 
   for (const [color, spans] of Object.entries(survivingDiffs)) {
-    const blockEl = document.getElementById(`vault-target-${color}`);
+    const blockEl = document.getElementById(`${idPrefix}-${color}`);
     if (blockEl) spans.forEach(s => blockEl.appendChild(s));
   }
 
@@ -465,7 +472,7 @@ function renderDashboardGems(targetElementId, actorData, diffs) {
       const diff = diffs.tokens[k];
       if (!diff || diff === 0) return;
 
-      const blockEl = document.getElementById(`vault-target-${k}`);
+      const blockEl = document.getElementById(`${idPrefix}-${k}`);
       if (!blockEl) return;
 
       const diffSpan = document.createElement('span');
@@ -607,7 +614,16 @@ window.render = function() {
   renderDashboardGems('res-layer', player, diffs);
   if (isAiBattle) {
     document.getElementById('ai-score-txt').textContent = fullState.ai.score;
-    renderDashboardGems('ai-res-layer', fullState.ai, null);
+    // 🤖 AI 金庫同樣計算前後差異，浮動 +N（籌碼）與 +N🛡️（產量）動畫與玩家完全一致
+    let aiDiffs = { tokens: {}, bonus: {} };
+    if (lastAiState) {
+      for (let k in fullState.ai.tokens) aiDiffs.tokens[k] = fullState.ai.tokens[k] - lastAiState.tokens[k];
+      for (let k in fullState.ai.bonus) aiDiffs.bonus[k] = fullState.ai.bonus[k] - lastAiState.bonus[k];
+    }
+    lastAiState = deepClone(fullState.ai);
+    renderDashboardGems('ai-res-layer', fullState.ai, aiDiffs, 'ai-vault-target');
+  } else {
+    lastAiState = null;
   }
 
   const currentBagCap = ActionDispatcher.getPlayerBagCap();
