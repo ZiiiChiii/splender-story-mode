@@ -535,7 +535,11 @@ html, body {
 
   /* Modal */
   .modal-overlay { padding: 8px !important; }
-  .modal { max-width: 100% !important; padding: 14px !important; max-height: 88dvh !important; overflow-y: auto !important; }
+  /* ⚠️ 彈窗位於被 transform:scale 縮放的 #stage 內，max-height 不可用 dvh/vh：
+     視窗單位算出的邏輯高度會再被舞台倍率放大（桌機 ×1.2+），
+     超出視窗後被 body overflow:hidden 裁切，看起來像被遮罩切邊。
+     一律改以 --stage-h 為基準（扣除 overlay padding 的安全邊距）。 */
+  .modal { max-width: 100% !important; padding: 14px !important; max-height: calc(var(--stage-h, 716px) - 40px) !important; overflow-y: auto !important; }
   .modal-title { font-size: 1rem !important; }
 
 
@@ -558,7 +562,7 @@ html, body {
 /* ⚜️ 皇家榮譽堂（成就歷程）：固定視窗高度 + 內部滾輪，不再整串撐爆畫面 */
 .ach-modal {
   max-width: 560px !important;
-  max-height: 82dvh;
+  max-height: calc(var(--stage-h, 716px) - 40px);
   display: flex;
   flex-direction: column;
   overflow: hidden; /* 滾動交給內部 .ach-scroll-body */
@@ -593,7 +597,7 @@ html, body {
 
 /* 📱 舞台恆為手機比例：原 @media(max-width:430px) 規則已常駐生效 */
 
-  .ach-modal { max-height: 86dvh; }
+  .ach-modal { max-height: calc(var(--stage-h, 716px) - 40px); }
 
 
 
