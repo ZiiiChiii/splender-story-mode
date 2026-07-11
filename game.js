@@ -173,7 +173,9 @@ function animateCardFlightToGoldVault(cardId, providesColor, callback, vaultPref
   const start = window.stageLocalRect(sourceDom);
   const fallbackDash = (vaultPrefix === 'ai-vault-target')
     ? document.getElementById('ai-dashboard-box') : document.getElementById('guide-dashboard');
-  const finalTarget = vaultDom || fallbackDash || document.getElementById('stage') || document.body;
+  // 🎯 精準命中：優先鎖定格內的「圓形寶石圖示」正中央，而非整個格子的幾何中心
+  const gemIcon = vaultDom ? vaultDom.querySelector('.res-circle') : null;
+  const finalTarget = gemIcon || vaultDom || fallbackDash || document.getElementById('stage') || document.body;
   const end = window.stageLocalRect(finalTarget);
 
   // ✨ 精準命中：以「起點中心 → 金庫對應寶石格中心」計算，貝茲曲線終點就是寶石格正中央
@@ -209,12 +211,15 @@ function animateCardFlightToGoldVault(cardId, providesColor, callback, vaultPref
 
   const tl = gsap.timeline();
 
-  // 第一拍：卡片微彈發光（蓄力感，幅度收斂避免過度放大）
+  // 🎯 終點縮放 = 寶石圖示大小 ÷ 卡片大小（落地時恰好與寶石同尺寸，不多不少）
+  const destScale = Math.max(0.06, Math.min(0.3, (end.width * 0.9) / start.width));
+
+  // 第一拍：卡片原尺寸發光微抬（完全不放大）
   tl.to(flyCard, {
-    duration: 0.15,
-    scale: 1.06,
-    y: -10,
-    ease: "back.out(2)"
+    duration: 0.12,
+    scale: 1.0,
+    y: -8,
+    ease: "power1.out"
   })
   // 第二拍：沿貝茲曲線精準飛向對應寶石格，途中 3D 翻轉縮小 + 灑落色彩拖尾
   .to(prog, {
@@ -233,8 +238,8 @@ function animateCardFlightToGoldVault(cardId, providesColor, callback, vaultPref
     duration: 0.72,
     rotationY: 360,
     rotationX: 24,
-    scale: 0.1,
-    ease: "power1.out"   /* 提早收縮：起飛不久就快速縮小，飛行全程輕巧不巨大 */
+    scale: destScale,
+    ease: "power1.out"   /* 提早收縮：起飛不久就快速縮小，落地恰與寶石圖示同大 */
   }, "<")
   // 第三拍：命中瞬間 —— 卡片湮滅、色彩爆裂、金庫寶石格彈跳發光
   .to(flyCard, {
@@ -502,16 +507,18 @@ function renderDashboardGems(targetElementId, actorData, diffs, idPrefix = 'vaul
 // 手機 scale≈1 原生呈現；桌機 scale 放大 → 文字/卡牌物理變大，兩端像素級一致。
 // ==========================================
 const STAGE_W = 430;   // 邏輯設計寬
-const STAGE_H = 860;   // 邏輯設計高（長寬 2:1）
+const STAGE_H = 716;   // 邏輯設計高（長寬比 2 : 1.2 → 430 × 2/1.2 ≈ 716）
 
 function fitStageToPhoneRatio() {
   const stage = document.getElementById('stage');
   if (!stage) return;
   const vw = window.innerWidth, vh = window.innerHeight;
 
-  // 等比縮放：上下各保留視窗高 1% 的空隙，再取寬/高中較小的縮放率完整入鏡
-  const vGap = vh * 0.01;
-  const z = Math.min(vw / STAGE_W, (vh - vGap * 2) / STAGE_H);
+  // 等比縮放：手機版上下各留 0.5%、兩側各留 0.1% 空隙；桌機維持上下各 1%
+  const isMobileView = vw <= 500;
+  const vGap = vh * (isMobileView ? 0.005 : 0.01);
+  const hGap = isMobileView ? vw * 0.001 : 0;
+  const z = Math.min((vw - hGap * 2) / STAGE_W, (vGap ? vh - vGap * 2 : vh) / STAGE_H);
   stage.style.transform = `scale(${z})`;
 
   // 桌機（有明顯留白）時加上手機外框裝飾
