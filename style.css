@@ -296,6 +296,18 @@ html, body {
   box-sizing: border-box;
   padding: 4px;
 }
+/* 🔒 保留區「暫無契約手牌」提示：橫跨 4 欄的扁平提示條。
+   ⚠️ 必須解除 .card 的 aspect-ratio 1:1（含手機版 !important 規則），
+   否則佔位卡會撐成 ~253px 的巨型正方形，把提示文字推出可視範圍、
+   並讓 #reserved-layer 溢出舞台底部約 180px。 */
+#reserved-layer .card.empty.reserved-empty-hint {
+  grid-column: span 4;
+  aspect-ratio: auto !important;
+  height: auto !important;
+  min-height: 48px;
+  align-self: stretch;
+  font-size: 0.55rem;
+}
 
 
 .modal-overlay { position:fixed; inset:0; background:rgba(0,0,0,0.85); backdrop-filter:blur(5px); display:flex; align-items:center; justify-content:center; padding:20px; z-index:2000; opacity:0; pointer-events:none; transition:opacity 0.3s ease; }
