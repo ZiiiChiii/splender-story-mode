@@ -495,6 +495,79 @@ function renderDashboardGems(targetElementId, actorData, diffs, idPrefix = 'vaul
 }
 
 // ==========================================
+// 🤖 帝國爭霸：AI 對手選擇系統
+// ==========================================
+const AI_OPPONENTS = [
+  { id: 'tracy',  name: '翠席兒', img: 'https://i.ibb.co/39L2xNMT/1.png',
+    difficulty: 'normal', diffLabel: '普通', quote: '讓我們一起享受遊戲吧！' },
+  { id: 'midou',  name: '米斗',   img: 'https://i.ibb.co/V0RLs3Pz/image.png',
+    difficulty: 'normal', diffLabel: '普通', quote: '看看你有多少能耐！' },
+  { id: 'defik',  name: '狄菲克', img: 'https://i.ibb.co/7xHk6FN2/image.png',
+    difficulty: 'hard',   diffLabel: '困難', quote: '哦？試著拿出你的全部本事來打敗我吧！' }
+];
+let _pickedOpponentIdx = null;
+
+window.openAiOpponentModal = function() {
+  const grid = document.getElementById('opponent-grid');
+  const dlg = document.getElementById('opponent-dialogue');
+  const btn = document.getElementById('btn-enter-battle');
+  if (!grid) return;
+
+  _pickedOpponentIdx = null;
+  if (dlg) dlg.innerHTML = '&nbsp;';
+  if (btn) { btn.disabled = true; btn.classList.remove('ready'); }
+
+  grid.innerHTML = AI_OPPONENTS.map((o, i) => `
+    <div class="opponent-card" id="opp-card-${i}" onclick="playUniformSfx(); window.chooseAiOpponent(${i})">
+      <img class="opponent-avatar" src="${o.img}" alt="${o.name}">
+      <div class="opponent-name">${o.name}</div>
+      <div class="opponent-diff ${o.difficulty}">難度：${o.diffLabel}</div>
+    </div>
+  `).join('');
+
+  document.getElementById('ai-opponent-modal')?.classList.add('show');
+};
+
+window.chooseAiOpponent = function(idx) {
+  _pickedOpponentIdx = idx;
+  const o = AI_OPPONENTS[idx];
+
+  AI_OPPONENTS.forEach((_, i) => {
+    document.getElementById(`opp-card-${i}`)?.classList.toggle('selected', i === idx);
+  });
+
+  // 選擇後對話（角色宣言）
+  const dlg = document.getElementById('opponent-dialogue');
+  if (dlg) dlg.innerHTML = `<b style="color:#ffe099;">${o.name}</b>：「${o.quote}」`;
+
+  // 💡 亮起【進入對戰】按鈕
+  const btn = document.getElementById('btn-enter-battle');
+  if (btn) { btn.disabled = false; btn.classList.add('ready'); }
+};
+
+window.confirmAiOpponentBattle = function() {
+  if (_pickedOpponentIdx === null) return;
+  const o = AI_OPPONENTS[_pickedOpponentIdx];
+  const state = CoreState.get();
+  state.settings.aiOpponent = { id: o.id, name: o.name, img: o.img, difficulty: o.difficulty };
+
+  document.getElementById('ai-opponent-modal')?.classList.remove('show');
+  ActionDispatcher.dispatch('INIT_GAME'); // setupNewGame 會依 aiOpponent 套用難度
+};
+
+// ✕ 取消選擇 → 退回成就模式
+window.cancelAiOpponentSelect = function() {
+  document.getElementById('ai-opponent-modal')?.classList.remove('show');
+  ActionDispatcher.dispatch('SWITCH_MODE', { mode: 'singlePlayer' });
+};
+
+// 結算視窗「重新選擇對手」
+window.reselectAiOpponent = function() {
+  document.getElementById('win-modal')?.classList.remove('show');
+  window.openAiOpponentModal();
+};
+
+// ==========================================
 // 🎵 依遊戲模式切換背景音樂
 // ==========================================
 const BG_TRACKS = {
@@ -654,6 +727,11 @@ window.render = function() {
   renderDashboardGems('res-layer', player, diffs);
   if (isAiBattle) {
     document.getElementById('ai-score-txt').textContent = fullState.ai.score;
+    const oppNameEl = document.getElementById('ai-opponent-name');
+    if (oppNameEl) {
+      oppNameEl.textContent = (isvsAI && fullState.settings.aiOpponent)
+        ? fullState.settings.aiOpponent.name : '電腦 AI';
+    }
     // 🤖 AI 金庫同樣計算前後差異，浮動 +N（籌碼）與 +N🛡️（產量）動畫與玩家完全一致
     // ⚠️ AI 金庫只顯示籌碼 +N；「+N 🛡️」產量徽章動畫在 AI 側一律移除
     //（買卡動畫本身已足夠表達，且徽章曾因 keyframes 缺失而卡住不消失）
@@ -1239,6 +1317,8 @@ window.addEventListener('DOMContentLoaded', async () => {
 
   // ✨ 收集遊戲中所有需要快取的圖片網址（含 5 色卡片首圖、貴族、籌碼、輔助官立繪）
   const imagesToCache = [
+    // 🤖 帝國爭霸對手立繪
+    'https://i.ibb.co/V0RLs3Pz/image.png', 'https://i.ibb.co/7xHk6FN2/image.png',
     'https://i.ibb.co/ZpJqvt5d/white.png', 'https://i.ibb.co/4nGkn3HP/sapphire.png',
     'https://i.ibb.co/0pVz7WV5/green.png', 'https://i.ibb.co/wZ9gmt1p/red.png',
     'https://i.ibb.co/y72gvDj/black.png', 'https://i.ibb.co/PZ1dZDyH/gold.png',
