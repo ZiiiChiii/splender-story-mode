@@ -169,11 +169,12 @@ function animateCardFlightToGoldVault(cardId, providesColor, callback, vaultPref
   }
 
   const fxColor = GEM_FX_COLORS[providesColor] || '#f1c40f';
-  const start = sourceDom.getBoundingClientRect();
+  // 📱 一律使用舞台邏輯座標：飛行位置與縮放比例在任何螢幕縮放下皆一致
+  const start = window.stageLocalRect(sourceDom);
   const fallbackDash = (vaultPrefix === 'ai-vault-target')
     ? document.getElementById('ai-dashboard-box') : document.getElementById('guide-dashboard');
-  const finalTarget = vaultDom || fallbackDash || document.body;
-  const end = finalTarget.getBoundingClientRect();
+  const finalTarget = vaultDom || fallbackDash || document.getElementById('stage') || document.body;
+  const end = window.stageLocalRect(finalTarget);
 
   // ✨ 精準命中：以「起點中心 → 金庫對應寶石格中心」計算，貝茲曲線終點就是寶石格正中央
   const startC = { x: start.left + start.width / 2, y: start.top + start.height / 2 };
@@ -319,7 +320,7 @@ window.animateNoblesEarned = function(nobles, actor = 'player') {
   _nobleAnimRunning++;
   isAnimating = true;
 
-  // 📱 一律以「舞台矩形」為展示座標基準（桌機置中舞台時不會飛出舞台外）
+  // 📱 舞台邏輯座標（恆為 430×932，任何縮放下呈現一致）
   const stage = window.getStageRect();
   const vw = stage.width, vh = stage.height;
   const N = nobles.length;
@@ -329,9 +330,9 @@ window.animateNoblesEarned = function(nobles, actor = 'player') {
   // 三張同時展示時 (舞台寬-邊距-間隔)/3，保證彼此完整並排、絕不重疊；單張上限 240px
   const targetW = Math.min(240, Math.max(70, (vw - 32 - (N - 1) * gap) / N));
   // 展示高度夾在舞台內，放大後上下緣都不出界
-  const cy = stage.top + Math.max(targetW / 2 + 24, Math.min(vh * 0.42, vh - targetW / 2 - 24));
+  const cy = Math.max(targetW / 2 + 24, Math.min(vh * 0.42, vh - targetW / 2 - 24));
 
-  const destRect = destEl.getBoundingClientRect();
+  const destRect = window.stageLocalRect(destEl);
   const destC = { x: destRect.left + destRect.width / 2, y: destRect.top + destRect.height / 2 };
 
   let finished = 0;
@@ -349,8 +350,8 @@ window.animateNoblesEarned = function(nobles, actor = 'player') {
       if (img) srcCard = img.closest('.noble-card');
     }
     const sr = srcCard
-      ? srcCard.getBoundingClientRect()
-      : { left: stage.left + vw / 2 - 45, top: stage.top + 60, width: 90, height: 90 };
+      ? window.stageLocalRect(srcCard)
+      : { left: vw / 2 - 45, top: 60, width: 90, height: 90 };
 
     // 建立飛行分身
     let flyEl;
@@ -369,7 +370,7 @@ window.animateNoblesEarned = function(nobles, actor = 'player') {
 
     const srcC = { x: sr.left + sr.width / 2, y: sr.top + sr.height / 2 };
     // 第 i 張的中央展示位（以舞台中心均分排開）
-    const showX = stage.left + vw / 2 + (i - (N - 1) / 2) * (targetW + gap);
+    const showX = vw / 2 + (i - (N - 1) / 2) * (targetW + gap);
     const showScale = targetW / sr.width;
     const destScale = Math.max(0.06, 18 / sr.width);
 
@@ -497,41 +498,58 @@ function renderDashboardGems(targetElementId, actorData, diffs, idPrefix = 'vaul
 }
 
 // ==========================================
-// 📱 手機比例舞台系統：桌機以 9:19.5 手機長寬比置中呈現，與手機開啟完全一致
+// 📱 邏輯舞台系統：所有版面固定設計在 430×932，整體以 transform: scale 等比縮放。
+// 手機 scale≈1 原生呈現；桌機 scale 放大 → 文字/卡牌物理變大，兩端像素級一致。
 // ==========================================
-const STAGE_RATIO = 9 / 19.5;   // 普遍手機直向長寬比
-const STAGE_MAX_W = 430;        // 舞台寬度上限（等同大型手機邏輯寬）
+const STAGE_W = 430;   // 邏輯設計寬
+const STAGE_H = 932;   // 邏輯設計高（9:19.5 手機比例）
 
 function fitStageToPhoneRatio() {
-  const shell = document.querySelector('.shell');
-  if (!shell) return;
+  const stage = document.getElementById('stage');
+  if (!stage) return;
   const vw = window.innerWidth, vh = window.innerHeight;
 
-  let w, h;
-  if (vw <= 500) {
-    // 真手機 / 窄視窗：填滿畫面（維持原生體驗）
-    w = vw; h = vh;
-    document.body.classList.remove('stage-boxed');
-  } else {
-    // 桌機：以手機長寬比鎖定舞台，置中呈現
-    w = Math.min(STAGE_MAX_W, Math.floor(vh * STAGE_RATIO), vw - 24);
-    h = Math.min(vh - 16, Math.floor(w / STAGE_RATIO));
-    document.body.classList.add('stage-boxed');
-  }
+  // 等比縮放：取寬/高兩軸中較小的縮放率，保證完整入鏡
+  const z = Math.min(vw / STAGE_W, vh / STAGE_H);
+  stage.style.transform = `scale(${z})`;
 
-  shell.style.width = w + 'px';
-  shell.style.height = h + 'px';
-  shell.style.maxWidth = w + 'px';
-  document.documentElement.style.setProperty('--stage-w', w + 'px');
-  document.documentElement.style.setProperty('--stage-h', h + 'px');
+  // 桌機（有明顯留白）時加上手機外框裝飾
+  document.body.classList.toggle('stage-boxed', vw > 500);
+
+  document.documentElement.style.setProperty('--stage-w', STAGE_W + 'px');
+  document.documentElement.style.setProperty('--stage-h', STAGE_H + 'px');
 }
 
-// 供動畫 / 教學系統取得舞台矩形（fixed 定位元素一律以此為座標基準）
+// 目前舞台縮放倍率（自我校正：以實測渲染寬 ÷ 邏輯寬，任何瀏覽器行為皆正確）
+window.getStageZoom = function() {
+  const stage = document.getElementById('stage');
+  if (!stage || !stage.offsetWidth) return 1;
+  const w = stage.getBoundingClientRect().width;
+  return w > 0 ? w / stage.offsetWidth : 1;
+};
+
+// 舞台邏輯矩形（恆為 0,0 → 430,932）
 window.getStageRect = function() {
-  const shell = document.querySelector('.shell');
-  if (shell) return shell.getBoundingClientRect();
-  return { left: 0, top: 0, right: window.innerWidth, bottom: window.innerHeight,
-           width: window.innerWidth, height: window.innerHeight };
+  return { left: 0, top: 0, right: STAGE_W, bottom: STAGE_H,
+           width: STAGE_W, height: STAGE_H };
+};
+
+// 🔑 元素的「舞台區域座標」矩形：
+// 把 getBoundingClientRect 的實體像素換算回 430×932 邏輯座標系。
+// 舞台內 position:fixed 元素以舞台為包含塊，因此 style.left/top 直接吃這個座標。
+window.stageLocalRect = function(el) {
+  const stage = document.getElementById('stage');
+  const z = window.getStageZoom();
+  const r = el.getBoundingClientRect();
+  const s = stage ? stage.getBoundingClientRect() : { left: 0, top: 0 };
+  return {
+    left:   (r.left - s.left) / z,
+    top:    (r.top - s.top) / z,
+    right:  (r.right - s.left) / z,
+    bottom: (r.bottom - s.top) / z,
+    width:  r.width / z,
+    height: r.height / z
+  };
 };
 
 window.addEventListener('resize', fitStageToPhoneRatio);
