@@ -754,7 +754,7 @@ window.render = function() {
       .map(n => {
         let reqHtml = '';
         for (let k in n.req) {
-          reqHtml += `<div class="cost-dot"><span class="cost-dot-circle ${GEM_CLASSES[k]}"></span><span>${n.req[k]}</span></div>`;
+          reqHtml += `<div class="cost-dot"><span class="cost-dot-square ${GEM_CLASSES[k]}"></span><span>${n.req[k]}</span></div>`;
         }
         return `
           <div class="noble-card">
