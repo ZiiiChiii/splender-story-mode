@@ -12,7 +12,7 @@ export const AiMode = {
     const ai = state.ai;
     const diff = state.aiDifficulty || (state.mode === 'vsAI' ? 'normal' : 'normal');
 
-    // ── 步驟 1：搜集所有買得起的卡片 ──
+    // ── 步驟 1：搜集所有買得起的卡片（牌桌 + AI 自己的保留區）──
     const affordableList = [];
     for (let lvl of ['lv3', 'lv2', 'lv1']) {
       const row = state.board[lvl];
@@ -23,6 +23,12 @@ export const AiMode = {
         if (afford.affordable) affordableList.push({ lvl, i, card, afford });
       }
     }
+    // 保留區的卡也能買（lvl 標記 'reserved'）
+    (ai.reserved || []).forEach((card, i) => {
+      if (!card) return;
+      const afford = GameEngine.canAffordCard(ai.bonus, ai.tokens, card.cost, { actor: 'ai', level: card.level || 'lv1' });
+      if (afford.affordable) affordableList.push({ lvl: 'reserved', i, card, afford });
+    });
 
     if (affordableList.length > 0) {
       let pick;
@@ -83,9 +89,45 @@ export const AiMode = {
         ActionDispatcher.finalizeTurn('ai');
       }, 600);
     } else {
-      // 銀行完全無普通籌碼可拿，AI 直接跳過防止戰局卡死
+      // 🃏 拿不了籌碼（背包滿 / 銀行空）→ 改為「保留一張卡」，仍然是有效行動
+      if (this.executeAiReserve(state)) return;
+      // 真的無路可走（買不起、拿不了、保留區也滿）才跳過，防止戰局卡死
+      console.log('🤖 AI 本回合無任何合法行動，被迫跳過');
       ActionDispatcher.finalizeTurn('ai');
     }
+  },
+
+  // 保留一張最有價值的卡（含黃金獲取）。成功回傳 true
+  executeAiReserve(state) {
+    const ai = state.ai;
+    if ((ai.reserved || []).length >= 3) return false;
+
+    // 挑選：分數最高、等級最高的在場卡
+    let best = null;
+    for (let lvl of ['lv3', 'lv2', 'lv1']) {
+      const row = state.board[lvl];
+      for (let i = 0; i < row.length; i++) {
+        const card = row[i];
+        if (!card) continue;
+        if (!best || card.points > best.card.points) best = { lvl, i, card };
+      }
+    }
+    if (!best) return false;
+
+    console.log(`🤖 AI 決定保留卡牌: ${best.card.id}`);
+    ai.reserved.push(best.card);
+    state.board[best.lvl][best.i] =
+      state.decks[best.lvl].length > 0 ? state.decks[best.lvl].pop() : null;
+
+    // 附贈黃金：銀行有金且背包未滿才拿
+    let bag = 0; for (let k in ai.tokens) bag += ai.tokens[k];
+    if (state.bank.o > 0 && bag < AI_BAG_CAP) {
+      state.bank.o--;
+      ai.tokens.o++;
+    }
+
+    setTimeout(() => { ActionDispatcher.finalizeTurn('ai'); }, 600);
+    return true;
   },
 
   // 找出最想買的高分卡，計算缺口顏色
@@ -138,8 +180,13 @@ export const AiMode = {
       a.bonus[card.provides]++;
       a.score += card.points;
 
-      // 補牌
-      s.board[level][idx] = s.decks[level].length > 0 ? s.decks[level].pop() : null;
+      if (level === 'reserved') {
+        // 來源是保留區：移除該張保留卡，不補牌
+        a.reserved.splice(idx, 1);
+      } else {
+        // 來源是牌桌：補牌
+        s.board[level][idx] = s.decks[level].length > 0 ? s.decks[level].pop() : null;
+      }
 
       ActionDispatcher.finalizeTurn('ai');
     };
