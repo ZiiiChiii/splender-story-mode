@@ -464,7 +464,13 @@ function renderDashboardGems(targetElementId, actorData, diffs, idPrefix = 'vaul
 
   for (const [color, spans] of Object.entries(survivingDiffs)) {
     const blockEl = document.getElementById(`${idPrefix}-${color}`);
-    if (blockEl) spans.forEach(s => blockEl.appendChild(s));
+    if (blockEl) spans.forEach(s => {
+      blockEl.appendChild(s);
+      // ✨ DOM 重掛會讓 CSS 動畫從頭重播（視覺上閃第二次）。
+      // 用負值 animation-delay 讓動畫直接跳到原本的進度接續播放，只閃一次。
+      const born = parseFloat(s.dataset.born || '0');
+      if (born > 0) s.style.animationDelay = (-(performance.now() - born)) + 'ms';
+    });
   }
 
   if (diffs) {
@@ -478,6 +484,7 @@ function renderDashboardGems(targetElementId, actorData, diffs, idPrefix = 'vaul
       const diffSpan = document.createElement('span');
       diffSpan.className = `floating-diff ${diff > 0 ? 'plus' : 'minus'}`;
       diffSpan.textContent = diff > 0 ? `+${diff}` : `${diff}`;
+      diffSpan.dataset.born = String(performance.now()); // 記錄出生時間，重掛時接續進度
       blockEl.appendChild(diffSpan);
 
       blockEl.classList.add('animate-pulse-glow');
@@ -510,6 +517,10 @@ window.render = function() {
 
   // AI 金庫面板：帝國爭霸 & 故事模式 vsAI 關卡皆顯示
   document.getElementById('ai-dashboard-box').style.display = isAiBattle ? 'block' : 'none';
+
+  // 🤝 首席輔助官欄位：專屬故事模式，成就模式與帝國爭霸一律隱藏
+  const astPanel = document.getElementById('guide-assistant-container');
+  if (astPanel) astPanel.style.display = isStoryMode ? 'flex' : 'none';
 
   // 回合歸屬指示器
   const turnIndicator = document.getElementById('turn-owner-indicator');
