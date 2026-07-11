@@ -260,6 +260,138 @@ function animateCardFlightToGoldVault(cardId, providesColor, callback) {
   });
 }
 
+// ==========================================
+// 👑 貴族獲得動畫：飛出 → 中央放大旋轉展示 → 飛入已獲得貴族區
+// ==========================================
+let _nobleAnimRunning = 0;        // 進行中的貴族動畫批次數
+let _nobleAnimQueue = [];         // 動畫結束後才執行的回呼（例如勝利視窗）
+
+// 供結算流程呼叫：動畫進行中回傳 true 並把回呼排入佇列；否則回傳 false 立即照常執行
+window.deferUntilNobleAnim = function(cb) {
+  if (_nobleAnimRunning <= 0) return false;
+  _nobleAnimQueue.push(cb);
+  return true;
+};
+
+function _nobleAnimBatchDone() {
+  _nobleAnimRunning = Math.max(0, _nobleAnimRunning - 1);
+  if (_nobleAnimRunning === 0) {
+    isAnimating = false;
+    window.render();
+    const q = _nobleAnimQueue.splice(0);
+    q.forEach(cb => { try { cb(); } catch (e) { console.error(e); } });
+  }
+}
+
+window.animateNoblesEarned = function(nobles) {
+  const fxContainer = document.getElementById('effects-layer');
+  const noblesLayer = document.getElementById('nobles-layer');
+  const destEl = document.getElementById('earned-nobles-layer')
+              || document.getElementById('left-earned-nobles')
+              || document.body;
+  if (!fxContainer || !nobles || nobles.length === 0) return;
+
+  _nobleAnimRunning++;
+  isAnimating = true;
+
+  const vw = window.innerWidth, vh = window.innerHeight;
+  const N = nobles.length;
+  const gap = 24;
+
+  // ✨ 放大尺寸依「同時獲得的張數」動態計算：
+  // 三張同時展示時 (寬-邊距-間隔)/3，保證彼此完整並排、絕不重疊；單張則放大到最大 240px
+  const targetW = Math.min(240, Math.max(90, (vw - 40 - (N - 1) * gap) / N));
+  // 展示高度夾在畫面內，放大後上下緣都不出界
+  const cy = Math.max(targetW / 2 + 24, Math.min(vh * 0.42, vh - targetW / 2 - 24));
+
+  const destRect = destEl.getBoundingClientRect();
+  const destC = { x: destRect.left + destRect.width / 2, y: destRect.top + destRect.height / 2 };
+
+  let finished = 0;
+  const finishOne = () => { if (++finished >= N) _nobleAnimBatchDone(); };
+
+  nobles.forEach((n, i) => {
+    // 從貴族議事堂找到本尊卡片（此刻尚未重繪，仍在原位）
+    let srcCard = null;
+    if (noblesLayer) {
+      const img = noblesLayer.querySelector(`img[alt="${n.name}"]`);
+      if (img) srcCard = img.closest('.noble-card');
+    }
+    const sr = srcCard
+      ? srcCard.getBoundingClientRect()
+      : { left: vw / 2 - 45, top: 60, width: 90, height: 90 };
+
+    // 建立飛行分身
+    let flyEl;
+    if (srcCard) {
+      flyEl = srcCard.cloneNode(true);
+      srcCard.style.opacity = '0.1';
+    } else {
+      flyEl = document.createElement('div');
+      flyEl.innerHTML = `<img src="${n.img}" style="width:100%;height:100%;object-fit:cover;border-radius:10px;">`;
+    }
+    flyEl.style.cssText += `;position:fixed;left:${sr.left}px;top:${sr.top}px;` +
+      `width:${sr.width}px;height:${sr.height}px;margin:0;z-index:10005;pointer-events:none;` +
+      `border-radius:10px;box-shadow:0 0 26px rgba(212,175,55,0.95), 0 0 80px rgba(212,175,55,0.45);`;
+    gsap.set(flyEl, { transformOrigin: 'center center', transformStyle: 'preserve-3d', perspective: 900 });
+    fxContainer.appendChild(flyEl);
+
+    const srcC = { x: sr.left + sr.width / 2, y: sr.top + sr.height / 2 };
+    // 第 i 張的中央展示位（多張時左右均分排開）
+    const showX = vw / 2 + (i - (N - 1) / 2) * (targetW + gap);
+    const showScale = targetW / sr.width;
+    const destScale = Math.max(0.06, 18 / sr.width);
+
+    const tl = gsap.timeline();
+
+    // 第一幕：所有貴族「同時」飛出至中央，邊飛邊放大並翻轉一圈
+    tl.to(flyEl, {
+      x: showX - srcC.x,
+      y: cy - srcC.y,
+      scale: showScale,
+      rotationY: 360,
+      duration: 0.65,
+      ease: 'power2.out'
+    })
+    // 第二幕：定點華麗展示 —— 續轉一整圈 + 金光呼吸
+    .to(flyEl, {
+      rotationY: '+=360',
+      duration: 1.15,
+      ease: 'sine.inOut'
+    })
+    .to(flyEl, {
+      boxShadow: '0 0 46px rgba(255,224,153,1), 0 0 120px rgba(212,175,55,0.7)',
+      duration: 0.55, yoyo: true, repeat: 1, ease: 'sine.inOut'
+    }, '<')
+    // 第三幕：依序（間隔 0.14s）俯衝飛入「已獲得貴族區」
+    .to(flyEl, {
+      x: destC.x - srcC.x,
+      y: destC.y - srcC.y,
+      scale: destScale,
+      rotationY: '+=180',
+      duration: 0.55,
+      delay: i * 0.14,
+      ease: 'power2.in'
+    })
+    .to(flyEl, {
+      opacity: 0,
+      duration: 0.1,
+      ease: 'power1.in',
+      onComplete: () => {
+        flyEl.remove();
+        // 命中：金色爆裂 + 已獲得區彈跳發光
+        if (typeof spawnImpactBurst === 'function') {
+          spawnImpactBurst(fxContainer, destC.x, destC.y, '#f1c40f');
+        }
+        gsap.timeline()
+          .fromTo(destEl, { scale: 1 }, { scale: 1.18, duration: 0.14, ease: 'back.out(3)' })
+          .to(destEl, { scale: 1, duration: 0.45, ease: 'elastic.out(1, 0.45)' });
+        finishOne();
+      }
+    });
+  });
+};
+
 function renderDashboardGems(targetElementId, actorData, diffs) {
   const container = document.getElementById(targetElementId);
   if (!container) return;
