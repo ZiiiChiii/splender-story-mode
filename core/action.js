@@ -339,11 +339,12 @@ export const ActionDispatcher = {
         }
       });
 
-      // 👑 玩家獲得貴族：立即啟動「飛出 → 放大旋轉 → 飛入已獲得區」動畫
-      //（必須在任何 render() 之前呼叫，動畫才能從貴族卡當前位置起飛）
-      if (actionActor === 'player' && earnedNobles.length > 0
+      // 👑 獲得貴族（玩家或 AI 皆同）：啟動「飛出 → 放大旋轉 → 飛入」動畫
+      //（必須在任何 render() 之前呼叫，動畫才能從貴族卡當前位置起飛；
+      //  AI 獲得時飛入 AI 金庫面板，勝利視窗一律等動畫播完）
+      if (earnedNobles.length > 0
           && typeof window.animateNoblesEarned === 'function') {
-        window.animateNoblesEarned(earnedNobles);
+        window.animateNoblesEarned(earnedNobles, actionActor);
       }
     }
 
