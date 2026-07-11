@@ -77,6 +77,8 @@ export const AiMode = {
           state.bank[extra]--; state.ai.tokens[extra]++;
         }
       }
+      // 🎬 立即重繪：AI 金庫即刻浮出 +N 動畫（與玩家拿取籌碼時相同）
+      if (typeof window !== 'undefined' && window.render) window.render();
       setTimeout(() => {
         ActionDispatcher.finalizeTurn('ai');
       }, 600);
@@ -116,24 +118,37 @@ export const AiMode = {
     const state = CoreState.get();
     const ai = state.ai;
 
-    // 扣除籌碼
-    for (let k in card.cost) {
-      const spent = afford.breakdown[k] || 0;
-      ai.tokens[k] -= spent;
-      state.bank[k] += spent;
+    // 先定義「實際入帳」流程，等飛行動畫播完才執行（與玩家購買流程完全一致）
+    const applyPurchase = () => {
+      const s = CoreState.get();
+      const a = s.ai;
+
+      // 扣除籌碼
+      for (let k in card.cost) {
+        const spent = afford.breakdown[k] || 0;
+        a.tokens[k] -= spent;
+        s.bank[k] += spent;
+      }
+      if (afford.neededGold > 0) {
+        a.tokens.o -= afford.neededGold;
+        s.bank.o += afford.neededGold;
+      }
+
+      // 更新 AI 永久資產
+      a.bonus[card.provides]++;
+      a.score += card.points;
+
+      // 補牌
+      s.board[level][idx] = s.decks[level].length > 0 ? s.decks[level].pop() : null;
+
+      ActionDispatcher.finalizeTurn('ai');
+    };
+
+    // 🎬 AI 購卡觸發與玩家相同的「卡片飛入金庫」動畫（飛向 AI 金庫的對應寶石格）
+    if (typeof window !== 'undefined' && typeof window.animateCardFlightToGoldVault === 'function') {
+      window.animateCardFlightToGoldVault(card.id, card.provides, applyPurchase, 'ai-vault-target');
+    } else {
+      applyPurchase();
     }
-    if (afford.neededGold > 0) {
-      ai.tokens.o -= afford.neededGold;
-      state.bank.o += afford.neededGold;
-    }
-
-    // 更新 AI 永久資產
-    ai.bonus[card.provides]++;
-    ai.score += card.points;
-
-    // 補牌
-    state.board[level][idx] = state.decks[level].length > 0 ? state.decks[level].pop() : null;
-
-    ActionDispatcher.finalizeTurn('ai');
   }
 };
