@@ -48,7 +48,7 @@ html, body {
 }
 
 .shell {
-  /* 📱 尺寸由 fitStageToPhoneRatio() 動態指定為手機長寬比（9:19.5，上限 430px 寬）*/
+  /* 📱 填滿 430×932 邏輯舞台，實際縮放交給 #stage 的 transform */
   width: 100%;
   margin: 0 auto;
   height: 100%;
@@ -678,17 +678,22 @@ html, body {
 
 
 
-/* ═══════════ 📱 手機比例舞台系統 ═══════════ */
-/* 桌機（視窗寬 > 500px）時舞台加上金色外框與光暈，宛如置中的手機畫面 */
-body.stage-boxed .shell {
+/* ═══════════ 📱 邏輯舞台系統（430×932 + 整體等比縮放） ═══════════ */
+#stage {
+  width: 430px;
+  height: 932px;
+  flex: 0 0 auto;
+  position: relative;
+  transform-origin: center center; /* 由 fitStageToPhoneRatio() 設定 scale */
+}
+/* 桌機時舞台加上金色外框與光暈，宛如置中的手機畫面 */
+body.stage-boxed #stage {
   border: 1px solid rgba(212, 175, 55, 0.35);
   border-radius: 14px;
   box-shadow: 0 0 40px rgba(212, 175, 55, 0.18), 0 0 120px rgba(0, 0, 0, 0.8);
-  overflow: hidden;
-  padding: 4px 6px;
-  box-sizing: border-box;
   background: var(--bg-deep, #0d0a07);
 }
+body.stage-boxed .shell { padding: 4px 6px; box-sizing: border-box; }
 
 /* 所有彈窗寬度不得超過舞台（桌機/手機視覺一致） */
 .modal {
