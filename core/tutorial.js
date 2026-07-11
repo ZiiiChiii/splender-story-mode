@@ -26,37 +26,37 @@ var STEPS = [
     el:null, color:null, voice:VOICE01 },
 
   { phase:'階段一：認識環境',
-    text:'歡迎來到皇家寶石交易殿堂。',
+    text:'歡迎來到黃家寶石交易殿堂。',
     el:null, color:null, voice:VOICE02 },
 
   { phase:'階段一：認識環境',
-    text:'今天我們的目標很簡單：在 [[28 回合]] 內拿到 [[15 分威望值]]，贏下這場比賽！——[[我教一步，你實際操作一步]]！',
+    text:'今天我們的目標很簡單：在 [[28 回合]] 內拿到 [[15 分威望]]，贏下這場比賽！這次不用光聽我說——[[我教一步，你就實際操作一步]]！',
     el:null, color:null, voice:VOICE },
 
   { phase:'階段一：認識環境',
-    text:'首先，這裡可以看目前第幾回合，還有你現在拿到了幾分威望值。',
+    text:'首先，這裡可以看目前第幾回合，還有你現在拿到了幾分。',
     el:'.status-bar', color:'#d4af37', voice:VOICE },
 
   { phase:'階段一：認識環境',
-    text:'中間這三大排卡片就是我們要搶購的寶石卡牌，每張卡片上面的寶石圖案及數字就是你購買此卡需要花的 [[籌碼費用]]！',
+    text:'中間這三大排卡片就是我們要搶購的產業，每張卡片上面的寶石就是你購買此卡需要花的 [[籌碼費用]]！',
     el:'#guide-card-rows', color:'#2ecc71', voice:VOICE },
 
   // 階段二：拿取籌碼（實戰）
   { phase:'階段二：拿取籌碼',
-    text:'沒有本金不能做生意，所需的籌碼可以免費拿取。我們來試看看！',
+    text:'沒有本金不能做生意。接下來換你動手！',
     el:null, color:null, voice:VOICE },
 
   { phase:'階段二：拿取籌碼',
-    text:'請在左側銀行點選 [[3 種不同顏色]] 的寶石，然後按下拿取3色！',
+    text:'請在左側銀行點選 [[3 種不同顏色]] 的寶石，然後按下確認拿取！',
     el:'#guide-actions', color:'#e74c3c', voice:VOICE,
     task:{ goal:'🎯 任務：拿取 3 顆不同顏色的寶石籌碼', type:'diff3' } },
 
   { phase:'階段二：拿取籌碼',
-    text:'漂亮！拿到的籌碼都放進你底部的金庫了。[[大數字是寶石籌碼數量，小數字是買到的卡片數量]]。記住，身上最多只能塞 [[10 顆寶石]]，拿太多會放不下！',
+    text:'漂亮！拿到的籌碼都放進你底部的金庫了。[[大數字是寶石數量，小數字是買到的卡片數量]]。記住，身上最多只能塞 [[10 顆寶石]]，拿太多會放不下！',
     el:'#guide-dashboard .dashboard', color:'#ffcc00', voice:VOICE },
 
   { phase:'階段二：拿取籌碼',
-    text:'還有另一種拿法：[[點一種顏色一下，再按拿取2色]]，一次帶走 [[2 顆相同]] 的寶石（該色庫存需 2 顆以上）。試試看！',
+    text:'還有另一種拿法：[[連點同一種顏色兩下]]，一次帶走 [[2 顆相同]] 的寶石（該色庫存需 2 顆以上）。試試看！',
     el:'#guide-actions', color:'#e74c3c', voice:VOICE,
     task:{ goal:'🎯 任務：一次拿取 2 顆相同顏色的寶石', type:'same2' } },
 
@@ -75,7 +75,7 @@ var STEPS = [
     el:'#guide-reserved', color:'#9b59b6', voice:VOICE },
 
   { phase:'階段三：收購與保留',
-    text:'現在你手上有寶石又有黃金了！去買下第一張永久寶石卡吧：點擊任何亮起 [[收購]] 的卡片。如果暫時都買不起，就再多拿幾回合寶石湊錢。',
+    text:'現在你手上有寶石又有黃金了！去買下第一張產業吧：點擊任何亮起 [[收購]] 的卡片。如果暫時都買不起，就再多拿幾回合寶石湊錢。',
     el:'#guide-card-rows', color:'#d4af37', voice:VOICE,
     task:{ goal:'🎯 任務：成功收購 1 張卡片（買不起就先多拿寶石）', type:'buy' } },
 
@@ -84,9 +84,9 @@ var STEPS = [
     text:'恭喜完成第一筆收購！當你買下的卡片累積到對應貴族卡顯示的顏色數量，頂層的領主貴族就會 [[自動前來拜訪]]，免費送你 [[3 分]]！',
     el:'.nobles-section', color:'#3498db', voice:VOICE },
 
-  // 階段五：其他模式（敘述）
-  { phase:'階段五：其他模式',
-    text:'最後，本模式是成就模式，可以在這裡練習遊戲並透過達成條件獲得成就。[[其他模式]]則在上方[[遊戲選項]]中，現在我們開始體會[[交易寶石]]的樂趣吧!',
+  // 階段五：輔助官特技（敘述）
+  { phase:'階段五：輔助官特技',
+    text:'最後，我有強大的隨行特技（像是幫你降低成本或擴大背包）。基礎你都親手練過了，點擊下方按鈕，我們出發去 [[橫掃戰場]] 吧！',
     el:null, color:null, voice:VOICE }
 ];
 
@@ -159,9 +159,13 @@ function calcLayout(step) {
   var charEl = document.getElementById('tut-char-wrapper');
   if (!boxEl || !charEl) return;
 
-  var vw = window.innerWidth, vh = window.innerHeight;
+  // 📱 一律以舞台矩形為邊界（桌機置中舞台時，立繪/對話框不會跑到舞台外）
+  var sr = (window.getStageRect && window.getStageRect())
+    || { left:0, top:0, right:window.innerWidth, bottom:window.innerHeight,
+         width:window.innerWidth, height:window.innerHeight };
+  var vw = sr.width, vh = sr.height;
   var mob = vw <= 430;
-  var M = 8; // 螢幕安全邊距
+  var M = 8; // 舞台安全邊距
 
   function clr(el) {
     ['top','bottom','left','right','transform'].forEach(function(p){ el.style[p]=''; });
@@ -176,25 +180,26 @@ function calcLayout(step) {
   // 超大目標（例如整片牌桌）：貼齊底部停靠，避免蓋住卡牌本體
   var hugeTarget = tRect && (tRect.height > vh * 0.5 || tRect.width > vw * 0.72);
 
+  var stageCX = sr.left + vw / 2;
   if (!tRect || hugeTarget) {
-    boxEl.style.bottom    = '14px';
-    boxEl.style.left      = '50%';
+    boxEl.style.bottom    = (window.innerHeight - sr.bottom + 14) + 'px';
+    boxEl.style.left      = stageCX + 'px';
     boxEl.style.transform = 'translateX(-50%)';
   } else {
-    var upper = (tRect.top + tRect.height / 2) < vh * 0.52;
+    var upper = (tRect.top + tRect.height / 2) < sr.top + vh * 0.52;
     if (upper) {
       var bt = tRect.bottom + 12;
-      if (tRect.top < 30) bt = tRect.bottom + 55;
-      // 對話框自身不可跑出畫面底部
+      if (tRect.top < sr.top + 30) bt = tRect.bottom + 55;
+      // 對話框自身不可跑出舞台底部
       var boxH = boxEl.offsetHeight || 200;
-      if (bt + boxH > vh - M) bt = Math.max(M, vh - M - boxH);
+      if (bt + boxH > sr.bottom - M) bt = Math.max(sr.top + M, sr.bottom - M - boxH);
       boxEl.style.top = bt + 'px';
       boxEl.style.bottom = 'auto';
     } else {
-      boxEl.style.bottom = (vh - tRect.top + 12) + 'px';
+      boxEl.style.bottom = (window.innerHeight - tRect.top + 12) + 'px';
       boxEl.style.top = 'auto';
     }
-    boxEl.style.left      = '50%';
+    boxEl.style.left      = stageCX + 'px';
     boxEl.style.transform = 'translateX(-50%)';
   }
 
@@ -204,17 +209,17 @@ function calcLayout(step) {
   var charW = charEl.offsetWidth  || (mob ? 150 : 340);
   var charH = charEl.offsetHeight || Math.round(charW * 1.35);
 
-  // 垂直：立繪底部與對話框頂端保留 36px 重疊（視覺相連），再夾回畫面內 → 原則 1 + 2
+  // 垂直：立繪底部與對話框頂端保留 36px 重疊（視覺相連），再夾回舞台內 → 原則 1 + 2
   var top = boxRect.top - charH + 36;
-  top = Math.max(M, Math.min(top, vh - charH - M));
+  top = Math.max(sr.top + M, Math.min(top, sr.bottom - charH - M));
 
   // 水平：預設站在「目標區域的另一側」→ 原則 3；無目標時站對話框左側
-  var preferRight = tRect ? (tRect.left + tRect.width / 2) < vw / 2 : false;
+  var preferRight = tRect ? (tRect.left + tRect.width / 2) < stageCX : false;
 
   function leftForSide(right) {
     var L = right ? (boxRect.right - Math.min(70, charW * 0.25))
                   : (boxRect.left - charW + Math.min(70, charW * 0.25));
-    return Math.max(M, Math.min(L, vw - charW - M)); // 夾回畫面內 → 原則 1
+    return Math.max(sr.left + M, Math.min(L, sr.right - charW - M)); // 夾回舞台內 → 原則 1
   }
   function overlapArea(L) {
     if (!tRect) return 0;
@@ -586,7 +591,7 @@ function buildDOM() {
       'flex-direction:column;justify-content:flex-end;align-items:center;padding-bottom:20px;',
       'font-family:"Microsoft JhengHei","Heiti TC","Inter",sans-serif;}',
 
-      '#tut-char-wrapper{position:fixed;width:340px;max-width:40vw;pointer-events:none;',
+      '#tut-char-wrapper{position:fixed;width:min(190px, calc(var(--stage-w, 100vw) * 0.42));pointer-events:none;',
       'filter:drop-shadow(0 8px 28px rgba(0,0,0,0.9));z-index:10000011;',
       'transition:top 0.3s ease,bottom 0.3s ease,left 0.3s ease,right 0.3s ease,opacity 0.3s ease,transform 0.3s ease;}',
       '#tut-char-img{width:100%;object-fit:contain;display:block;}',
@@ -605,7 +610,7 @@ function buildDOM() {
       'color:#968a7f;border-radius:4px;padding:4px 14px;font-size:0.7rem;cursor:pointer;transition:all 0.2s;}',
       '#tut-skip-btn:hover{color:#ffe099;border-color:#d4af37;}',
 
-      '#tut-box{position:fixed;z-index:10000012;width:88%;max-width:620px;',
+      '#tut-box{position:fixed;z-index:10000012;width:calc(var(--stage-w, 100vw) * 0.92);max-width:620px;',
       'background:rgba(4,6,10,0.97);border:2px solid #d4af37;',
       'box-shadow:0 0 32px rgba(212,175,55,0.2),0 20px 50px rgba(0,0,0,0.95);',
       'border-radius:12px;padding:22px 24px 16px;cursor:pointer;user-select:none;',
@@ -637,7 +642,7 @@ function buildDOM() {
       '#tut-overlay.task-mode{background:transparent!important;pointer-events:none!important;}',
       '#tut-overlay.task-mode #tut-box{pointer-events:auto;cursor:default;}',
       '#tut-overlay.task-mode #tut-skip-btn{pointer-events:auto;}',
-      '#tut-char-wrapper.task-shrink{width:220px!important;opacity:0.92;}',
+      '#tut-char-wrapper.task-shrink{width:min(120px, calc(var(--stage-w, 100vw) * 0.28))!important;opacity:0.92;}',
       '#tut-task-goal{display:none;margin-top:10px;padding:8px 14px;border-radius:8px;',
       'background:rgba(212,175,55,0.12);border:1px dashed rgba(212,175,55,0.6);',
       'color:#ffe099;font-weight:800;font-size:0.92rem;letter-spacing:0.04em;',
@@ -658,14 +663,12 @@ function buildDOM() {
       '#tut-box.collapsed{padding:10px 14px 8px;width:auto;max-width:460px;}',
       '#tut-box.collapsed #tut-dialogue-text,#tut-box.collapsed #tut-footer{display:none;}',
       '#tut-box.collapsed #tut-task-goal{margin-top:0;padding-right:64px;}',
-      '@media(max-width:430px){#tut-char-wrapper.task-shrink{width:110px!important;}}',
-      '@media(max-width:430px){',
-      '#tut-char-wrapper{width:150px;max-width:40vw;}',
+      '/* 📱 舞台恆為手機比例：以下規則常駐生效（原 @media 430px） */',
       '#tut-box{padding:16px 14px 13px;}',
       '#tut-dialogue-text{font-size:0.85rem;}',
       '#tut-name-tag{font-size:0.82rem;top:-28px;left:14px;padding:4px 14px;}',
       '#tut-next-btn{padding:7px 16px;font-size:0.75rem;}',
-      '#tut-phase-label{font-size:0.58rem;top:12px;right:12px;}}'
+      '#tut-phase-label{font-size:0.58rem;top:12px;right:12px;}'
     ].join('');
     document.head.appendChild(s);
   }
