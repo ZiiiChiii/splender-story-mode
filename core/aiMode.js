@@ -77,8 +77,8 @@ export const AiMode = {
           state.bank[extra]--; state.ai.tokens[extra]++;
         }
       }
-      // 🎬 立即重繪：AI 金庫即刻浮出 +N 動畫（與玩家拿取籌碼時相同）
-      if (typeof window !== 'undefined' && window.render) window.render();
+      // ⚠️ 這裡「不」立即重繪：若先重繪一次、finalizeTurn 又重繪一次，
+      // 浮動 +N 標籤會被搬移重掛而重播動畫（閃爍兩次）。統一由 finalize 的重繪呈現一次。
       setTimeout(() => {
         ActionDispatcher.finalizeTurn('ai');
       }, 600);
