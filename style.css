@@ -571,3 +571,13 @@ html, body {
 @media (max-width: 430px) {
   .ach-modal { max-height: 86dvh; }
 }
+
+
+/* 🛡️ 產量徽章動畫：此 keyframes 原本缺失，導致 +N🛡️ 動畫不會播放、
+   徽章靜止卡在畫面直到下次重繪。補上後：上浮淡出並於結束後保持隱形。 */
+@keyframes permanentFloatUp {
+  0%   { opacity: 0; transform: translateY(6px) scale(0.8); }
+  20%  { opacity: 1; transform: translateY(0) scale(1.15); }
+  70%  { opacity: 1; transform: translateY(-8px) scale(1); }
+  100% { opacity: 0; transform: translateY(-20px) scale(0.9); }
+}
