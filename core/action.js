@@ -338,6 +338,13 @@ export const ActionDispatcher = {
           state.ai.noblePoints += n.points;
         }
       });
+
+      // 👑 玩家獲得貴族：立即啟動「飛出 → 放大旋轉 → 飛入已獲得區」動畫
+      //（必須在任何 render() 之前呼叫，動畫才能從貴族卡當前位置起飛）
+      if (actionActor === 'player' && earnedNobles.length > 0
+          && typeof window.animateNoblesEarned === 'function') {
+        window.animateNoblesEarned(earnedNobles);
+      }
     }
 
     // 單人成就 27：單回合卡片+貴族共 6 分以上
@@ -523,6 +530,11 @@ export const ActionDispatcher = {
   },
 
   _showStoryEndModal(state, mission, currentLvl, isWin, failReason, turnLimit) {
+    // 👑 貴族動畫尚未播完 → 延後到動畫全部結束再展示捷報
+    if (window.deferUntilNobleAnim
+        && window.deferUntilNobleAnim(() => this._showStoryEndModal(state, mission, currentLvl, isWin, failReason, turnLimit))) {
+      return;
+    }
     const iconEl = document.getElementById('win-modal-icon');
     const titleEl = document.getElementById('win-modal-title');
     const bodyEl = document.getElementById('modal-body-txt');
@@ -577,6 +589,11 @@ export const ActionDispatcher = {
   },
 
   _showEndModal(state, aiEffectiveScore) {
+    // 👑 貴族動畫尚未播完 → 延後到動畫全部結束再展示結算
+    if (window.deferUntilNobleAnim
+        && window.deferUntilNobleAnim(() => this._showEndModal(state, aiEffectiveScore))) {
+      return;
+    }
     const iconEl = document.getElementById('win-modal-icon');
     const titleEl = document.getElementById('win-modal-title');
     const bodyEl = document.getElementById('modal-body-txt');
