@@ -555,6 +555,10 @@ window.stageLocalRect = function(el) {
 
 window.addEventListener('resize', fitStageToPhoneRatio);
 window.addEventListener('orientationchange', fitStageToPhoneRatio);
+// 模組載入當下立即套用一次（scripts 位於 body 末端，#stage 已存在），
+// 並在 load 後再校正一次 —— 重新整理瞬間版面即正確，無需等待使用者拉動視窗
+fitStageToPhoneRatio();
+window.addEventListener('load', fitStageToPhoneRatio, { once: true });
 
 // ==========================================
 // 🤖 帝國爭霸：AI 對手選擇系統
