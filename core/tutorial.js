@@ -563,7 +563,7 @@ function buildDOM() {
 
       '/* 🧑 立繪：內嵌於對話框左欄，半身呈現（object-fit:cover 裁上半身）。',
       '   撐滿整欄高度、貼齊框內緣，底部漸隱融入框內 */',
-      '#tut-char-wrapper{flex:0 0 88px;width:88px;align-self:stretch;min-height:96px;',
+      '#tut-char-wrapper{flex:0 0 62px;width:62px;align-self:stretch;min-height:84px;',
       'overflow:hidden;pointer-events:none;position:relative;',
       'margin:-16px 0 -12px -14px;border-radius:9px 0 0 9px;',
       'filter:drop-shadow(0 4px 14px rgba(0,0,0,0.8));',
@@ -602,7 +602,7 @@ function buildDOM() {
       'font-family:"Cinzel",serif;letter-spacing:0.05em;}',
 
       '#tut-dialogue-text{font-size:0.8rem;line-height:1.7;color:#f1f2f6;',
-      'letter-spacing:0.4px;min-height:4.6em;}',
+      'letter-spacing:0.4px;min-height:4em;overflow-wrap:anywhere;}',
 
       '#tut-footer{display:flex;justify-content:space-between;align-items:center;margin-top:10px;}',
       '#tut-dots{display:flex;gap:5px;align-items:center;}',
@@ -621,7 +621,7 @@ function buildDOM() {
       '#tut-overlay.task-mode{background:transparent!important;pointer-events:none!important;}',
       '#tut-overlay.task-mode #tut-box{pointer-events:auto;cursor:default;}',
       '#tut-overlay.task-mode #tut-skip-btn{pointer-events:auto;}',
-      '#tut-char-wrapper.task-shrink{flex-basis:58px!important;width:58px!important;opacity:0.95;}',
+      '#tut-char-wrapper.task-shrink{flex-basis:46px!important;width:46px!important;opacity:0.95;}',
       '#tut-task-goal{display:none;margin-top:10px;padding:8px 14px;border-radius:8px;',
       'background:rgba(212,175,55,0.12);border:1px dashed rgba(212,175,55,0.6);',
       'color:#ffe099;font-weight:800;font-size:0.78rem;letter-spacing:0.03em;',
@@ -645,7 +645,7 @@ function buildDOM() {
       '#tut-box.collapsed #tut-task-goal{margin-top:0;padding-right:64px;}',
       '/* 📱 舞台恆為手機比例：以下規則常駐生效（原 @media 430px） */',
       
-      '#tut-name-tag{font-size:0.82rem;top:-28px;left:92px;padding:4px 14px;}',
+      '#tut-name-tag{font-size:0.82rem;top:-28px;left:66px;padding:4px 14px;}',
       '#tut-next-btn{padding:7px 16px;font-size:0.75rem;}',
       '#tut-phase-label{font-size:0.58rem;top:12px;right:12px;}'
     ].join('');
