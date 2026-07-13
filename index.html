@@ -218,7 +218,6 @@
     <div class="status-bar">
       <div class="status-pill" id="turn-owner-indicator" style="display:none; border-color:#ffcc00; font-weight:700;">👤 玩家回合</div>
       <button class="music-btn" style="border-color:#d4af37" onclick="playUniformSfx(); openGameOptionsModal()">⚙️ 遊戲選項</button>
-      <button class="music-btn" style="border-color:#ffe099; color:#ffe099;" onclick="playUniformSfx(); startFloatingTutorial();">📖 遊戲教學</button>
       <div class="status-pill">回合 <strong id="turn-txt">0</strong></div>
       <div class="status-pill">威望 <strong id="score-txt" style="color:#e6b464; text-shadow: var(--glow-warm);">0</strong> / <span id="target-txt">15</span></div>
     </div>
@@ -324,16 +323,18 @@
   <div class="modal" style="max-width:460px;">
     <h2 class="modal-title">⚙️ 皇家貿易商會選項</h2>
     <p style="font-size:0.8rem; color:var(--text-muted); margin-bottom:10px;">調配您的經商偏好與對局模式</p>
-    <p style="font-size:0.75rem; color:#ffe099; text-align:left; font-weight:700; margin-top:4px;">🎮 模式切換 (切換將直接重開新對局)：</p>
-    <div style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 6px; margin: 4px 0 10px 0;">
-      <button class="diff-opt-btn" id="mode-btn-single" onclick="playUniformSfx(); ActionDispatcher.dispatch('SWITCH_MODE', { mode: 'singlePlayer' })">🏆 成就大師</button>
-      <button class="diff-opt-btn" id="mode-btn-ai" onclick="playUniformSfx(); ActionDispatcher.dispatch('SWITCH_MODE', { mode: 'vsAI' })">🤖 帝國爭霸</button>
-      <button class="diff-opt-btn" id="mode-btn-story" onclick="playUniformSfx(); ActionDispatcher.dispatch('SWITCH_MODE', { mode: 'storyMode' })">📜 故事戰役</button>
+    <!-- 🎮 模式切換：先點按鈕，展開後才顯示三種模式 -->
+    <button class="menu-row-btn" id="mode-switch-toggle" style="width:100%; margin:4px 0 6px 0;" onclick="playUniformSfx(); toggleModeSwitchPanel()">🎮 切換遊戲模式 ▾</button>
+    <div id="mode-switch-panel" style="display:none; grid-template-columns: repeat(3, 1fr); gap: 6px; margin: 0 0 10px 0;">
+      <p style="grid-column: 1 / -1; font-size:0.68rem; color:var(--text-muted); margin:0 0 2px 0; text-align:left;">切換將直接重開新對局：</p>
+      <button class="diff-opt-btn" id="mode-btn-single" onclick="playUniformSfx(); chooseGameMode('singlePlayer')">🏆 成就大師</button>
+      <button class="diff-opt-btn" id="mode-btn-ai" onclick="playUniformSfx(); chooseGameMode('vsAI')">🤖 帝國爭霸</button>
+      <button class="diff-opt-btn" id="mode-btn-story" onclick="playUniformSfx(); chooseGameMode('storyMode')">📜 故事戰役</button>
     </div>
    <div class="menu-grid-layout" style="margin-top: 12px;">
   <button id="menu-toggle-music" class="menu-row-btn" onclick="playUniformSfx(); handleMusicToggle()">🎵 背景音樂：開啟</button>
   <button id="menu-toggle-sfx" class="menu-row-btn" onclick="playUniformSfx(); handleSfxToggle()">🔊 遊戲音效：開啟</button>
-  <button class="menu-row-btn" onclick="playUniformSfx(); saveCurrentProgress()">💾 保存皇家進度</button>
+  <button class="menu-row-btn" onclick="playUniformSfx(); closeGameOptionsModal(); startFloatingTutorial()">📖 遊戲教學</button>
 </div>
     <button class="btn-replay" style="background:#3a2e22; border:1px solid #d4af37;" onclick="playUniformSfx(); closeGameOptionsModal()">返回大會堂</button>
   </div>
