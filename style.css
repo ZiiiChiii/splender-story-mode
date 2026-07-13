@@ -1,3 +1,6 @@
+/* 🖋️ 貴族卡牌名稱字體：Child Fun Sans（zeoseven 字體託管，含完整中文字形） */
+@import url("https://fontsapi.zeoseven.com/219/main/result.css");
+
 /* ── Reset & Base ──────────────────────────────────────────── */
 *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 
@@ -738,4 +741,10 @@ body.stage-boxed .shell { padding: 4px 6px; box-sizing: border-box; }
 #guide-card-rows .board-row {
   flex: 0 0 auto !important;
   min-height: 0 !important;
+}
+
+.noble-name {
+  font-family: "Child Fun Sans", 'Microsoft JhengHei', 'Heiti TC', sans-serif;
+  font-weight: normal;
+  letter-spacing: 0.04em;
 }
