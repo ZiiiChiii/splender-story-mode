@@ -410,33 +410,11 @@ html, body {
   .ach-badge-title { font-size: 0.5rem; }
   .ach-latest-display { font-size: 0.58rem; line-height: 1.1; }
 
-  /* 核心遊戲區：覆蓋 inline gap:12px 的容器 */
-  .shell > div[style*="display: flex"][style*="gap: 12px"] {
-    gap: 4px !important;
-    flex: 1 !important;
-    min-height: 0 !important;
-    margin-bottom: 0 !important;
-    overflow: hidden !important;
-  }
-
-  /* 左側鑄幣交易局：覆蓋 inline width:150px */
-  #left-sidebar {
-    width: 62px !important;
-    flex-shrink: 0 !important;
-    gap: 4px !important;
-  }
-
-  #left-earned-nobles {
-    width: 100% !important;
-    max-width: none !important;
-    box-sizing: border-box !important;
-  }
-  #guide-actions > div:first-child { display: none !important; }
-
+  /* 🪙 拿取寶石籌碼（右上區）：兩欄籌碼選擇 */
   #unified-bank-selectors {
     display: grid !important;
-    grid-template-columns: 1fr !important;
-    gap: 3px !important;
+    grid-template-columns: repeat(2, 1fr) !important;
+    gap: 3px 6px !important;
     overflow-y: auto !important;
   }
   .token-container-cell { padding: 1px !important; gap: 2px !important; }
@@ -496,17 +474,20 @@ html, body {
   .cost-dot-circle { width: 4px !important; height: 4px !important; }
   .btn-card { font-size: 0.38rem !important; padding: 1px 0 !important; }
 
-  /* 底部金庫：覆蓋 inline height:105px */
-  #guide-dashboard {
-    height: auto !important;
-    min-height: 70px !important;
-    max-height: 88px !important;
+  /* 🗂️ 底部 2×2 區（玩家金庫 / 拿籌碼 / 保留庫 / 已拜訪貴族） */
+  #bottom-quad {
     flex-shrink: 0 !important;
     gap: 4px !important;
-    padding-top: 3px !important;
-    margin-top: 0 !important;
+    grid-template-rows: minmax(0, auto) minmax(0, 66px) !important;
+    max-height: 188px !important;
   }
-
+  /* 底部四格內部一律可捲動、不撐破格線 */
+  #bottom-quad > section { overflow: hidden !important; min-height: 0 !important; }
+  #reserved-layer { max-height: 52px; overflow-y: auto; }
+  #guide-dashboard {
+    min-height: 0 !important;
+    padding: 4px 8px !important;
+  }
   .dashboard { padding: 3px 6px !important; }
   .res-grid { gap: 3px !important; }
   .res-circle { width: 11px !important; height: 11px !important; }
@@ -514,27 +495,24 @@ html, body {
   .res-bonus { font-size: 0.45rem !important; }
   #cap-txt { font-size: 0.46rem !important; margin-top: 1px !important; }
 
-   /* 首席輔助官面板 - 手機版 */
+   /* 首席輔助官面板（貴族列旁，僅故事模式顯示） */
  #guide-assistant-container {
-    width: calc((var(--stage-w, 100vw) - 86px) / 4) !important;
+    width: 100px !important;
     min-width: 0 !important;
-    max-width: calc((var(--stage-w, 100vw) - 86px) / 4) !important;
+    max-width: 100px !important;
     flex-shrink: 0 !important;
     padding: 2px !important;
   }
 
-  /* 已拜訪貴族面板 - 手機版 */
+  /* 已拜訪貴族面板（右下區） */
   #left-earned-nobles {
-    width: 100% !important;
-    max-width: none !important;
-    flex: 1 !important;
+    min-width: 0 !important;
     padding: 3px !important;
     overflow-y: auto !important;
   }
-  
-  /* 保留手牌區：覆蓋 inline min-width:320px */
+
+  /* 保留手牌區（左下區） */
   #guide-reserved {
-    flex: 2.5 !important;
     min-width: 0 !important;
     padding: 3px !important;
   }
