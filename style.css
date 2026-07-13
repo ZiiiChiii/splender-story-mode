@@ -410,30 +410,49 @@ html, body {
   .ach-badge-title { font-size: 0.5rem; }
   .ach-latest-display { font-size: 0.58rem; line-height: 1.1; }
 
-  /* 🪙 拿取寶石籌碼（右上區）：兩欄籌碼選擇 */
+  /* 🪙 銀行區內部：標題壓縮、籌碼格吃滿中段、按鈕縮小，全部塞進固定格 */
+  #guide-actions { padding: 4px 6px !important; }
+  #guide-actions > div:first-child { font-size: 0.5rem !important; padding-bottom: 2px !important; margin-bottom: 2px !important; }
+  #guide-actions > div:nth-child(3) { padding-top: 3px !important; gap: 4px !important; }
+  /* 錯誤訊息：改為浮層覆蓋在籌碼區上方，不占固定版面高度但仍可見 */
+  #guide-actions { position: relative !important; }
+  #guide-actions .msg-box {
+    position: absolute !important; left: 4px !important; right: 4px !important; bottom: 4px !important;
+    margin: 0 !important; padding: 3px 4px !important; z-index: 20 !important;
+    background: rgba(120,20,20,0.94) !important; border-radius: 4px !important;
+    font-size: 0.5rem !important; line-height: 1.15 !important; text-align: center !important;
+    pointer-events: none !important;
+  }
+  #guide-actions .msg-box:empty { display: none !important; }
+  /* 🪙 拿取寶石籌碼（右上區）：3欄×2列，6 格一次顯示、不需捲動 */
   #unified-bank-selectors {
     display: grid !important;
-    grid-template-columns: repeat(2, 1fr) !important;
-    gap: 3px 6px !important;
-    overflow-y: auto !important;
+    grid-template-columns: repeat(3, 1fr) !important;
+    grid-template-rows: repeat(2, 1fr) !important;
+    gap: 2px 4px !important;
+    flex: 1 1 auto !important;
+    overflow: hidden !important;
   }
-  .token-container-cell { padding: 1px !important; gap: 2px !important; }
-  .token-btn { width: 18px !important; height: 18px !important; background-size: 13px 13px !important; }
-  .token-count-label { font-size: 0.42rem !important; }
+  .token-container-cell { flex-direction: row !important; padding: 0 2px !important; gap: 2px !important; justify-content: center !important; align-items: center !important; }
+  .token-btn { width: 17px !important; height: 17px !important; background-size: 12px 12px !important; flex-shrink: 0 !important; }
+  .token-count-label { font-size: 0.4rem !important; line-height: 1 !important; }
   #btn-do-diff, #btn-do-same { font-size: 0.48rem !important; padding: 4px 1px !important; }
 
-  /* 右側卡牌矩陣 */
+  /* 💎 卡牌矩陣：固定高度預算（三排 + 表頭一次顯示，不裁切第三排） */
   #guide-matrix {
-    flex: 1 !important;
+    flex: 0 0 auto !important;
+    height: 300px !important;
     min-height: 0 !important;
     overflow: hidden !important;
     gap: 2px !important;
+    margin-bottom: 4px !important;
   }
+  #guide-card-rows { gap: 2px !important; }
 
   /* 貴族區 */
   .nobles-section { margin-bottom: 0 !important; padding: 1px 0 !important; flex-shrink: 0 !important; }
   .nobles-grid { gap: 4px !important; }
- .noble-card { min-width: 0 !important; max-width: calc((var(--stage-w, 100vw) - 86px) / 4) !important; width: calc((var(--stage-w, 100vw) - 86px) / 4) !important; height: calc((var(--stage-w, 100vw) - 86px) / 4) !important; flex-shrink: 0 !important; }
+ .noble-card { min-width: 0 !important; width: 82px !important; max-width: 82px !important; height: 82px !important; flex-shrink: 0 !important; }
   .noble-pts { font-size: 0.58rem !important; }
   .noble-reqs { font-size: 0.36rem !important; }
 
@@ -450,21 +469,22 @@ html, body {
   .deck-count { font-size: 0.46rem !important; }
 
   .grid-4 {
-    flex: 0 0 auto !important;           /* 列高 = 卡牌內容高度 */
+    flex: 1 1 0 !important;               /* 各排均分矩陣高度 */
     min-height: 0 !important;
     display: grid !important;
     grid-template-columns: repeat(4, 1fr) !important;
-    grid-template-rows: none !important;
-    grid-auto-rows: auto !important;      /* ⚠️ 基礎規則是 0，會把卡牌壓成 1px，必須改回 auto */
+    grid-auto-rows: 1fr !important;
     gap: 3px !important;
+    align-items: stretch !important;
   }
 
-  /* 卡牌正方形 */
+  /* 卡牌：填滿所在格子的高度（依矩陣固定預算縮放，保證三排完整顯示） */
   .card {
     width: 100% !important;
-    height: auto !important;              /* 高度交給 aspect-ratio 依欄寬決定（原尺寸） */
-    aspect-ratio: 1 / 1 !important;
+    height: 100% !important;
+    aspect-ratio: auto !important;
     max-width: none !important;
+    min-height: 0 !important;
     /* ⚠️ 不可寫 transform:none !important —— 會壓過 GSAP 行內樣式，殺死可購買漂浮動畫 */
   }
   .card-content-wrapper { padding: 2px !important; }
@@ -476,14 +496,14 @@ html, body {
 
   /* 🗂️ 底部 2×2 區（玩家金庫 / 拿籌碼 / 保留庫 / 已拜訪貴族） */
   #bottom-quad {
-    flex-shrink: 0 !important;
+    flex: 0 0 auto !important;
     gap: 4px !important;
-    grid-template-rows: minmax(0, auto) minmax(0, 66px) !important;
-    max-height: 188px !important;
+    grid-template-rows: 104px 64px !important;   /* 上排(金庫/籌碼) 下排(保留/貴族) */
+    height: 172px !important;
   }
-  /* 底部四格內部一律可捲動、不撐破格線 */
   #bottom-quad > section { overflow: hidden !important; min-height: 0 !important; }
-  #reserved-layer { max-height: 52px; overflow-y: auto; }
+  /* 🔒 保留卡：4 張一列完整顯示、不需捲動（卡片依欄寬自動縮小） */
+  #reserved-layer { overflow: visible !important; align-items: stretch !important; }
   #guide-dashboard {
     min-height: 0 !important;
     padding: 4px 8px !important;
