@@ -82,7 +82,7 @@ export const StoryMode = {
     const currentMission = STORY_MISSIONS[state.storyProgress.currentLevel - 1] || STORY_MISSIONS[0];
 
     modal.innerHTML = `
-      <div class="modal" style="max-width:520px; max-height:85vh; display:flex; flex-direction:column; overflow:hidden; padding:16px;">
+      <div class="modal" style="max-width:520px; max-height:calc(var(--stage-h, 716px) - 40px); display:flex; flex-direction:column; overflow:hidden; padding:16px;">
         <h2 class="modal-title">📜 皇家故事模式戰役</h2>
         <p style="font-size:0.75rem; color:var(--text-muted); margin-bottom:6px;">可任意點選已解鎖的關卡進行重複挑戰，或點選下一關繼續推進</p>
         
