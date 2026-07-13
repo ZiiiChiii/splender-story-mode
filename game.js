@@ -172,7 +172,8 @@ function animateCardFlightToGoldVault(cardId, providesColor, callback, vaultPref
   // 📱 一律使用舞台邏輯座標：飛行位置與縮放比例在任何螢幕縮放下皆一致
   const start = window.stageLocalRect(sourceDom);
   const fallbackDash = (vaultPrefix === 'ai-vault-target')
-    ? document.getElementById('ai-dashboard-box') : document.getElementById('guide-dashboard');
+    ? (document.getElementById('ai-banner-vault') || document.getElementById('ai-dashboard-box'))
+    : document.getElementById('guide-dashboard');
   // 🎯 精準命中：優先鎖定格內的「圓形寶石圖示」正中央，而非整個格子的幾何中心
   const gemIcon = vaultDom ? vaultDom.querySelector('.res-circle') : null;
   const finalTarget = gemIcon || vaultDom || fallbackDash || document.getElementById('stage') || document.body;
@@ -704,8 +705,11 @@ window.render = function() {
   const targetTxt = document.getElementById('target-txt');
   if (targetTxt) targetTxt.textContent = ActionDispatcher.getTargetScore(fullState);
 
-  // AI 金庫面板：帝國爭霸 & 故事模式 vsAI 關卡皆顯示
-  document.getElementById('ai-dashboard-box').style.display = isAiBattle ? 'block' : 'none';
+  // AI 金庫面板：
+  //   帝國爭霸(vsAI) → 金庫移駐頂部橫幅（原成就欄位置），底部面板隱藏
+  //   故事模式 vsAI 關卡 → 維持底部面板（橫幅保留給關卡任務資訊）
+  document.getElementById('ai-dashboard-box').style.display =
+    (isAiBattle && !isvsAI) ? 'block' : 'none';
 
   // 🤝 首席輔助官欄位：專屬故事模式，成就模式與帝國爭霸一律隱藏
   const astPanel = document.getElementById('guide-assistant-container');
@@ -727,11 +731,38 @@ window.render = function() {
   const bannerBadge = document.getElementById('dynamic-banner-badge');
   const bannerText = document.getElementById('dynamic-banner-text');
 
+  // 🤖 AI 金庫內容節點的掛載位置切換（vsAI ↔ 底部面板），單一 DOM、id 不重複，
+  //    飛卡動畫的 ai-vault-target-* 目標會自動跟著掛載位置移動
+  const achContent    = document.getElementById('banner-ach-content');
+  const aiBannerVault = document.getElementById('ai-banner-vault');
+  const aiBannerSlot  = document.getElementById('ai-banner-slot');
+  const aiVaultContent = document.getElementById('ai-vault-content');
+  const aiBottomBox   = document.getElementById('ai-dashboard-box');
+
   if (bannerZone && bannerBadge && bannerText) {
     if (isvsAI) {
-      bannerZone.style.display = 'none';
+      // ── 🤖 帝國爭霸：橫幅化身 AI 金庫（原成就欄位置）──
+      bannerZone.style.display = 'flex';
+      bannerZone.style.cursor = 'default';
+      if (achContent) achContent.style.display = 'none';
+      if (aiBannerVault) {
+        aiBannerVault.style.display = 'flex';
+        // 保留一格顯示當前對戰對手頭像
+        const av = document.getElementById('ai-banner-avatar');
+        const opp = fullState.settings.aiOpponent;
+        if (av && opp && av.getAttribute('src') !== opp.img) av.src = opp.img;
+        if (aiVaultContent && aiBannerSlot && aiVaultContent.parentElement !== aiBannerSlot) {
+          aiBannerSlot.appendChild(aiVaultContent);
+        }
+      }
     } else {
       bannerZone.style.display = 'flex';
+      if (achContent) achContent.style.display = '';
+      if (aiBannerVault) aiBannerVault.style.display = 'none';
+      // 金庫內容歸位底部面板（故事模式 vsAI 關卡使用）
+      if (aiVaultContent && aiBottomBox && aiVaultContent.parentElement !== aiBottomBox) {
+        aiBottomBox.appendChild(aiVaultContent);
+      }
 
       // ── 🏆 1. 單人模式：常駐顯示成就進度（成就動畫由全域輪播器接手）──
       if (isSingleMode) {
