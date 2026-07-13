@@ -1187,9 +1187,32 @@ window.reserveBoardCard = function(level, idx) {
   ActionDispatcher.dispatch('RESERVE_CARD', { level, idx });
 };
 
+// 🎮 模式切換面板：預設收合，點「切換遊戲模式」按鈕才展開三種模式
+window.toggleModeSwitchPanel = () => {
+  const p = document.getElementById('mode-switch-panel');
+  const t = document.getElementById('mode-switch-toggle');
+  if (!p) return;
+  const opening = (p.style.display === 'none' || !p.style.display);
+  p.style.display = opening ? 'grid' : 'none';
+  if (t) t.textContent = opening ? '🎮 切換遊戲模式 ▴' : '🎮 切換遊戲模式 ▾';
+};
+
+window.chooseGameMode = (mode) => {
+  const p = document.getElementById('mode-switch-panel');
+  const t = document.getElementById('mode-switch-toggle');
+  if (p) p.style.display = 'none';
+  if (t) t.textContent = '🎮 切換遊戲模式 ▾';
+  ActionDispatcher.dispatch('SWITCH_MODE', { mode: mode });
+};
+
 window.openGameOptionsModal = () => {
   const s = CoreState.get().settings;
   const m = CoreState.get().mode;
+  // 每次開窗重置模式面板為收合狀態
+  const msp = document.getElementById('mode-switch-panel');
+  const mst = document.getElementById('mode-switch-toggle');
+  if (msp) msp.style.display = 'none';
+  if (mst) mst.textContent = '🎮 切換遊戲模式 ▾';
   document.getElementById('menu-toggle-music').textContent = s.isMusicMuted ? "🔇 背景音樂：靜音" : "🎵 背景音樂：開啟";
   document.getElementById('menu-toggle-sfx').textContent = s.isSfxMuted ? "🔇 遊戲音效：靜音" : "🔊 遊戲音效：開啟";
 
