@@ -53,7 +53,7 @@ var STEPS = [
 
   { phase:'階段二：拿取籌碼',
     text:'漂亮！拿到的籌碼都放進你底部的金庫了。[[大數字是寶石數量，小數字是買到的卡片數量]]。記住，身上最多只能塞 [[10 顆寶石]]，拿太多會放不下！',
-    el:'#guide-dashboard .dashboard', color:'#ffcc00', voice:VOICE },
+    el:'#guide-dashboard', color:'#ffcc00', voice:VOICE },
 
   { phase:'階段二：拿取籌碼',
     text:'還有另一種拿法：[[連點同一種顏色兩下]]，一次帶走 [[2 顆相同]] 的寶石（該色庫存需 2 顆以上）。試試看！',
