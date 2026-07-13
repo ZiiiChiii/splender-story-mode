@@ -265,8 +265,14 @@
           <div class="nobles-grid" id="nobles-layer" style="gap: 8px;"></div>
         </section>
 
-        <section class="earned-nobles-panel" id="guide-assistant-container" style="width: 120px; max-width: 120px; flex-shrink: 0; padding: 0 6px; display: flex; flex-direction: column;">          <div style="color: #ffe099; font-size: 0.6rem; font-weight: 700; margin-bottom: 2px; text-transform: uppercase; text-align: center;">🤝 首席輔助官</div>
+        <!-- 🤝 首席輔助官欄位（僅故事模式顯示）：點選開啟人才庫更換隨行輔助官 -->
+        <section class="earned-nobles-panel" id="guide-assistant-container"
+          style="width: 120px; max-width: 120px; flex-shrink: 0; padding: 0 6px; display: flex; flex-direction: column; cursor: pointer;"
+          title="點選開啟皇家貴族人才庫，更換首席輔助官"
+          onclick="playUniformSfx(); openTalentPoolModal()">
+          <div style="color: #ffe099; font-size: 0.6rem; font-weight: 700; margin-bottom: 2px; text-transform: uppercase; text-align: center;">🤝 首席輔助官</div>
           <div id="assistant-display-layer" style="display: flex; align-items: center; gap: 8px; flex: 1;"></div>
+          <div style="font-size: 0.5rem; color: var(--text-muted); text-align: center; padding-bottom: 3px;">👆 點選開啟人才庫</div>
         </section>
 
       </div>
@@ -327,7 +333,6 @@
    <div class="menu-grid-layout" style="margin-top: 12px;">
   <button id="menu-toggle-music" class="menu-row-btn" onclick="playUniformSfx(); handleMusicToggle()">🎵 背景音樂：開啟</button>
   <button id="menu-toggle-sfx" class="menu-row-btn" onclick="playUniformSfx(); handleSfxToggle()">🔊 遊戲音效：開啟</button>
-  <button class="menu-row-btn" onclick="playUniformSfx(); openTalentPoolModal()">🏛️ 挑選首席輔助官 (人才庫)</button>
   <button class="menu-row-btn" onclick="playUniformSfx(); saveCurrentProgress()">💾 保存皇家進度</button>
 </div>
     <button class="btn-replay" style="background:#3a2e22; border:1px solid #d4af37;" onclick="playUniformSfx(); closeGameOptionsModal()">返回大會堂</button>
