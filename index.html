@@ -235,86 +235,87 @@
     </div>
   </div>
 
-  <div style="display: flex; gap: 12px; flex: 1; min-height: 0; margin-bottom: 6px; align-items: stretch;">
-
-  <div id="left-sidebar" style="width: 150px; flex-shrink: 0; display: flex; flex-direction: column; gap: 10px;">
-    
-    <section class="action-panel" id="guide-actions" style="width: 100%; display: flex; flex-direction: column; justify-content: space-between; padding: 8px; margin-bottom: 0;">
-      <div style="font-size:0.65rem; color:#ffe099; font-weight:800; text-align:center; border-bottom:1px dashed rgba(255,255,255,0.15); padding-bottom:4px; margin-bottom:4px;">🪙 鑄幣交易局</div>
-      <div id="unified-bank-selectors" style="display: grid; grid-template-columns: 1fr; gap: 5px; flex: 1; padding: 2px 0; overflow-y:auto;"></div>
-      <div style="display: flex; flex-direction: column; gap: 5px; margin-top: auto; padding-top: 6px; border-top:1px dashed rgba(255,255,255,0.15);">
-        <button class="btn-primary" id="btn-do-diff" style="font-size:0.6rem; padding:6px 2px; line-height:1.2;" disabled onclick="handleDoDiffClick()">收下 (3色)</button>
-        <button class="btn-primary" id="btn-do-same" style="font-size:0.6rem; padding:6px 2px; line-height:1.2;" disabled onclick="handleDoSameClick()">收下 (2色)</button>
-      </div>
-      <div class="msg-box" id="error-msg" style="min-height:0; margin-top:2px; line-height:1.1; font-size:0.55rem;"></div>
+  <!-- ⚜️ 貴族列（分配圖第 3 區）：隨機 3 張覲見貴族，橫跨整寬 -->
+  <div style="display: flex; gap: 8px; flex-shrink: 0; align-items: stretch; width: 100%; margin-bottom: 2px; padding-bottom: 2px; border-bottom: 1px dashed rgba(212,175,55,0.2);">
+    <section class="nobles-section" id="guide-nobles" style="flex: 1; min-width: 0;">
+      <div style="font-size: 0.6rem; color: #ffe099; font-weight: 700; margin-bottom: 2px; text-transform: uppercase; padding-left: 6px;">⚜️ 議事堂出席覲見貴族</div>
+      <div class="nobles-grid" id="nobles-layer" style="gap: 8px;"></div>
     </section>
 
-    <section id="left-earned-nobles" style="width: 100%; padding: 4px; background: rgba(0, 0, 0, 0.3); border-radius: 4px; display: flex; flex-direction: column;">
-      <div class="earned-nobles-title" style="font-size: 0.6rem; color: #ffe099; font-weight: 700; margin-bottom: 4px; text-transform: uppercase; text-align: center;">👑 已拜訪貴族</div>
-      <div class="earned-nobles-list" id="earned-nobles-layer" style="display: flex; flex-direction: column; gap: 4px; overflow-y: auto; max-height: 150px; flex: 1;"></div>
+    <!-- 🤝 首席輔助官欄位（僅故事模式顯示）：點選開啟人才庫更換隨行輔助官 -->
+    <section class="earned-nobles-panel" id="guide-assistant-container"
+      style="width: 120px; max-width: 120px; flex-shrink: 0; padding: 0 6px; display: none; flex-direction: column; cursor: pointer;"
+      title="點選開啟皇家貴族人才庫，更換首席輔助官"
+      onclick="playUniformSfx(); openTalentPoolModal()">
+      <div style="color: #ffe099; font-size: 0.6rem; font-weight: 700; margin-bottom: 2px; text-transform: uppercase; text-align: center;">🤝 首席輔助官</div>
+      <div id="assistant-display-layer" style="display: flex; align-items: center; gap: 8px; flex: 1;"></div>
+      <div style="font-size: 0.5rem; color: var(--text-muted); text-align: center; padding-bottom: 3px;">👆 點選開啟人才庫</div>
     </section>
   </div>
-          
-    <div class="board-matrix" id="guide-matrix" style="flex: 1; min-height: 0; display: flex; flex-direction: column; gap: 2px;">
-              
-  <div style="display: flex; gap: 12px; margin-bottom: 4px; padding: 2px 0; border-bottom: 1px dashed rgba(212,175,55,0.2); align-items: stretch; width: 100%;">
-        
-        <section class="nobles-section" id="guide-nobles" style="flex: 1; min-width: 0;">
-          <div style="font-size: 0.6rem; color: #ffe099; font-weight: 700; margin-bottom: 2px; text-transform: uppercase; padding-left: 6px;">⚜️ 議事堂出席覲見貴族</div>
-          <div class="nobles-grid" id="nobles-layer" style="gap: 8px;"></div>
-        </section>
 
-        <!-- 🤝 首席輔助官欄位（僅故事模式顯示）：點選開啟人才庫更換隨行輔助官 -->
-        <section class="earned-nobles-panel" id="guide-assistant-container"
-          style="width: 120px; max-width: 120px; flex-shrink: 0; padding: 0 6px; display: flex; flex-direction: column; cursor: pointer;"
-          title="點選開啟皇家貴族人才庫，更換首席輔助官"
-          onclick="playUniformSfx(); openTalentPoolModal()">
-          <div style="color: #ffe099; font-size: 0.6rem; font-weight: 700; margin-bottom: 2px; text-transform: uppercase; text-align: center;">🤝 首席輔助官</div>
-          <div id="assistant-display-layer" style="display: flex; align-items: center; gap: 8px; flex: 1;"></div>
-          <div style="font-size: 0.5rem; color: var(--text-muted); text-align: center; padding-bottom: 3px;">👆 點選開啟人才庫</div>
-        </section>
-
-      </div>
-
-      <!-- 🎓 三列卡牌獨立容器：教學高亮只框卡牌矩陣、不含上方貴族/輔助官列 -->
-      <div id="guide-card-rows" style="flex: 1; min-height: 0; display: flex; flex-direction: column; gap: 2px;">
+  <!-- 💎 可買寶石卡牌矩陣（分配圖第 4 區）：橫跨整寬 -->
+  <div class="board-matrix" id="guide-matrix" style="flex: 1; min-height: 0; display: flex; flex-direction: column; gap: 2px; margin-bottom: 6px;">
+    <!-- 🎓 三列卡牌獨立容器：教學高亮只框卡牌矩陣 -->
+    <div id="guide-card-rows" style="flex: 1; min-height: 0; display: flex; flex-direction: column; gap: 2px;">
       <div class="board-row" style="flex: 1; min-height: 0; display: flex; flex-direction: column;">
         <div class="row-header lv3" style="margin-bottom: 2px;"><span class="section-title" style="color:#d4af37; font-weight:700; font-size:0.65rem;">頂級物業 (Lv3)</span><span class="deck-count" id="deck-lv3-txt">剩餘: 0</span></div>
         <div class="grid-4" id="row-lv3" style="flex: 1; min-height: 0; gap: 4px;"></div>
       </div>
-      
+
       <div class="board-row" style="flex: 1; min-height: 0; display: flex; flex-direction: column;">
         <div class="row-header lv2" style="margin-bottom: 2px;"><span class="section-title" style="color:#b0b5b8; font-weight:700; font-size:0.65rem;">中階產業 (Lv2)</span><span class="deck-count" id="deck-lv2-txt">剩餘: 0</span></div>
         <div class="grid-4" id="row-lv2" style="flex: 1; min-height: 0; gap: 4px;"></div>
       </div>
-      
+
       <div class="board-row" style="flex: 1; min-height: 0; display: flex; flex-direction: column;">
         <div class="row-header lv1" style="margin-bottom: 2px;"><span class="section-title" style="color:#a1704a; font-weight:700; font-size:0.65rem;">基礎礦脈 (Lv1)</span><span class="deck-count" id="deck-lv1-txt">剩餘: 0</span></div>
         <div class="grid-4" id="row-lv1" style="flex: 1; min-height: 0; gap: 4px;"></div>
       </div>
-      </div>
     </div>
-
   </div>
 
-  <div class="dashboard-container" id="guide-dashboard" style="margin-top: 0; padding: 6px 0 6px 0; border-top: 1px dashed rgba(255,255,255,0.15); display: flex; gap: 10px; align-items: stretch; flex-shrink: 0;">
-    <section class="dashboard" style="flex:1.5 ; display: flex; flex-direction: column; justify-content: center; padding: 6px 10px; height: 100%;">
+  <!-- 🗂️ 底部 2×2 區（分配圖第 5、6 區）：
+       左上 玩家金庫 ｜ 右上 拿取寶石籌碼
+       左下 保留卡牌庫 ｜ 右下 已獲得貴族欄位 -->
+  <div id="bottom-quad" style="display: grid; grid-template-columns: 1fr 1fr; grid-template-rows: auto auto; gap: 6px; flex-shrink: 0;">
+
+    <!-- ◤ 左上：玩家金庫（vsAI 時 AI 金庫掛回底部面板亦在此欄內） -->
+    <section class="dashboard" id="guide-dashboard" style="display: flex; flex-direction: column; justify-content: center; padding: 6px 10px; min-width: 0;">
       <div id="player-dashboard-title" style="font-size:0.6rem; color:#ffe099; font-weight:700; margin-bottom: 2px;">👤 玩家金庫</div>
       <div class="res-grid" id="res-layer"></div>
       <div class="cap-bar" id="cap-txt" style="margin-top: 4px;">背包: 0 / 10</div>
-      
+
       <div id="ai-dashboard-box" style="display:none; border-top:1px dashed rgba(255,255,255,0.15); padding-top:2px; margin-top:2px;">
         <div id="ai-vault-content" style="display:flex; align-items:center; gap:10px; width:100%; min-width:0;">
           <div style="font-size:0.55rem; color:#e74c3c; font-weight:700; flex-shrink:0; line-height:1.25; text-align:left;">🤖 <span id="ai-opponent-name">電腦 AI</span> 金庫<br>分數: <span id="ai-score-txt" style="color:#ffcc00;">0</span></div>
           <div class="res-grid" id="ai-res-layer" style="display:flex; flex-wrap:wrap; gap:3px 8px; flex:1; min-width:0;"></div>
         </div>
       </div>
-     </section>
-    
-      <section class="reserved-section" id="guide-reserved" style="flex: 3.5; min-width: 260px; padding: 6px;">
-  <p class="section-title" style="color:#d4af37; font-size: 0.6rem; text-align: center; margin-bottom: 4px;">🔒 保密保留完整契約手牌區</p>
-  <div id="reserved-layer" style="display: grid; grid-template-columns: repeat(4, 1fr); gap: 4px;"></div>
-</section>
+    </section>
+
+    <!-- ◥ 右上：拿取寶石籌碼的地方（原鑄幣交易局，自左側欄搬移至此） -->
+    <section class="action-panel" id="guide-actions" style="display: flex; flex-direction: column; justify-content: space-between; padding: 8px; min-width: 0;">
+      <div style="font-size:0.65rem; color:#ffe099; font-weight:800; text-align:center; border-bottom:1px dashed rgba(255,255,255,0.15); padding-bottom:4px; margin-bottom:4px;">🪙 鑄幣交易局</div>
+      <div id="unified-bank-selectors" style="display: grid; grid-template-columns: repeat(2, 1fr); gap: 4px 8px; flex: 1; padding: 2px 0; overflow-y:auto;"></div>
+      <div style="display: flex; gap: 5px; margin-top: auto; padding-top: 6px; border-top:1px dashed rgba(255,255,255,0.15);">
+        <button class="btn-primary" id="btn-do-diff" style="flex:1; font-size:0.6rem; padding:6px 2px; line-height:1.2;" disabled onclick="handleDoDiffClick()">收下 (3色)</button>
+        <button class="btn-primary" id="btn-do-same" style="flex:1; font-size:0.6rem; padding:6px 2px; line-height:1.2;" disabled onclick="handleDoSameClick()">收下 (2色)</button>
+      </div>
+      <div class="msg-box" id="error-msg" style="min-height:0; margin-top:2px; line-height:1.1; font-size:0.55rem;"></div>
+    </section>
+
+    <!-- ◣ 左下：保留卡牌庫 -->
+    <section class="reserved-section" id="guide-reserved" style="padding: 6px; min-width: 0;">
+      <p class="section-title" style="color:#d4af37; font-size: 0.6rem; text-align: center; margin-bottom: 4px;">🔒 保密保留完整契約手牌區</p>
+      <div id="reserved-layer" style="display: grid; grid-template-columns: repeat(4, 1fr); gap: 4px;"></div>
+    </section>
+
+    <!-- ◢ 右下：已獲得的貴族欄位（自左側欄搬移至此） -->
+    <section id="left-earned-nobles" style="padding: 4px 6px; background: rgba(0, 0, 0, 0.3); border-radius: 4px; display: flex; flex-direction: column; min-width: 0;">
+      <div class="earned-nobles-title" style="font-size: 0.6rem; color: #ffe099; font-weight: 700; margin-bottom: 4px; text-transform: uppercase; text-align: center;">👑 已拜訪貴族</div>
+      <div class="earned-nobles-list" id="earned-nobles-layer" style="display: flex; flex-wrap: wrap; gap: 4px; overflow-y: auto; flex: 1; align-content: flex-start;"></div>
+    </section>
+
   </div>
           
 </div>
