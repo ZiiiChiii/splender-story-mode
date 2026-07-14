@@ -262,7 +262,7 @@ html, body {
 .grid-4 { display: grid; grid-template-columns: repeat(4, 1fr); gap: 3px; grid-auto-rows: 0; align-items: start; }
 
 #row-lv1, #row-lv2, #row-lv3 {
-  flex: none !important;
+  flex: 1 1 0 !important;   /* 均分 board-row 剩餘高度，卡片充分利用垂直空間 */
 }
 
 .card {
@@ -394,7 +394,7 @@ html, body {
     height: 100%;
     display: flex;
     flex-direction: column;
-    justify-content: space-between;
+    justify-content: flex-start;   /* 不平攤幽靈間隙，剩餘空間全給矩陣 flex:1 */
     gap: 2px;
     overflow: hidden;
   }
@@ -438,16 +438,15 @@ html, body {
   .token-count-label { font-size: 0.4rem !important; line-height: 1 !important; }
   #btn-do-diff, #btn-do-same { font-size: 0.48rem !important; padding: 4px 1px !important; }
 
-  /* 💎 卡牌矩陣：固定高度預算（三排 + 表頭一次顯示，不裁切第三排） */
+  /* 💎 卡牌矩陣：flex:1 吃滿頂部與底部之間的所有剩餘空間，卡片隨之最大化 */
   #guide-matrix {
-    flex: 0 0 auto !important;
-    height: 300px !important;
+    flex: 1 1 auto !important;
     min-height: 0 !important;
     overflow: hidden !important;
     gap: 2px !important;
     margin-bottom: 4px !important;
   }
-  #guide-card-rows { gap: 2px !important; }
+  #guide-card-rows { flex: 1 1 auto !important; min-height: 0 !important; gap: 2px !important; }
 
   /* 貴族區 */
   .nobles-section { margin-bottom: 0 !important; padding: 1px 0 !important; flex-shrink: 0 !important; }
@@ -737,7 +736,7 @@ body.stage-boxed .shell { padding: 4px 6px; box-sizing: border-box; }
   justify-content: flex-start !important;
 }
 #guide-card-rows .board-row {
-  flex: 0 0 auto !important;
+  flex: 1 1 0 !important;      /* 三排均分矩陣高度，卡片充分利用垂直空間 */
   min-height: 0 !important;
 }
 
