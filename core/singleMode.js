@@ -195,25 +195,49 @@ export const SingleMode = {
     }
   },
 
-  // 🎯 核心重構：歷史面板連動
+  // 🎯 皇家勳章牆：外層只顯示「符號＋名稱」，達成條件點入勳章後於聚光燈面板顯示
   openAchievementHistory() {
     const container = document.getElementById('ach-matrix-injector');
     const unlockedSet = this.getUnlockedSet();
-    
+    const TIER_NAME = { easy: "簡單", normal: "中階", hard: "進階", expert: "困難", master: "神人" };
+
     if (container) {
-      container.innerHTML = ALL_ACHIEVEMENTS.map(a => {
-        const unlocked = unlockedSet.has(a.id);
-        let tierName = { easy: "簡單", normal: "中階", hard: "進階", expert: "困難", master: "神人" }[a.tier];
-        return `
-          <div class="ach-item-row ${unlocked ? 'unlocked' : ''}" style="border-left: 4px solid ${a.color}; margin-bottom: 6px;">
-            <div class="ach-row-meta">
-              <div class="ach-row-name">${a.symbol} ${unlocked ? a.title : '?? 未知經商密盟 ??'}</div>
-              <div class="ach-row-desc">${unlocked ? a.desc : '此成就尚未解鎖，請在單人模式下滿足條件。'}</div>
-            </div>
-            <div class="ach-row-tag" style="background: ${unlocked ? a.color : '#332a24'}; color:${unlocked ? '#110e0c' : '#73655c'};">${unlocked ? tierName : '未鎖'}</div>
-          </div>
-        `;
+      // ── 各難度進度統計條（增添層次，避免單調）──
+      const tiers = ['easy', 'normal', 'hard', 'expert', 'master'];
+      const tierBar = tiers.map(t => {
+        const list = ALL_ACHIEVEMENTS.filter(a => a.tier === t);
+        const got = list.filter(a => unlockedSet.has(a.id)).length;
+        const color = list[0].color;
+        return `<div class="ach-tier-chip" style="--tier-c:${color};">
+          <span class="ach-tier-chip-name">${TIER_NAME[t]}</span>
+          <span class="ach-tier-chip-count">${got}/${list.length}</span>
+          <div class="ach-tier-chip-bar"><div style="width:${Math.round(got / list.length * 100)}%;"></div></div>
+        </div>`;
       }).join('');
+
+      // ── 聚光燈詳情面板（預設提示；點勳章後由 showAchDetail 填入）──
+      const spotlight = `
+        <div class="ach-spotlight" id="ach-spotlight">
+          <div class="ach-spot-symbol" id="ach-spot-symbol">👑</div>
+          <div class="ach-spot-body">
+            <div class="ach-spot-title" id="ach-spot-title">皇家勳章牆</div>
+            <div class="ach-spot-desc" id="ach-spot-desc">點選下方任一勳章，於此查看達成條件。</div>
+          </div>
+          <div class="ach-spot-tag" id="ach-spot-tag" style="visibility:hidden;">—</div>
+        </div>`;
+
+      // ── 勳章牆：只放符號＋名稱（未解鎖顯示 ??），條件一律不外顯 ──
+      const wall = `<div class="ach-wall">` + ALL_ACHIEVEMENTS.map(a => {
+        const unlocked = unlockedSet.has(a.id);
+        return `
+          <button class="ach-medal ${unlocked ? 'unlocked' : 'locked'}" style="--tier-c:${a.color};"
+            onclick="if(typeof playUniformSfx==='function')playUniformSfx(); window.showAchDetail(${a.id});">
+            <span class="ach-medal-symbol">${unlocked ? a.symbol : '🔒'}</span>
+            <span class="ach-medal-name">${unlocked ? a.title : '？？？'}</span>
+          </button>`;
+      }).join('') + `</div>`;
+
+      container.innerHTML = `<div class="ach-tier-strip">${tierBar}</div>` + spotlight + wall;
     }
     const statsEl = document.getElementById('ach-stats-field');
     if (statsEl) { 
@@ -221,6 +245,34 @@ export const SingleMode = {
       statsEl.style.display = ''; 
     }
     document.getElementById('ach-history-modal-container')?.classList.add('show');
+  },
+
+  // 🔍 點選勳章 → 聚光燈面板顯示達成條件（唯一顯示條件的地方）
+  showAchDetail(id) {
+    const a = ALL_ACHIEVEMENTS.find(x => x.id === id);
+    if (!a) return;
+    const unlocked = this.getUnlockedSet().has(id);
+    const TIER_NAME = { easy: "簡單", normal: "中階", hard: "進階", expert: "困難", master: "神人" };
+    const sym = document.getElementById('ach-spot-symbol');
+    const ttl = document.getElementById('ach-spot-title');
+    const dsc = document.getElementById('ach-spot-desc');
+    const tag = document.getElementById('ach-spot-tag');
+    const pane = document.getElementById('ach-spotlight');
+    if (!pane) return;
+    sym.textContent = unlocked ? a.symbol : '🔒';
+    ttl.textContent = unlocked ? a.title : '？？未知經商密盟？？';
+    dsc.textContent = unlocked ? a.desc : '此勳章尚未解鎖 — 請在成就模式中持續經商，解鎖後即可查看達成條件。';
+    tag.textContent = TIER_NAME[a.tier];
+    tag.style.visibility = 'visible';
+    tag.style.background = unlocked ? a.color : '#332a24';
+    tag.style.color = unlocked ? '#110e0c' : '#73655c';
+    pane.style.setProperty('--tier-c', a.color);
+    pane.classList.remove('flash'); void pane.offsetWidth; pane.classList.add('flash');
+    // 選中態標記
+    document.querySelectorAll('.ach-medal.selected').forEach(m => m.classList.remove('selected'));
+    const wall = document.querySelectorAll('.ach-medal');
+    const idx = ALL_ACHIEVEMENTS.findIndex(x => x.id === id);
+    if (wall[idx]) wall[idx].classList.add('selected');
   },
 
   closeAchievementHistory() {
