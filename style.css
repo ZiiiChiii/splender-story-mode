@@ -3448,3 +3448,68 @@ body.stage-boxed .shell { padding: 4px 6px; box-sizing: border-box; }
   from { transform: translateX(-50%) scale(0.5); opacity: 0; }
   to   { transform: translateX(-50%) scale(1); opacity: 1; }
 }
+
+/* ═══════════════════════════════════════════════════════════════
+   🔧 使用者需求修正 第七批（2026-07）
+   配對房號改為「五格固定顯示」驗證碼式輸入 + 縮小加入按鈕
+   ═══════════════════════════════════════════════════════════════ */
+#online-code-boxes {
+  position: relative;
+  display: flex;
+  gap: 7px;
+  justify-content: center;
+  cursor: text;
+  margin-bottom: 8px;
+}
+.online-code-box {
+  width: 46px;
+  height: 56px;
+  border: 2px solid rgba(212, 175, 55, 0.4);
+  border-radius: 8px;
+  background: rgba(0, 0, 0, 0.5);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1.6rem;          /* 每個字元又大又清楚 */
+  font-weight: 900;
+  color: #ffcc00;
+  text-shadow: 0 0 8px rgba(255, 204, 0, 0.35);
+  transition: border-color 0.15s ease, box-shadow 0.15s ease;
+  user-select: none;
+}
+.online-code-box.filled {
+  border-color: #d4af37;
+  background: rgba(212, 175, 55, 0.12);
+}
+.online-code-box.current {
+  border-color: #ffcc00;
+  box-shadow: 0 0 8px rgba(255, 204, 0, 0.45);
+  animation: codeBoxBlink 1s ease-in-out infinite alternate;
+}
+@keyframes codeBoxBlink {
+  from { box-shadow: 0 0 4px rgba(255, 204, 0, 0.25); }
+  to   { box-shadow: 0 0 10px rgba(255, 204, 0, 0.6); }
+}
+/* 隱形的真實輸入框：鋪滿五格區域接收打字與手機鍵盤，本身不可見 */
+#online-join-code {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  opacity: 0.01;
+  border: none;
+  background: transparent;
+  color: transparent;
+  caret-color: transparent;
+  font-size: 16px;            /* 防止 iOS 聚焦時自動放大頁面 */
+  outline: none;
+  cursor: text;
+}
+/* 縮小的加入按鈕：置中、不再撐滿整列 */
+.online-join-btn {
+  display: block;
+  margin: 0 auto;
+  padding: 6px 22px !important;
+  font-size: 0.68rem !important;
+  width: auto !important;
+}
