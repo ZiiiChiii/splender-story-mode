@@ -3318,3 +3318,6 @@ body.stage-boxed .shell { padding: 4px 6px; box-sizing: border-box; }
 }
 .online-input:focus { border-color: #ffcc00; box-shadow: 0 0 6px rgba(255, 204, 0, 0.3); }
 .online-input::placeholder { color: rgba(255, 255, 255, 0.3); letter-spacing: normal; }
+
+/* 🌐 好友對戰視窗 z-index 保險：永遠浮在遊戲選單之上 */
+#online-modal { z-index: 999999 !important; }
