@@ -656,14 +656,33 @@ export const ActionDispatcher = {
 
     const isAiBattle = this.isAiBattle(state);
     const isVsAiMode = state.mode === 'vsAI';
+    const isOnline = !!(state.onlineMatch && state.onlineMatch.active);
 
-    // 帝國爭霸：重新開始（維持原對手）＋ 重新選擇對手；其他模式維持單一重開按鈕
-    restartBtn.textContent = isVsAiMode ? '🔁 重新開始（維持原對手）' : '重開新局';
-    restartBtn.className = "btn-replay";
-    restartBtn.onclick = () => { window.playUniformSfx(); window.restartGame(); };
-
+    // 帝國爭霸：重新開始（維持原對手）＋ 重新選擇對手；線上對戰：再戰一場＋重新配對
     const reselectBtn = document.getElementById('btn-reselect-opponent');
-    if (reselectBtn) reselectBtn.style.display = isVsAiMode ? '' : 'none';
+    if (isOnline) {
+      restartBtn.textContent = '⚔️ 再戰一場';
+      restartBtn.className = "btn-replay";
+      restartBtn.onclick = () => { window.playUniformSfx(); window.OnlineMode?.requestRematch(); };
+      if (reselectBtn) {
+        reselectBtn.style.display = '';
+        reselectBtn.textContent = '🔄 重新配對';
+        reselectBtn.onclick = () => {
+          window.playUniformSfx();
+          document.getElementById('win-modal')?.classList.remove('show');
+          window.OnlineMode?.rematchNewPeer();
+        };
+      }
+    } else {
+      restartBtn.textContent = isVsAiMode ? '🔁 重新開始（維持原對手）' : '重開新局';
+      restartBtn.className = "btn-replay";
+      restartBtn.onclick = () => { window.playUniformSfx(); window.restartGame(); };
+      if (reselectBtn) {
+        reselectBtn.style.display = isVsAiMode ? '' : 'none';
+        reselectBtn.textContent = '🔄 重新選擇對手';
+        reselectBtn.onclick = () => { window.playUniformSfx(); window.reselectAiOpponent(); };
+      }
+    }
     const diffTxtEl = document.getElementById('modal-diff-result-txt');
     if (diffTxtEl) diffTxtEl.textContent = '';
 
