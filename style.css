@@ -3321,3 +3321,130 @@ body.stage-boxed .shell { padding: 4px 6px; box-sizing: border-box; }
 
 /* 🌐 好友對戰視窗 z-index 保險：永遠浮在遊戲選單之上 */
 #online-modal { z-index: 999999 !important; }
+
+/* ═══════════════════════════════════════════════════════════════
+   🔧 使用者需求修正 第六批（2026-07）
+   ═══════════════════════════════════════════════════════════════ */
+
+/* 1️⃣ 對手保留牌縮圖：小色塊圖例（等級標示），點擊開窗看所需籌碼 */
+.opp-reserved-thumb {
+  width: 20px;
+  height: 26px;
+  border-radius: 3px;
+  border: 1px solid rgba(255, 255, 255, 0.45);
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.8), inset 0 0 4px rgba(0, 0, 0, 0.35);
+  background-size: cover;
+  background-position: center;
+  cursor: pointer;
+  display: flex;
+  align-items: flex-end;
+  justify-content: center;
+  transition: transform 0.15s ease, box-shadow 0.15s ease;
+}
+.opp-reserved-thumb span {
+  font-size: 0.42rem;
+  font-weight: 900;
+  color: #fff;
+  text-shadow: 0 1px 2px #000, 0 0 3px #000;
+  line-height: 1.4;
+}
+.opp-reserved-thumb:hover {
+  transform: translateY(-2px) scale(1.15);
+  box-shadow: 0 0 8px rgba(255, 215, 0, 0.6);
+}
+#opp-reserved-modal { z-index: 999999 !important; }
+
+/* 5️⃣ 配對碼輸入欄放大：5 碼房號完整清楚顯示 */
+.online-code-input {
+  font-size: 1.15rem !important;
+  font-weight: 800 !important;
+  letter-spacing: 5px !important;
+  text-align: center !important;
+  text-transform: uppercase !important;
+  padding: 8px 2px !important;
+  color: #ffcc00 !important;
+}
+.online-code-input::placeholder {
+  font-size: 0.75rem !important;
+  letter-spacing: normal !important;
+  font-weight: 400 !important;
+}
+
+/* 3️⃣ 快捷語句系統：右下懸浮 💬 鈕 + 展開語句面板 + 對話氣泡 */
+#online-chat-bar {
+  position: absolute;
+  right: 8px;
+  bottom: 8px;
+  z-index: 500000;
+  display: flex;
+  flex-direction: column-reverse;
+  align-items: flex-end;
+  gap: 6px;
+}
+#online-chat-toggle {
+  width: 38px;
+  height: 38px;
+  border-radius: 50%;
+  border: 1px solid rgba(212, 175, 55, 0.6);
+  background: rgba(20, 15, 12, 0.92);
+  font-size: 1rem;
+  cursor: pointer;
+  box-shadow: 0 3px 10px rgba(0, 0, 0, 0.6);
+  transition: transform 0.15s ease;
+}
+#online-chat-toggle:hover { transform: scale(1.1); border-color: #ffcc00; }
+#online-chat-panel {
+  display: none;
+  flex-direction: column;
+  gap: 4px;
+  background: rgba(15, 12, 10, 0.95);
+  border: 1px solid rgba(212, 175, 55, 0.4);
+  border-radius: 8px;
+  padding: 6px;
+  box-shadow: 0 6px 18px rgba(0, 0, 0, 0.7);
+}
+#online-chat-panel.open { display: flex; }
+.online-chat-phrase {
+  background: rgba(212, 175, 55, 0.1);
+  border: 1px solid rgba(212, 175, 55, 0.3);
+  border-radius: 4px;
+  color: #ffe099;
+  font-size: 0.62rem;
+  font-weight: 700;
+  padding: 5px 10px;
+  cursor: pointer;
+  text-align: left;
+  white-space: nowrap;
+  transition: background 0.15s ease;
+}
+.online-chat-phrase:hover { background: rgba(212, 175, 55, 0.3); color: #fff; }
+
+/* 對話氣泡：對手訊息浮在上方（靠近對手欄），自己的浮在下方 */
+#online-chat-bubble {
+  position: absolute;
+  left: 50%;
+  transform: translateX(-50%);
+  z-index: 600000;
+  max-width: 80%;
+  background: rgba(10, 8, 6, 0.95);
+  border: 1px solid #d4af37;
+  border-radius: 14px;
+  color: #fff;
+  font-size: 0.72rem;
+  font-weight: 700;
+  padding: 7px 14px;
+  box-shadow: 0 4px 14px rgba(0, 0, 0, 0.7), 0 0 10px rgba(212, 175, 55, 0.25);
+  pointer-events: none;
+  animation: chatBubblePop 0.3s cubic-bezier(0.25, 1.4, 0.5, 1);
+  transition: opacity 0.5s ease;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+#online-chat-bubble.from-opp { top: 52px; }
+#online-chat-bubble.from-me { bottom: 54px; }
+#online-chat-bubble.fade { opacity: 0; }
+@keyframes chatBubblePop {
+  from { transform: translateX(-50%) scale(0.5); opacity: 0; }
+  to   { transform: translateX(-50%) scale(1); opacity: 1; }
+}
