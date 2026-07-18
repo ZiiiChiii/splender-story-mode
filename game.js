@@ -859,6 +859,18 @@ window.render = function() {
     }
     lastAiState = deepClone(fullState.ai);
     renderDashboardGems('ai-res-layer', fullState.ai, aiDiffs, 'ai-vault-target');
+
+    // 🃏 對手保留牌縮圖：只顯示等級+永久寶石色圖例，點擊開窗查看所需籌碼
+    const aiResMini = document.getElementById('ai-reserved-mini');
+    if (aiResMini) {
+      const rsv = fullState.ai.reserved || [];
+      aiResMini.innerHTML = rsv.map((c, i) => `
+        <div class="opp-reserved-thumb ${GEM_CLASSES[c.provides]}"
+             title="對手保留牌：點擊查看所需籌碼"
+             onclick="window.showOppReservedCard(${i})">
+          <span>L${String(c.id)[0]}</span>
+        </div>`).join('');
+    }
   } else {
     lastAiState = null;
   }
@@ -1521,3 +1533,46 @@ window.addEventListener('DOMContentLoaded', async () => {
 });
 
 window.addEventListener('resize', setDynamicVh);
+
+// ══════════════════════════════════════════════
+// 🃏 對手保留牌詳情視窗（AI 對戰 / 好友對戰共用）
+// ══════════════════════════════════════════════
+const OPP_GEM_NAMES = { w: '白鑽', u: '藍寶', g: '翡翠', r: '紅玉', k: '黑曜', o: '黃金' };
+window.showOppReservedCard = function(idx) {
+  if (typeof window.playUniformSfx === 'function') window.playUniformSfx();
+  const st = CoreState.get();
+  const card = (st.ai.reserved || [])[idx];
+  if (!card) return;
+
+  let overlay = document.getElementById('opp-reserved-modal');
+  if (!overlay) {
+    overlay = document.createElement('div');
+    overlay.className = 'modal-overlay';
+    overlay.id = 'opp-reserved-modal';
+    (document.getElementById('stage') || document.body).appendChild(overlay);
+  }
+
+  const costHtml = Object.keys(card.cost).map(k => `
+    <div class="cost-dot" style="background:rgba(0,0,0,0.55) !important; border:1px solid rgba(255,255,255,0.15) !important; padding:2px 6px !important; font-size:0.75rem !important; gap:4px !important;">
+      <span class="cost-dot-circle ${GEM_CLASSES[k]}" style="width:12px; height:12px;"></span>
+      <span>${OPP_GEM_NAMES[k]} × ${card.cost[k]}</span>
+    </div>`).join('');
+
+  overlay.innerHTML = `
+    <div class="modal" style="max-width:290px; padding:16px;" onclick="event.stopPropagation()">
+      <h2 class="modal-title" style="font-size:0.9rem;">🃏 對手的保留牌</h2>
+      <div style="display:flex; align-items:center; justify-content:center; gap:10px; margin:8px 0;">
+        <div class="card-gem-icon ${GEM_CLASSES[card.provides]}" style="width:22px; height:22px;"></div>
+        <div style="font-size:0.75rem; color:#fff; text-align:left; line-height:1.5;">
+          等級 Lv${String(card.id)[0]}　威望 <span style="color:#ffcc00; font-weight:800;">${card.points}</span> 分<br>
+          產出：${OPP_GEM_NAMES[card.provides]}（永久減免）
+        </div>
+      </div>
+      <div style="font-size:0.62rem; color:var(--text-muted); margin-bottom:6px;">收購所需籌碼</div>
+      <div style="display:flex; flex-wrap:wrap; gap:6px; justify-content:center; margin-bottom:12px;">${costHtml}</div>
+      <button class="btn-replay" style="width:100%; margin:0; padding:8px;"
+        onclick="document.getElementById('opp-reserved-modal').classList.remove('show')">關閉</button>
+    </div>`;
+  overlay.onclick = () => overlay.classList.remove('show');
+  overlay.classList.add('show');
+};
