@@ -930,7 +930,7 @@ window.render = function() {
       }
 
       return `
-        <div class="card" id="dom-card-${card.id}" style="background-image: url('${imgUrl}'); width: 100%; aspect-ratio: 1 / 1; transform: none;">
+        <div class="card ${afford.affordable ? 'reserved-buyable' : ''}" id="dom-card-${card.id}" style="background-image: url('${imgUrl}'); width: 100%; aspect-ratio: 1 / 1; transform: none;">
           <div class="card-content-wrapper">
             <div class="card-top"><span class="card-pts">${card.points > 0 ? card.points : ''}</span><div class="card-gem-icon ${GEM_CLASSES[card.provides]}"></div></div>
             <div class="card-costs">${resCostHtml}</div>
