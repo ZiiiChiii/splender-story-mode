@@ -313,12 +313,19 @@
           <button class="btn-primary" style="width:100%; padding:9px; margin-bottom:12px;"
             onclick="playUniformSfx(); window.OnlineMode.createRoom()">🏠 建立房間（當房主・先手）</button>
 
-          <div style="display:flex; gap:6px; align-items:stretch; margin-bottom:12px;">
-            <input id="online-join-code" class="online-input online-code-input" maxlength="5"
-              placeholder="房號" autocomplete="off" autocapitalize="characters"
-              style="flex:1; min-width:0;">
-            <button class="btn-primary" style="padding:0 14px;"
-              onclick="playUniformSfx(); window.OnlineMode.joinRoom()">🚪 加入</button>
+          <div style="margin-bottom:12px;">
+            <label style="font-size:0.62rem; color:#ffe099; display:block; text-align:left; margin-bottom:5px;">輸入好友的 5 碼房號</label>
+            <div id="online-code-boxes" onclick="document.getElementById('online-join-code').focus()">
+              <span class="online-code-box" id="online-cb-0"></span>
+              <span class="online-code-box" id="online-cb-1"></span>
+              <span class="online-code-box" id="online-cb-2"></span>
+              <span class="online-code-box" id="online-cb-3"></span>
+              <span class="online-code-box" id="online-cb-4"></span>
+              <input id="online-join-code" maxlength="5" autocomplete="off"
+                autocapitalize="characters" spellcheck="false" inputmode="text">
+            </div>
+            <button class="btn-primary online-join-btn"
+              onclick="playUniformSfx(); window.OnlineMode.joinRoom()">🚪 加入房間</button>
           </div>
 
           <div id="online-status" style="min-height:44px; font-size:0.7rem; color:#fff; line-height:1.5;
@@ -331,6 +338,35 @@
         </div>
       `;
       overlay.classList.add('show');
+      this._bindCodeBoxes();
+    },
+
+    // 驗證碼式五格輸入：隱形輸入框接收打字，五個固定格子逐字顯示
+    _bindCodeBoxes() {
+      const input = document.getElementById('online-join-code');
+      if (!input) return;
+      const sync = () => {
+        // 過濾：只允許房號字元集（自動轉大寫、去除易混淆字元以外的輸入）
+        let v = input.value.toUpperCase().replace(/[^A-Z2-9]/g, '')
+          .replace(/[ILO01]/g, '').slice(0, 5);
+        input.value = v;
+        for (let i = 0; i < 5; i++) {
+          const box = document.getElementById('online-cb-' + i);
+          if (!box) return;
+          box.textContent = v[i] || '';
+          box.classList.toggle('filled', !!v[i]);
+          box.classList.toggle('current', i === v.length); // 游標所在格提示
+        }
+      };
+      input.addEventListener('input', sync);
+      input.addEventListener('focus', sync);
+      input.addEventListener('blur', () => {
+        for (let i = 0; i < 5; i++) document.getElementById('online-cb-' + i)?.classList.remove('current');
+      });
+      input.addEventListener('keydown', (e) => {
+        if (e.key === 'Enter') { e.preventDefault(); this.joinRoom(); }
+      });
+      sync();
     },
 
     cancelAndClose() {
