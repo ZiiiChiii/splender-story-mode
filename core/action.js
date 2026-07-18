@@ -690,7 +690,13 @@ export const ActionDispatcher = {
       && (state.mode === 'singlePlayer' || state.player.score >= aiEffectiveScore);
 
     if (playerWin) {
-      if (isAiBattle) {
+      if (isOnline) {
+        // 🏆 好友對戰：恭喜打敗對手
+        iconEl.textContent = '👑';
+        titleEl.textContent = '恭喜獲勝：成功打敗對手！';
+        bodyEl.textContent = `您在第 ${state.turn} 回合率先完成霸業，以威望徹底壓制了對手！`;
+        if (diffTxtEl) diffTxtEl.textContent = `最終比分 — 👤 你 ${state.player.score} 分 : 🧑‍💻 對手 ${aiEffectiveScore} 分`;
+      } else if (isAiBattle) {
         // 🏆 帝國爭霸：擊敗 AI 的專屬捷報
         iconEl.textContent = '👑';
         titleEl.textContent = '帝國爭霸告捷：AI 俯首稱臣！';
@@ -703,7 +709,19 @@ export const ActionDispatcher = {
       }
       modalBox.style.borderColor = '#d4af37';
     } else {
-      if (isAiBattle) {
+      if (isOnline) {
+        // ❌ 好友對戰：對手獲勝（搶先達標 / 回合耗盡）
+        if (aiEffectiveScore >= 15) {
+          iconEl.textContent = '🧑‍💻';
+          titleEl.textContent = '敗北：對手獲勝！';
+          bodyEl.textContent = `對手在第 ${state.turn} 回合率先突破 15 分威望防線，您以 ${state.player.score} 分飲恨敗陣。再戰一場討回來吧！`;
+        } else {
+          iconEl.textContent = '⏳';
+          titleEl.textContent = '敗北：回合耗盡，霸業未竟！';
+          bodyEl.textContent = `28 回合內雙方皆未完成霸業，您未能壓制對手。請重整旗鼓，再次挑戰！`;
+        }
+        if (diffTxtEl) diffTxtEl.textContent = `最終比分 — 👤 你 ${state.player.score} 分 : 🧑‍💻 對手 ${aiEffectiveScore} 分`;
+      } else if (isAiBattle) {
         // ❌ 帝國爭霸：敗因分流（被 AI 搶先 / 回合耗盡）
         if (aiEffectiveScore >= 15) {
           iconEl.textContent = '🤖';
