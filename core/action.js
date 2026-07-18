@@ -412,6 +412,10 @@ export const ActionDispatcher = {
 
     if (state.player.score >= 15 || aiEffectiveScore >= 15 || (!noTurnLimit && state.turn > 28)) {
       window.render();
+      // 🌐 線上對戰：本地行動觸發終局 → 先把最終棋局傳給對手，讓雙方同步看到結算
+      if (state.onlineMatch?.active && actionActor === 'player' && window.OnlineMode) {
+        window.OnlineMode.broadcastState('end');
+      }
       SingleMode.auditEndGameAchievements();
       this._showEndModal(state, aiEffectiveScore);
       return;
@@ -430,6 +434,18 @@ export const ActionDispatcher = {
       showError('🏹 迅捷斥候：第一回合可再拿取一次籌碼！');
       window.render();
       return; // 不換手、不進回合
+    }
+
+    // ── 🌐 線上好友對戰：本地行動完成 → 換手給遠端對手並同步全狀態 ──
+    //    （對手佔用 ai 席位但 AI 思考停用；對方的行動由收包套用，不會走到這裡）
+    if (state.onlineMatch?.active) {
+      if (actionActor === 'player') {
+        if (state.onlineMatch.role === 'guest') state.turn++; // 客方為後手，行動完進位回合
+        state.currentTurnOwner = 'ai';
+        window.render();
+        if (window.OnlineMode) window.OnlineMode.broadcastState('turn');
+      }
+      return;
     }
 
     if (this.isAiBattle(state)) {
