@@ -3034,3 +3034,38 @@ body.stage-boxed .shell { padding: 4px 6px; box-sizing: border-box; }
   font-weight: normal;
   letter-spacing: 0.04em;
 }
+
+/* ═══════════════════════════════════════════════════════════════
+   🔧 使用者需求修正（2026-07）
+   ─ 附加於檔案最末端，利用 CSS 後讀優先權覆蓋前方所有重複規則 ─
+   ═══════════════════════════════════════════════════════════════ */
+
+/* 1️⃣ 放大發展卡（含保留區手牌）上的「所需寶石成本」標示
+      原手機常駐規則把它壓到 0.38rem / 4px 小圓點，此處整體放大 */
+.card-costs { gap: 2px !important; }
+.card-costs .cost-dot {
+  font-size: 0.6rem !important;
+  font-weight: 800 !important;
+  padding: 1px 3px !important;
+  gap: 2px !important;
+  border-radius: 3px !important;
+}
+.card-costs .cost-dot-circle {
+  width: 9px !important;
+  height: 9px !important;
+}
+
+/* 2️⃣ 成就欄縮小為貼合內部文字的大小（不再整條撐滿版面） */
+#dynamic-banner-zone {
+  width: fit-content !important;
+  max-width: 100% !important;
+  padding: 3px 10px !important;
+}
+#dynamic-banner-zone .ach-latest-container {
+  flex: 0 0 auto !important;
+  width: auto !important;   /* 蓋掉行內 style="width:100%" */
+}
+/* 例外：AI 對戰模式時橫幅化身為 AI 金庫，仍需撐滿整寬以容納籌碼列 */
+#dynamic-banner-zone:has(#ai-banner-vault[style*="flex"]) {
+  width: 100% !important;
+}
