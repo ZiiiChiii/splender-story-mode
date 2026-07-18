@@ -720,7 +720,9 @@ window.render = function() {
   if (turnIndicator) {
     if (isAiBattle) {
       turnIndicator.style.display = '';
-      turnIndicator.textContent = isPlayerTurn ? '👤 玩家回合' : '🤖 AI 思考中…';
+      const isOnlineMatch = !!(fullState.onlineMatch && fullState.onlineMatch.active);
+      turnIndicator.textContent = isPlayerTurn ? '👤 玩家回合'
+        : (isOnlineMatch ? '🧑‍💻 對手思考中…' : '🤖 AI 思考中…');
       turnIndicator.style.borderColor = isPlayerTurn ? '#ffcc00' : '#e74c3c';
     } else {
       turnIndicator.style.display = 'none';
@@ -847,8 +849,11 @@ window.render = function() {
     document.getElementById('ai-score-txt').textContent = fullState.ai.score;
     const oppNameEl = document.getElementById('ai-opponent-name');
     if (oppNameEl) {
+      const isOnlineVault = !!(fullState.onlineMatch && fullState.onlineMatch.active);
       oppNameEl.textContent = (isvsAI && fullState.settings.aiOpponent)
-        ? fullState.settings.aiOpponent.name : '電腦 AI';
+        ? fullState.settings.aiOpponent.name : (isOnlineVault ? '對手' : '電腦 AI');
+      const vaultPrefix = document.getElementById('ai-vault-prefix');
+      if (vaultPrefix) vaultPrefix.textContent = isOnlineVault ? '👤' : '🤖';
     }
     // 🤖 AI 金庫同樣計算前後差異，浮動 +N（籌碼）與 +N🛡️（產量）動畫與玩家完全一致
     // ⚠️ AI 金庫只顯示籌碼 +N；「+N 🛡️」產量徽章動畫在 AI 側一律移除
