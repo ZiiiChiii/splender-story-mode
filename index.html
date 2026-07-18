@@ -14,6 +14,7 @@
   <noscript><link rel="stylesheet" href="https://fontsapi.zeoseven.com/219/main/result.css"></noscript>
 
 <script src="https://cdn.jsdelivr.net/npm/gsap@3.12.5/dist/gsap.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/peerjs@1.5.4/dist/peerjs.min.js"></script>
 <style>
           /* 🪙 橋接修復：直接將交易局按鈕的類別名稱綁定寶石圖片 */
     .token-btn {
@@ -334,6 +335,7 @@
       <button class="diff-opt-btn" id="mode-btn-single" onclick="playUniformSfx(); chooseGameMode('singlePlayer')">🏆 成就大師</button>
       <button class="diff-opt-btn" id="mode-btn-ai" onclick="playUniformSfx(); chooseGameMode('vsAI')">🤖 帝國爭霸</button>
       <button class="diff-opt-btn" id="mode-btn-story" onclick="playUniformSfx(); chooseGameMode('storyMode')">📜 故事戰役</button>
+      <button class="diff-opt-btn" id="mode-btn-online" onclick="playUniformSfx(); window.openOnlineModal()">🌐 好友對戰</button>
     </div>
    <div class="menu-grid-layout" style="margin-top: 12px;">
   <button id="menu-toggle-music" class="menu-row-btn" onclick="playUniformSfx(); handleMusicToggle()">🎵 背景音樂：開啟</button>
@@ -432,6 +434,7 @@
 
 </div><!-- /#stage -->
 <script src="core/tutorial.js"></script>
+<script src="core/onlineMode.js"></script>
 <script src="game.js" type="module"></script>
 </body>
 </html>
