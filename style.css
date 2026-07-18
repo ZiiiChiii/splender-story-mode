@@ -3174,3 +3174,55 @@ body.stage-boxed .shell { padding: 4px 6px; box-sizing: border-box; }
   0%   { opacity: 0; transform: scale(0.4) rotate(0deg); }
   100% { opacity: 1; transform: scale(1.25) rotate(45deg); }
 }
+
+/* ═══════════════════════════════════════════════════════════════
+   🔧 使用者需求修正 第三批（2026-07）
+   ═══════════════════════════════════════════════════════════════ */
+
+/* 1️⃣ 所需籌碼／所需累積卡牌圖示：黑底全面改為透明
+      （黑底有兩層：cost-dot 自身的黑底 + noble-reqs 整列的黑底，一併移除）
+      改以文字描邊陰影維持數字在卡面圖上的可讀性 */
+.card-costs .cost-dot,
+.noble-reqs .cost-dot {
+  background: transparent !important;
+  border: none !important;
+  line-height: 1 !important;
+}
+.card-costs .cost-dot span:last-child,
+.noble-reqs .cost-dot span:last-child {
+  color: #fff;
+  text-shadow: 0 1px 2px #000, 0 0 4px rgba(0,0,0,0.95), 0 0 8px rgba(0,0,0,0.8);
+}
+.noble-reqs {
+  background: transparent !important;
+  padding: 0 !important;
+}
+/* 色塊本身補強外框光，透明底下依然清晰 */
+.card-costs .cost-dot-circle,
+.noble-reqs .cost-dot-square {
+  box-shadow: 0 0 0 1px rgba(255,255,255,0.35), 0 1px 3px rgba(0,0,0,0.9) !important;
+}
+
+/* 2️⃣ 貴族卡「所需累積卡片」圖示重新調整整體大小：
+      貴族卡被常駐規則鎖定為 82px 寬且 overflow:hidden，
+      前一批 10px 方塊 + 大字讓整列超出卡寬導致最後的數字被裁切。
+      此處收斂尺寸讓「最多 4 組需求」也能完整排進 82px 內 */
+.noble-reqs {
+  gap: 2px !important;
+  flex-wrap: wrap !important;      /* 極端情況自動換行，永不裁切 */
+  max-width: 100% !important;
+}
+.noble-reqs .cost-dot {
+  font-size: 0.55rem !important;
+  padding: 0 1px !important;
+  gap: 1.5px !important;
+}
+.noble-reqs .cost-dot-square {
+  width: 8px !important;
+  height: 8px !important;
+  border-radius: 2px !important;
+}
+
+/* 發展卡成本圖示維持放大尺寸，僅同步透明化（上方已處理），
+   並確保數字行高不會被上下裁切 */
+.card-costs .cost-dot { line-height: 1.1 !important; }
