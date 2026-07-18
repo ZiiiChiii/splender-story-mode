@@ -291,9 +291,14 @@
       <div class="cap-bar" id="cap-txt" style="margin-top: 4px;">背包: 0 / 10</div>
 
       <div id="ai-dashboard-box" style="display:none; border-top:1px dashed rgba(255,255,255,0.15); padding-top:2px; margin-top:2px;">
-        <div id="ai-vault-content" style="display:flex; align-items:center; gap:10px; width:100%; min-width:0;">
-          <div style="font-size:0.55rem; color:#e74c3c; font-weight:700; flex-shrink:0; line-height:1.25; text-align:left;">🤖 <span id="ai-opponent-name">電腦 AI</span> 金庫<br>分數: <span id="ai-score-txt" style="color:#ffcc00;">0</span></div>
+        <div id="ai-vault-content" style="display:flex; align-items:center; gap:8px; width:100%; min-width:0;">
+          <div style="font-size:0.55rem; color:#e74c3c; font-weight:700; flex-shrink:0; line-height:1.25; text-align:left;">🤖 <span id="ai-opponent-name">電腦 AI</span> 金庫</div>
           <div class="res-grid" id="ai-res-layer" style="display:flex; flex-wrap:wrap; gap:3px 8px; flex:1; min-width:0;"></div>
+          <div id="ai-reserved-mini" title="對手的保留牌" style="display:flex; gap:3px; flex-shrink:0; align-items:center;"></div>
+          <div id="ai-score-badge" style="flex-shrink:0; margin-left:auto; text-align:center; padding:1px 7px; background:rgba(231,76,60,0.12); border:1px solid rgba(231,76,60,0.45); border-radius:4px; line-height:1.15;">
+            <div style="font-size:0.42rem; color:#ff9d8f; font-weight:700;">分數</div>
+            <div style="font-size:0.85rem; color:#ffcc00; font-weight:900;"><span id="ai-score-txt">0</span></div>
+          </div>
         </div>
       </div>
     </section>
