@@ -60,13 +60,40 @@ export const AiMode = {
     }
 
     // ── 步驟 2：買不起（或簡單 AI 猶豫）→ 拿籌碼 ──
+
+    // 🧠 大師（狄菲克）：拿取規則與玩家「完全相同」——
+    //    每回合只能「拿 3 顆不同色」或「同色拿 2 顆（銀行需 2 顆以上）」，絕不多拿。
+    //    難度改由策略體現：拿籌碼前先規劃未來 1~2 步要收購的目標卡，
+    //    往目標缺口拿色，缺口集中時甚至改走同色拿 2 加速成型。
+    if (diff === 'master') {
+      const plan = this._masterPlanTokens(state, ai);
+      if (plan && plan.type === 'same') {
+        console.log(`🤖 AI(master) 策略規劃：同色拿 2 顆 [${plan.color}]，加速收購目標卡`);
+        state.bank[plan.color] -= 2;
+        ai.tokens[plan.color] += 2;
+        setTimeout(() => { ActionDispatcher.finalizeTurn('ai'); }, 600);
+        return;
+      }
+      if (plan && plan.type === 'diff' && plan.colors.length > 0) {
+        console.log(`🤖 AI(master) 策略規劃：拿取 ${plan.colors}（朝目標卡缺口補給）`);
+        plan.colors.forEach(c => { state.bank[c]--; ai.tokens[c]++; });
+        setTimeout(() => { ActionDispatcher.finalizeTurn('ai'); }, 600);
+        return;
+      }
+      // 拿不了籌碼（背包滿 / 銀行空）→ 保留卡片，仍是合法行動
+      if (this.executeAiReserve(state)) return;
+      console.log('🤖 AI(master) 本回合無任何合法行動，被迫跳過');
+      ActionDispatcher.finalizeTurn('ai');
+      return;
+    }
+
     let targetColors = [];
     if (diff === 'easy') {
       // 簡單：完全隨機亂拿，毫無規劃
       const shuffled = GEMS.filter(k => state.bank[k] > 0).sort(() => Math.random() - 0.5);
       targetColors = shuffled.slice(0, 3);
-    } else if (diff === 'expert' || diff === 'master') {
-      // 高階 AI：鎖定目標卡片，優先拿它缺少的顏色（master 以策略價值選目標）
+    } else if (diff === 'expert') {
+      // 高階 AI：鎖定目標卡片，優先拿它缺少的顏色
       targetColors = this._pickColorsTowardBestCard(state, ai, diff);
     }
     if (targetColors.length < 3) {
@@ -92,14 +119,6 @@ export const AiMode = {
         state.bank[c]--;
         state.ai.tokens[c]++;
       });
-      // 神級 AI：精算補給，額外獲得 1 顆隨機籌碼
-      if (diff === 'master' && bag + targetColors.length < AI_BAG_CAP) {
-        const avail = GEMS.filter(c => state.bank[c] > 0);
-        if (avail.length > 0) {
-          const extra = avail[Math.floor(Math.random() * avail.length)];
-          state.bank[extra]--; state.ai.tokens[extra]++;
-        }
-      }
       // ⚠️ 這裡「不」立即重繪：若先重繪一次、finalizeTurn 又重繪一次，
       // 浮動 +N 標籤會被搬移重掛而重播動畫（閃爍兩次）。統一由 finalize 的重繪呈現一次。
       setTimeout(() => {
@@ -183,6 +202,84 @@ export const AiMode = {
          + demand * 0.22 * engineW
          + cheapEngineBonus
          - effCost * 0.55;
+  },
+
+  // 🧠 大師（狄菲克）策略性拿籌碼規劃：
+  //    1. 依「策略價值 - 缺口懲罰」鎖定前三名目標卡（首要目標 + 兩個備援方向）
+  //    2. 彙整多目標的缺口需求，通用色（同時服務多張目標卡的顏色）優先
+  //    3. 若首要目標某色缺口 >= 2 且拿完 2 顆後即將成型 → 改走「同色拿 2」衝刺
+  //    4. 否則拿 3 顆不同色，全部朝目標缺口補給，不浪費任何一次拿取
+  //    拿取上限與玩家規則完全一致：3 不同 / 2 同色（銀行需 >= 2）/ 背包上限 10
+  _masterPlanTokens(state, ai) {
+    let bag = 0; for (let k in ai.tokens) bag += ai.tokens[k];
+    const room = AI_BAG_CAP - bag;
+    if (room <= 0) return null;
+
+    // ── 1. 掃描牌桌，建立目標卡候選清單 ──
+    const targets = [];
+    for (let lvl of ['lv3', 'lv2', 'lv1']) {
+      for (let card of state.board[lvl]) {
+        if (!card) continue;
+        let gap = 0;
+        const gapMap = {};
+        for (let k of GEMS) {
+          const need = Math.max(0, (card.cost[k] || 0) - (ai.bonus[k] || 0) - (ai.tokens[k] || 0));
+          gapMap[k] = need; gap += need;
+        }
+        if (gap === 0) continue; // 已買得起的卡不需為它拿籌碼
+        targets.push({
+          card, gap, gapMap,
+          value: this._cardStrategicValue(state, ai, card) - gap * 0.7
+        });
+      }
+    }
+
+    // 牌桌淨空等極端情況：退回「拿銀行庫存最多的 3 色」保底
+    if (targets.length === 0) {
+      const colors = GEMS.filter(k => state.bank[k] > 0)
+        .sort((a, b) => state.bank[b] - state.bank[a])
+        .slice(0, Math.min(3, room));
+      return colors.length > 0 ? { type: 'diff', colors } : null;
+    }
+
+    targets.sort((a, b) => b.value - a.value);
+    const top = targets.slice(0, 3);
+
+    // ── 2. 多目標需求彙整（首要 1.0 / 次要 0.55 / 三備 0.3 加權）──
+    const weights = [1.0, 0.55, 0.3];
+    const needScore = { w: 0, u: 0, g: 0, r: 0, k: 0 };
+    top.forEach((t, i) => {
+      for (let k of GEMS) needScore[k] += t.gapMap[k] * weights[i];
+    });
+
+    // ── 3. 同色拿 2 衝刺判斷（與玩家同規則：銀行該色需 >= 2）──
+    const prime = top[0];
+    if (room >= 2) {
+      let bestSame = null;
+      for (let k of GEMS) {
+        if (prime.gapMap[k] >= 2 && (state.bank[k] || 0) >= 2) {
+          if (!bestSame || prime.gapMap[k] > prime.gapMap[bestSame]) bestSame = k;
+        }
+      }
+      // 拿完 2 顆後首要目標總缺口只剩 <= 1（可靠黃金或下一步輕鬆補齊）→ 值得衝刺
+      if (bestSame && (prime.gap - 2) <= 1) {
+        return { type: 'same', color: bestSame };
+      }
+    }
+
+    // ── 4. 拿 3 顆不同色：按彙整需求分數高→低，只拿真正有缺口且銀行有貨的顏色 ──
+    let colors = GEMS
+      .filter(k => needScore[k] > 0 && (state.bank[k] || 0) > 0)
+      .sort((a, b) => needScore[b] - needScore[a]);
+    // 需求色不足 3 個時，補拿銀行庫存最多的顏色當未來儲備
+    if (colors.length < 3) {
+      const rest = GEMS
+        .filter(k => (state.bank[k] || 0) > 0 && !colors.includes(k))
+        .sort((a, b) => state.bank[b] - state.bank[a]);
+      colors = colors.concat(rest);
+    }
+    colors = colors.slice(0, Math.min(3, room));
+    return colors.length > 0 ? { type: 'diff', colors } : null;
   },
 
   // 找出最想買的卡，計算缺口顏色（master 以策略價值選目標；expert 以分數選目標）
