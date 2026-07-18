@@ -3272,3 +3272,31 @@ body.stage-boxed .shell { padding: 4px 6px; box-sizing: border-box; }
   from { box-shadow: 0 0 2px rgba(255, 215, 0, 0.2); }
   to   { box-shadow: 0 0 8px rgba(255, 215, 0, 0.55); }
 }
+
+/* ═══════════════════════════════════════════════════════════════
+   🔧 使用者需求修正 第五批（2026-07）
+   ═══════════════════════════════════════════════════════════════ */
+
+/* 保留區卡牌縮小 + 內容緊湊化：
+   原本 100% 寬的正方形卡放不下「頂列 + 成本列 + 收購按鈕」三層內容，
+   按鈕被卡片自身 overflow:hidden 裁掉。
+   此處縮小卡片、壓縮內部元素，並微幅增高卡身確保按鈕完整露出 */
+#reserved-layer .card:not(.empty) {
+  width: 92% !important;
+  aspect-ratio: 1 / 1.06 !important;   /* 稍微增高，給按鈕留位 */
+  margin: 0 auto !important;
+  justify-self: center;
+}
+#reserved-layer .card-content-wrapper {
+  padding: 2px !important;
+  display: flex !important;
+  flex-direction: column !important;
+  height: 100% !important;
+  box-sizing: border-box !important;
+}
+#reserved-layer .card-costs .cost-dot { font-size: 0.48rem !important; padding: 0 1px !important; }
+#reserved-layer .card-costs .cost-dot-circle { width: 6px !important; height: 6px !important; }
+#reserved-layer .card-pts { font-size: 0.55rem !important; }
+#reserved-layer .card-gem-icon { width: 9px !important; height: 9px !important; }
+#reserved-layer .card-actions { margin-top: auto !important; }   /* 按鈕永遠貼底 */
+#reserved-layer .btn-card { font-size: 0.4rem !important; padding: 1px 0 !important; line-height: 1.2 !important; }
