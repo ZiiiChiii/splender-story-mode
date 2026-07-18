@@ -164,6 +164,7 @@
       // 房主先手；把初始棋局同步給客方
       this.broadcastState('init');
       this._closeModal();
+      this._mountChatUI();
       this._toast('🌐 線上對戰開始！你是先手，請行動');
     },
 
@@ -178,6 +179,7 @@
 
       this._applyRemote(synced); // 房主視角互換後：客方看到 owner='ai'（等待房主）
       this._closeModal();
+      this._mountChatUI();
       if (typeof window.render === 'function') window.render();
       this._toast('🌐 線上對戰開始！等待房主先行動…');
     },
@@ -219,8 +221,24 @@
 
           case 'restart':
             // 房主重開新局 → 客方收到全新棋局
+            document.getElementById('win-modal')?.classList.remove('show');
             this._guestReceiveInit(msg.s);
-            this._toast('🔄 房主已重開新局！');
+            this._toast('⚔️ 新的一局開始！');
+            break;
+
+          case 'chat':
+            // 💬 對手發送快捷語句
+            this._showChatBubble(String(msg.m || '').slice(0, 20), 'opp');
+            break;
+
+          case 'rematch':
+            // 客方請求再戰 → 房主自動重開並同步發牌
+            if (this.role === 'host') {
+              document.getElementById('win-modal')?.classList.remove('show');
+              window.ActionDispatcher.dispatch('INIT_GAME');
+              this.broadcastState('restart');
+              this._toast('⚔️ 對手想再戰！新的一局開始');
+            }
             break;
         }
       });
@@ -237,12 +255,14 @@
         this.active = false;
         const st = window.CoreState.get();
         if (st.onlineMatch) st.onlineMatch.active = false;
+        this._unmountChatUI();
       }
       this._destroyPeer();
     },
 
     leaveMatch() {
       this.active = false;
+      this._unmountChatUI();
       const st = window.CoreState.get();
       if (st.onlineMatch) st.onlineMatch.active = false;
       if (this.conn) { try { this.conn.close(); } catch (e) {} this.conn = null; }
@@ -294,8 +314,9 @@
             onclick="playUniformSfx(); window.OnlineMode.createRoom()">🏠 建立房間（當房主・先手）</button>
 
           <div style="display:flex; gap:6px; align-items:stretch; margin-bottom:12px;">
-            <input id="online-join-code" class="online-input" maxlength="5" placeholder="輸入 5 碼房號"
-              style="flex:1; text-transform:uppercase; letter-spacing:4px; text-align:center;">
+            <input id="online-join-code" class="online-input online-code-input" maxlength="5"
+              placeholder="房號" autocomplete="off" autocapitalize="characters"
+              style="flex:1; min-width:0;">
             <button class="btn-primary" style="padding:0 14px;"
               onclick="playUniformSfx(); window.OnlineMode.joinRoom()">🚪 加入</button>
           </div>
@@ -326,6 +347,84 @@
     _setStatus(html) {
       const el = document.getElementById('online-status');
       if (el) el.innerHTML = html;
+    },
+
+    // ══════════════════════════════════════════════
+    // 💬 快捷語句系統：固定語句、防洗頻、雙向氣泡顯示
+    // ══════════════════════════════════════════════
+    CHAT_PHRASES: ['👍 厲害的一手！', '😱 好險…', '🤔 讓我想想', '⏰ 快點啦～', '🤝 打得漂亮', '⚔️ 再來一場！'],
+    _lastChatAt: 0,
+
+    _mountChatUI() {
+      if (document.getElementById('online-chat-bar')) return;
+      const bar = document.createElement('div');
+      bar.id = 'online-chat-bar';
+      bar.innerHTML = `
+        <button id="online-chat-toggle" title="發送快捷語句"
+          onclick="window.OnlineMode._toggleChatPanel()">💬</button>
+        <div id="online-chat-panel">
+          ${this.CHAT_PHRASES.map((p, i) =>
+            `<button class="online-chat-phrase" onclick="window.OnlineMode.sendChat(${i})">${p}</button>`
+          ).join('')}
+        </div>`;
+      (document.getElementById('stage') || document.body).appendChild(bar);
+    },
+
+    _unmountChatUI() {
+      document.getElementById('online-chat-bar')?.remove();
+      document.getElementById('online-chat-bubble')?.remove();
+    },
+
+    _toggleChatPanel() {
+      if (typeof window.playUniformSfx === 'function') window.playUniformSfx();
+      document.getElementById('online-chat-panel')?.classList.toggle('open');
+    },
+
+    sendChat(idx) {
+      const now = Date.now();
+      if (now - this._lastChatAt < 2000) { this._toast('💬 訊息發送太頻繁，稍等一下'); return; }
+      const phrase = this.CHAT_PHRASES[idx];
+      if (!phrase || !this.conn || !this.conn.open) return;
+      this._lastChatAt = now;
+      if (typeof window.playUniformSfx === 'function') window.playUniformSfx();
+      try { this.conn.send({ t: 'chat', m: phrase }); } catch (e) {}
+      this._showChatBubble(phrase, 'me');
+      document.getElementById('online-chat-panel')?.classList.remove('open');
+    },
+
+    _showChatBubble(text, who) {
+      document.getElementById('online-chat-bubble')?.remove();
+      const b = document.createElement('div');
+      b.id = 'online-chat-bubble';
+      b.className = who === 'me' ? 'from-me' : 'from-opp';
+      b.textContent = (who === 'me' ? '你：' : (this.oppName + '：')) + text;
+      (document.getElementById('stage') || document.body).appendChild(b);
+      setTimeout(() => { b.classList.add('fade'); }, 2600);
+      setTimeout(() => { b.remove(); }, 3200);
+    },
+
+    // ══════════════════════════════════════════════
+    // ⚔️ 結算視窗按鈕支援：再戰一場 / 重新配對
+    // ══════════════════════════════════════════════
+    requestRematch() {
+      document.getElementById('win-modal')?.classList.remove('show');
+      if (!this.conn || !this.conn.open) {
+        this._toast('⚠️ 與對手的連線已中斷，請改用「重新配對」');
+        return;
+      }
+      if (this.role === 'host') {
+        window.ActionDispatcher.dispatch('INIT_GAME');
+        this.broadcastState('restart');
+        this._toast('⚔️ 新的一局開始！');
+      } else {
+        try { this.conn.send({ t: 'rematch' }); } catch (e) {}
+        this._toast('⚔️ 已向房主發出再戰邀請，等待開局…');
+      }
+    },
+
+    rematchNewPeer() {
+      this.leaveMatch();
+      this.openModal();
     },
 
     _toast(msg) {
