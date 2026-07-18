@@ -3226,3 +3226,49 @@ body.stage-boxed .shell { padding: 4px 6px; box-sizing: border-box; }
 /* 發展卡成本圖示維持放大尺寸，僅同步透明化（上方已處理），
    並確保數字行高不會被上下裁切 */
 .card-costs .cost-dot { line-height: 1.1 !important; }
+
+/* ═══════════════════════════════════════════════════════════════
+   🔧 使用者需求修正 第四批（2026-07）
+   ═══════════════════════════════════════════════════════════════ */
+
+/* 1️⃣ 榮譽成就欄外框回歸「固定整欄大小」：
+      先前 fit-content 會隨文字長短伸縮，導致外框跳動。
+      此處覆蓋回穩定的整寬欄位，外框線永遠框住整體成就欄 */
+#dynamic-banner-zone {
+  display: flex !important;
+  width: 100% !important;
+  align-self: stretch !important;
+  padding: 4px 12px !important;
+  box-sizing: border-box !important;
+}
+#dynamic-banner-zone .ach-latest-container {
+  flex: 1 1 auto !important;
+  width: auto !important;
+}
+
+/* 2️⃣ 保留區卡牌「可購買提示」：淡淡金色光芒呼吸閃爍 */
+.card.reserved-buyable {
+  border-color: rgba(255, 215, 0, 0.55) !important;
+  animation: reservedBuyGlow 1.8s ease-in-out infinite alternate;
+}
+@keyframes reservedBuyGlow {
+  from {
+    box-shadow: 0 0 4px 1px rgba(255, 215, 0, 0.18),
+                inset 0 0 6px rgba(255, 215, 0, 0.08);
+  }
+  to {
+    box-shadow: 0 0 14px 4px rgba(255, 215, 0, 0.55),
+                inset 0 0 10px rgba(255, 215, 0, 0.18);
+  }
+}
+/* 收購按鈕同步微微發亮，動線更明確 */
+.card.reserved-buyable .btn-card:not([disabled]) {
+  border-color: #ffd700 !important;
+  color: #ffe099 !important;
+  text-shadow: 0 0 6px rgba(255, 215, 0, 0.6);
+  animation: reservedBtnPulse 1.8s ease-in-out infinite alternate;
+}
+@keyframes reservedBtnPulse {
+  from { box-shadow: 0 0 2px rgba(255, 215, 0, 0.2); }
+  to   { box-shadow: 0 0 8px rgba(255, 215, 0, 0.55); }
+}
