@@ -1407,7 +1407,7 @@ setInterval(() => {
   const currentAch = fullState.pendingAchievementsQueue.shift();
 
   let tierText = { easy: "簡單", normal: "中階", hard: "進階", expert: "困難", master: "神人" }[currentAch.tier];
-  bannerText.innerHTML = `<span style="color: ${currentAch.color}; font-weight: 800;">${currentAch.symbol} [${tierText}] ${currentAch.title} — ${currentAch.desc}</span>`;
+  bannerText.innerHTML = `<span style="color: ${currentAch.color}; font-weight: 800;">${currentAch.symbol} 獲得成就 [${tierText}] ${currentAch.title}</span>`;
   bannerText.classList.remove('has-ach');
   void bannerText.offsetWidth;
   bannerText.classList.add('has-ach');
