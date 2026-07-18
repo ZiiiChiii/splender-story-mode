@@ -3300,3 +3300,21 @@ body.stage-boxed .shell { padding: 4px 6px; box-sizing: border-box; }
 #reserved-layer .card-gem-icon { width: 9px !important; height: 9px !important; }
 #reserved-layer .card-actions { margin-top: auto !important; }   /* 按鈕永遠貼底 */
 #reserved-layer .btn-card { font-size: 0.4rem !important; padding: 1px 0 !important; line-height: 1.2 !important; }
+
+/* ═══════════════════════════════════════════════════════════════
+   🌐 好友對戰（線上對戰）配對視窗樣式
+   ═══════════════════════════════════════════════════════════════ */
+.online-input {
+  width: 100%;
+  box-sizing: border-box;
+  background: rgba(0, 0, 0, 0.5);
+  border: 1px solid rgba(212, 175, 55, 0.4);
+  border-radius: 4px;
+  color: #fff;
+  font-size: 0.8rem;
+  padding: 7px 10px;
+  outline: none;
+  margin-top: 3px;
+}
+.online-input:focus { border-color: #ffcc00; box-shadow: 0 0 6px rgba(255, 204, 0, 0.3); }
+.online-input::placeholder { color: rgba(255, 255, 255, 0.3); letter-spacing: normal; }
