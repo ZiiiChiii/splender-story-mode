@@ -21,7 +21,12 @@ const RAW_CARDS = {
     {id:"112", points:1, provides:"u", cost:{r:4}},
     {id:"113", points:1, provides:"g", cost:{k:4}},
     {id:"114", points:1, provides:"r", cost:{w:4}},
-    {id:"115", points:1, provides:"k", cost:{u:4}}
+    {id:"115", points:1, provides:"k", cost:{u:4}},
+    {id:"116", points:0, provides:"w", cost:{r:2, g:2}},
+    {id:"117", points:0, provides:"u", cost:{k:2, w:2}},
+    {id:"118", points:0, provides:"g", cost:{u:3}},
+    {id:"119", points:0, provides:"r", cost:{g:3}},
+    {id:"120", points:0, provides:"k", cost:{r:3}}
   ],
   lv2: [
     {id:"201", points:1, provides:"w", cost:{w:3, u:2, g:2}},
@@ -33,7 +38,17 @@ const RAW_CARDS = {
     {id:"207", points:2, provides:"u", cost:{u:5}},
     {id:"208", points:3, provides:"g", cost:{g:6}},
     {id:"209", points:2, provides:"r", cost:{w:1, u:4, g:2}},
-    {id:"210", points:3, provides:"k", cost:{k:6}}
+    {id:"210", points:3, provides:"k", cost:{k:6}},
+    {id:"211", points:1, provides:"r", cost:{r:3, w:2, u:2}},
+    {id:"212", points:1, provides:"k", cost:{k:3, g:2, w:2}},
+    {id:"213", points:2, provides:"g", cost:{g:4, u:2, w:1}},
+    {id:"214", points:2, provides:"u", cost:{u:4, r:2, g:1}},
+    {id:"215", points:2, provides:"w", cost:{w:4, k:2, r:1}},
+    {id:"216", points:2, provides:"g", cost:{g:5}},
+    {id:"217", points:2, provides:"r", cost:{r:5}},
+    {id:"218", points:2, provides:"k", cost:{u:1, g:4, r:2}},
+    {id:"219", points:3, provides:"w", cost:{w:6}},
+    {id:"220", points:3, provides:"u", cost:{u:6}}
   ],
   lv3: [
     {id:"301", points:4, provides:"w", cost:{k:7}},
@@ -43,7 +58,19 @@ const RAW_CARDS = {
     {id:"305", points:4, provides:"k", cost:{r:7}},
     {id:"306", points:5, provides:"w", cost:{w:3, k:7}},
     {id:"307", points:5, provides:"u", cost:{w:7, u:3}},
-    {id:"308", points:5, provides:"g", cost:{u:7, g:3}}
+    {id:"308", points:5, provides:"g", cost:{u:7, g:3}},
+    {id:"309", points:3, provides:"w", cost:{u:3, g:3, r:5, k:3}},
+    {id:"310", points:3, provides:"u", cost:{w:3, g:3, r:3, k:5}},
+    {id:"311", points:3, provides:"g", cost:{w:5, u:3, r:3, k:3}},
+    {id:"312", points:3, provides:"r", cost:{w:3, u:5, g:3, k:3}},
+    {id:"313", points:3, provides:"k", cost:{w:3, u:3, g:5, r:3}},
+    {id:"314", points:4, provides:"r", cost:{r:3, g:6, k:3}},
+    {id:"315", points:4, provides:"k", cost:{k:3, r:6, g:3}},
+    {id:"316", points:4, provides:"w", cost:{w:3, k:6, r:3}},
+    {id:"317", points:4, provides:"u", cost:{u:3, w:6, k:3}},
+    {id:"318", points:4, provides:"g", cost:{g:3, u:6, w:3}},
+    {id:"319", points:5, provides:"r", cost:{g:7, r:3}},
+    {id:"320", points:5, provides:"k", cost:{r:7, k:3}}
   ]
 };
 
