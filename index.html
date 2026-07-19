@@ -11,6 +11,7 @@
 <link rel="stylesheet" href="style.css">
 <link rel="stylesheet" href="tactics.css">
 <link rel="stylesheet" href="town.css">
+<link rel="stylesheet" href="storyDialog.css">
   <!-- 🖋️ 貴族名稱字體（Child Fun Sans）：非阻塞載入，CDN 失敗也不影響開站 -->
   <link rel="stylesheet" href="https://fontsapi.zeoseven.com/219/main/result.css" media="print" onload="this.media='all'">
   <noscript><link rel="stylesheet" href="https://fontsapi.zeoseven.com/219/main/result.css"></noscript>
@@ -31,41 +32,7 @@
     .token-btn-r { background-image: url('https://i.ibb.co/wZ9gmt1p/red.png') !important; }
     .token-btn-k { background-image: url('https://i.ibb.co/y72gvDj/black.png') !important; }
     .token-btn-o { background-image: url('https://i.ibb.co/PZ1dZDyH/gold.png') !important; }
-      /* 📥 視覺小說故事劇場專專屬樣式 */
-    #story-layer {
-        position: fixed;
-        top: 0;
-        left: 0;
-        width: 100%;
-        height: 100%;
-        z-index: 99999; 
-        background: rgba(15, 20, 26, 0.95); 
-        display: none;
-        flex-direction: column;
-        justify-content: flex-end;
-        align-items: center;
-        padding-bottom: 50px;
-        box-sizing: border-box;
-        font-family: 'Microsoft JhengHei', 'Heiti TC', sans-serif;
-        opacity: 0;
-        pointer-events: none;
-    }
-    #story-layer.story-active {
-        display: flex !important;
-        opacity: 1 !important;
-        pointer-events: all !important;
-    }
-    /* 📱 故事層全面夾制到舞台寬度（桌機/手機呈現一致） */
-    .story-chapter-title { position: absolute; top: 24px; color: #f1c40f; font-size: 1.15rem; font-weight: bold; letter-spacing: 2px; text-shadow: 0 2px 10px rgba(0,0,0,0.6); max-width: calc(var(--stage-w, 100vw) - 20px); text-align: center; }
-    .story-intro-panel { position: absolute; top: 72px; width: calc(var(--stage-w, 100vw) - 28px); max-width: 720px; background: rgba(0, 0, 0, 0.65); border-left: 4px solid #f1c40f; padding: 12px 14px; color: #ddd; font-size: 0.82rem; line-height: 1.5; border-radius: 0 8px 8px 0; text-align: left; box-sizing: border-box; }
-    .story-character-container { position: absolute; bottom: 176px; width: min(280px, calc(var(--stage-w, 100vw) * 0.68)); height: min(calc(var(--stage-h, 716px) * 0.6), 440px); display: flex; justify-content: center; align-items: flex-end; pointer-events: none; }
-    .story-character-img { max-width: 100%; max-height: 100%; object-fit: contain; }
-    .story-dialogue-box { position: relative; width: calc(var(--stage-w, 100vw) - 16px); max-width: 850px; min-height: 148px; height: auto; background: rgba(5, 8, 12, 0.95); border: 2px solid #f1c40f; box-shadow: 0 0 20px rgba(241, 196, 15, 0.2); border-radius: 12px; padding: 18px 18px 26px; color: #fff; cursor: pointer; user-select: none; box-sizing: border-box; }
-    .story-name-tag { position: absolute; top: -28px; left: 18px; background: #f1c40f; color: #000; padding: 5px 18px; font-weight: bold; border-radius: 6px 6px 0 0; font-size: 0.95rem; box-shadow: 0 -3px 10px rgba(0,0,0,0.3); }
-    .story-dialogue-text { font-size: 1rem; line-height: 1.6; letter-spacing: 0.5px; color: #f1f2f6; text-align: left; }
-    .story-condition-badge { position: absolute; top: 15px; right: 20px; background: rgba(231, 76, 60, 0.25); border: 1px solid #e74c3c; color: #ff7675; padding: 4px 10px; font-size: 0.8rem; border-radius: 4px; }
-    .story-click-hint { position: absolute; bottom: 12px; right: 25px; font-size: 0.85rem; color: #f1c40f; animation: storyArrowBlink 0.8s infinite alternate; }
-    @keyframes storyArrowBlink { from { opacity: 0.3; transform: translateY(0); } to { opacity: 1; transform: translateY(-3px); } }
+      /* 📖 舊 #story-layer 樣式已移除:劇情劇場統一由 storyDialog.css / core/storyDialog.js 提供 */
 
           /* 📥 遊戲初始化預載入畫面樣式 */
 #game-preloader {
@@ -203,19 +170,8 @@
     <div class="preload-percent" id="preload-percent">0%</div>
     <button id="preloader-enter-btn" class="btn-replay" style="max-width: 200px;" onclick="window.enterGameFromPreloader()">進入皇家大會堂</button>
 </div>
-<div id="story-layer">
-    <div class="story-chapter-title" id="story-chapter-title">章節加載中...</div>
-    <div class="story-intro-panel" id="story-intro-panel">背景故事加載中...</div>
-    <div class="story-character-container" id="story-character">
-        <img class="story-character-img" id="story-char-img" alt="角色立繪">
-    </div>
-    <div class="story-dialogue-box" id="story-dialogue-box" onclick="window.storyModule.nextDialogue()">
-        <div class="story-name-tag" id="story-name-tag">???</div>
-        <div class="story-condition-badge" id="story-condition-badge">通關條件</div>
-        <div class="story-dialogue-text" id="story-dialogue-text">...</div>
-        <div class="story-click-hint">▼ 點擊繼續</div>
-    </div>
-</div>
+<!-- 📖 劇情劇場改由共用引擎 core/storyDialog.js 動態建立(#story-dialog-layer),
+     桌遊主線與戰棋次線的劇情統一走同一套視覺小說格式 -->
 
 <div id="tactics-layer"></div>
 <div id="town-layer"></div>
@@ -444,6 +400,7 @@
 </div>
 
 </div><!-- /#stage -->
+<script src="core/storyDialog.js"></script>
 <script src="core/tutorial.js"></script>
 <script src="core/onlineMode.js"
   onerror="var s=document.createElement('script'); s.src='onlineMode.js'; s.onerror=function(){ window.__onlineModeMissing=true; }; document.body.appendChild(s);"></script>
