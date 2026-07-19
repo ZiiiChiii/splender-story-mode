@@ -596,6 +596,18 @@ export const ActionDispatcher = {
     const diffTxt = document.getElementById('modal-diff-result-txt');
     if (diffTxt) diffTxt.textContent = '';
 
+    // 🏘️ 故事模式:備用鈕改造為「返回城鎮樞紐」
+    const townBtn = document.getElementById('btn-reselect-opponent');
+    if (townBtn) {
+      townBtn.style.display = '';
+      townBtn.textContent = '🏘️ 返回城鎮';
+      townBtn.onclick = () => {
+        window.playUniformSfx();
+        document.getElementById('win-modal').classList.remove('show');
+        if (window.TownMode) window.TownMode.enter();
+      };
+    }
+
     if (isWin) {
       iconEl.textContent = '📜';
       titleEl.textContent = `戰役捷報：第 ${currentLvl} 關突破！`;
