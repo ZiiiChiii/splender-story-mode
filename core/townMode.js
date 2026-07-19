@@ -88,6 +88,7 @@ export const TownMode = {
       <div class="town-top">
         <span class="town-title">🏘️ 微光村・故事樞紐</span>
         <span class="town-vault" id="town-vault"></span>
+        <button class="town-opt" id="town-opt-btn">⚙️ 遊戲選項</button>
       </div>
       <div class="town-viewport" id="town-viewport">
         <div class="town-grid" id="town-grid"></div>
@@ -166,6 +167,14 @@ export const TownMode = {
     this.layer.querySelectorAll('.town-dpad button').forEach(b => {
       b.onclick = () => { const d = b.dataset.dir; if (d === 'act') this.interact(); else this.move(d); };
     });
+    // ⚙️ 遊戲選項:收城鎮圖層並開既有選項(可切回其他模式;僅關閉則回城鎮)
+    const optBtn = document.getElementById('town-opt-btn');
+    if (optBtn) optBtn.onclick = () => {
+      sfx();
+      this._resumeAfterModal = true;
+      this.layer && this.layer.classList.remove('town-active');
+      if (window.openGameOptionsModal) window.openGameOptionsModal();
+    };
   },
 
   walkable(x, y) {
@@ -227,8 +236,10 @@ export const TownMode = {
     else if (near.id === 'shop') this.openShop();
   },
 
-  /* 🏛️ 交易殿堂 → 桌遊主線任務 */
+  /* 🏛️ 交易殿堂 → 桌遊主線任務(先收城鎮圖層,避免蓋住彈窗) */
   openHall() {
+    this._resumeAfterModal = true;
+    this.layer && this.layer.classList.remove('town-active');
     if (window.StoryMode) window.StoryMode.openStoryMapModal('main');
   },
 
