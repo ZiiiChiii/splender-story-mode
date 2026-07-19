@@ -37,6 +37,17 @@ BUILDINGS.forEach(b => {
 const TREES = [[2, 1], [12, 1], [1, 4], [13, 8], [2, 8], [12, 4], [4, 8], [10, 8]];
 TREES.forEach(([x, y]) => { if (MAP[y] && MAP[y][x] === 'G') MAP[y][x] = 'T'; });
 
+/* 🧓 NPC 與互動道具(劇情第三敘事線的地圖元素) */
+const NPCS = [
+  { id: 'elder', name: '長老 艾德溫', x: 5, y: 9, hint: '與長老交談・接受指引' },
+];
+const PROPS = [
+  { id: 'board', name: '任務佈告欄', x: 9, y: 5, hint: '查看進度與下一步指引' },
+];
+// NPC / 道具所在格不可走
+NPCS.forEach(n => { if (MAP[n.y] && MAP[n.y][n.x] !== undefined) MAP[n.y][n.x] = 'B'; });
+PROPS.forEach(p => { if (MAP[p.y] && MAP[p.y][p.x] !== undefined) MAP[p.y][p.x] = 'B'; });
+
 const WORLD_NODES = [
   { chIdx: 0, name: '紅岩礦坑', icon: '⛏️', x: 22, y: 38, desc: '灰鴉傭兵佔據的黑曜石礦道' },
   { chIdx: 1, name: '橡木鎮糧倉', icon: '🌾', x: 54, y: 26, desc: '深夜遭夜襲的糧倉' },
@@ -375,6 +386,81 @@ function drawHero(ctx, cx, cy, facing, frame) {
   ctx.drawImage(spr, Math.round(cx - w / 2), Math.round(cy - h + 3), Math.round(w), Math.round(h));
 }
 
+/* ── 🧓 長老艾德溫(16×20 點陣:灰髮、褐袍、木杖) ── */
+const ELDER_PAL = {
+  s:'#EFC9A0', S:'#CF9C72',           // 膚色 / 陰影
+  e:'#2a2230',                         // 眼
+  h:'#D8D4CA', H:'#A8A499',           // 灰髮/鬍 亮/暗
+  c:'#8A6B43', C:'#6B4F30', l:'#A88854', // 褐袍 亮/暗/高光
+  k:'#D9A441',                         // 腰帶釦
+  b:'#4A3018',                         // 鞋
+  t:'#7A5230', T:'#5C3D20',           // 木杖
+};
+const ELDER_SPR = [
+  '................',
+  '......hhhh......',
+  '.....hHHHHh.....',
+  '.....hssssh.....',
+  '.....sesse....t.',
+  '.....ssssss...t.',
+  '....hHssHh....t.',
+  '....hHHHHh....t.',
+  '...lcccccl....t.',
+  '..CcccccccC...t.',
+  '..Ccckkccc....t.',
+  '..CcccccccC...t.',
+  '..CcccccccC...t.',
+  '..CcccccccC...T.',
+  '..CcccccccC...T.',
+  '...ccccccc....T.',
+  '...cc...cc....T.',
+  '...bb...bb....T.',
+  '................',
+  '................',
+];
+let ELDER_CACHE = null;
+function elderSprite() {
+  if (ELDER_CACHE) return ELDER_CACHE;
+  const W0 = 16, H0 = 20;
+  const c = document.createElement('canvas'); c.width = W0; c.height = H0;
+  const ctx = c.getContext('2d');
+  ELDER_SPR.forEach((row, y) => { [...row].forEach((ch, x) => {
+    if (ch === '.' || !ELDER_PAL[ch]) return;
+    ctx.fillStyle = ELDER_PAL[ch]; ctx.fillRect(x, y, 1, 1);
+  }); });
+  ELDER_CACHE = c;
+  return c;
+}
+function drawElder(ctx, gx, gy, ox, oy) {
+  const cx = gx * TILE - ox + TILE / 2, cy = gy * TILE - oy + TILE - 2;
+  const bob = Math.sin(performance.now() / 700) * 1.2; // 緩慢呼吸
+  ctx.fillStyle = 'rgba(0,0,0,.30)';
+  ctx.beginPath(); ctx.ellipse(cx, cy, 10, 3.2, 0, 0, Math.PI * 2); ctx.fill();
+  const scale = 2.0, w = 16 * scale, h = 20 * scale;
+  ctx.imageSmoothingEnabled = false;
+  ctx.drawImage(elderSprite(), Math.round(cx - w / 2), Math.round(cy - h + 3 + bob), Math.round(w), Math.round(h));
+  // ❕ 有待播劇情/新指引時的提示
+  if (window.StoryEvents && window.StoryEvents.hasPending()) {
+    const pulse = 0.6 + 0.4 * Math.sin(performance.now() / 300);
+    ctx.fillStyle = `rgba(255,224,153,${pulse})`;
+    ctx.font = 'bold 13px sans-serif'; ctx.textAlign = 'center';
+    ctx.fillText('❕', cx, cy - h - 2);
+  }
+}
+/* ── 📋 任務佈告欄(木板 + 貼紙) ── */
+function drawBoard(ctx, gx, gy, ox, oy) {
+  const x = gx * TILE - ox, y = gy * TILE - oy;
+  px(ctx, x + 6, y + 14, 4, 18, '#6B4A2B'); px(ctx, x + 22, y + 14, 4, 18, '#6B4A2B'); // 柱
+  px(ctx, x + 2, y + 2, 28, 16, '#7A5230');                                            // 板框
+  px(ctx, x + 4, y + 4, 24, 12, '#C9B58C');                                            // 板面
+  px(ctx, x + 6, y + 6, 8, 4, '#EFE8D4'); px(ctx, x + 16, y + 6, 9, 3, '#E8D9B0');     // 貼紙
+  px(ctx, x + 6, y + 12, 12, 2, '#B09A6E');
+  px(ctx, x + 18, y + 11, 3, 3, '#D9534F');                                            // 紅蠟章
+}
+
+/* 供劇情引擎使用的像素立繪(dataURL,pixel 模式放大) */
+let HERO_PORTRAIT = null, ELDER_PORTRAIT = null;
+
 export const TownMode = {
   layer: null, canvas: null, ctx: null,
   // 連續座標(格為單位,可含小數)
@@ -430,6 +516,8 @@ export const TownMode = {
     try { this.draw(); } catch (e) { console.warn('[town] first draw', e); }
     setTimeout(() => { if (this.active) { this.setupCanvas(); try { this.draw(); } catch (e) {} } }, 60);
     this.raf = requestAnimationFrame(this.loop);
+    // 📖 地圖劇情事件:進城時依進度自動演出(序幕甦醒、階段轉場等,單次不重播)
+    if (window.StoryEvents) { try { window.StoryEvents.onTownEnter(); } catch (e) {} }
   },
 
   exit() {
@@ -611,6 +699,8 @@ export const TownMode = {
     const drawables = [];
     BUILDINGS.forEach(b => drawables.push({ y: (b.by + b.bh) * TILE, fn: () => drawBuilding(ctx, b, ox, oy) }));
     TREES.forEach(([tx, ty]) => { if (MAP[ty][tx] === 'T') drawables.push({ y: (ty + 1) * TILE, fn: () => drawTree(ctx, tx, ty, ox, oy) }); });
+    NPCS.forEach(n => drawables.push({ y: (n.y + 1) * TILE, fn: () => drawElder(ctx, n.x, n.y, ox, oy) }));
+    PROPS.forEach(p => drawables.push({ y: (p.y + 1) * TILE, fn: () => drawBoard(ctx, p.x, p.y, ox, oy) }));
     const heroSX = this.px * TILE - ox, heroSY = this.py * TILE - oy;
     drawables.push({ y: this.py * TILE, fn: () => drawHero(ctx, heroSX, heroSY, this.facing, this.frame) });
     drawables.sort((a, b) => a.y - b.y);
@@ -626,6 +716,14 @@ export const TownMode = {
       ctx.strokeStyle = '#d9a441'; ctx.lineWidth = 1; ctx.strokeRect(nx - tw / 2, ny - 13, tw, 15);
       ctx.fillStyle = '#ffe099'; ctx.fillText(label, nx, ny - 2);
     });
+    // NPC 名牌(較小)
+    NPCS.forEach(n => {
+      const nx = (n.x + 0.5) * TILE - ox, ny = n.y * TILE - oy - 30;
+      ctx.font = 'bold 9px "Microsoft JhengHei",sans-serif'; ctx.textAlign = 'center';
+      const tw = ctx.measureText(n.name).width + 10;
+      ctx.fillStyle = 'rgba(8,10,14,.75)'; ctx.fillRect(nx - tw / 2, ny - 11, tw, 13);
+      ctx.fillStyle = '#c8d0d8'; ctx.fillText(n.name, nx, ny - 2);
+    });
     ctx.restore();
   },
 
@@ -635,7 +733,22 @@ export const TownMode = {
       const dist = Math.hypot(this.px - (dx + 0.5), this.py - (dy + 0.5));
       if (dist <= 1.15) return b;
     }
+    // NPC 與互動道具:站到旁邊即可互動
+    for (const n of NPCS.concat(PROPS)) {
+      const dist = Math.hypot(this.px - (n.x + 0.5), this.py - (n.y + 0.5));
+      if (dist <= 1.15) return n;
+    }
     return null;
+  },
+
+  /* 📖 供劇情引擎取用的像素立繪 */
+  heroPortraitURL() {
+    if (!HERO_PORTRAIT) { try { HERO_PORTRAIT = heroSprite('down', 0).toDataURL(); } catch (e) { return ''; } }
+    return HERO_PORTRAIT;
+  },
+  elderPortraitURL() {
+    if (!ELDER_PORTRAIT) { try { ELDER_PORTRAIT = elderSprite().toDataURL(); } catch (e) { return ''; } }
+    return ELDER_PORTRAIT;
   },
 
   updateVault() {
@@ -650,6 +763,8 @@ export const TownMode = {
     if (near.id === 'hall') this.openHall();
     else if (near.id === 'gate') this.openWorldMap();
     else if (near.id === 'shop') this.openShop();
+    else if (near.id === 'elder') { if (window.StoryEvents) window.StoryEvents.talkToElder(); }
+    else if (near.id === 'board') { if (window.StoryEvents) window.StoryEvents.openBoard(); }
   },
 
   /* 🏛️ 交易殿堂 → 桌遊主線任務(先收城鎮圖層,避免蓋住彈窗) */
