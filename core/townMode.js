@@ -1,40 +1,142 @@
-// core/townMode.js — 🏘️ 故事模式 RPG 樞紐(canvas 像素風・絲滑連續移動)
-//   交易殿堂 → 主線桌遊任務(StoryMode 商道戰役)
-//   城鎮門口 → 世界大地圖 → 戰棋任務節點(TacticsMode)
-//   商店      → 寶石交易 + 購買戰棋部隊技能/強化
+/* town.css — 🏘️ 故事模式 RPG 城鎮樞紐(全部鎖在 #town-layer / .town-modal) */
 
-const TILE = 32;          // 每格像素(邏輯座標)
-const W = 15, H = 12;     // 地圖格數
+#town-layer{
+  --tn-ink:#141A22; --tn-grass:#3E6B47; --tn-grass2:#457550; --tn-road:#8B7355; --tn-road2:#9C8264;
+  --tn-wall:#2A323C; --tn-bld:#6B5642; --tn-bld2:#7C6650; --tn-roof:#8E4A3C; --tn-gold:#D9A441;
+  --tn-text:#EAE4D6; --tn-dim:#93A0A8;
+  position:absolute; inset:0; z-index:99985; display:none; flex-direction:column;
+  background:radial-gradient(600px 400px at 50% 30%, #24343A 0%, var(--tn-ink) 75%);
+  color:var(--tn-text); font-family:'Microsoft JhengHei','Heiti TC',sans-serif; overflow:hidden; user-select:none;
+}
+#town-layer.town-active{ display:flex; }
+#town-layer *{ box-sizing:border-box; }
 
-/* 地形碼:G草 R石板路 P廣場磚 W水 . 內部代號 */
-const MAP = (() => {
-  const g = Array.from({ length: H }, () => Array(W).fill('G'));
-  // 外圈柵欄(F 不可走)
-  for (let x = 0; x < W; x++) { g[0][x] = 'F'; g[H - 1][x] = 'F'; }
-  for (let y = 0; y < H; y++) { g[y][0] = 'F'; g[y][W - 1] = 'F'; }
-  // 中央十字石板路
-  for (let y = 1; y < H - 1; y++) g[y][7] = 'R';
-  for (let x = 1; x < W - 1; x++) g[6][x] = 'R';
-  // 廣場(路口周邊鋪磚)
-  for (let y = 5; y <= 7; y++) for (let x = 6; x <= 8; x++) if (g[y][x] === 'G') g[y][x] = 'P';
-  // 水池(裝飾,不可走)
-  g[9][2] = 'W'; g[9][3] = 'W'; g[10][2] = 'W'; g[10][3] = 'W';
-  return g;
-})();
+#town-layer .town-top{
+  display:flex; align-items:center; justify-content:space-between; padding:8px 12px;
+  border-bottom:1px solid rgba(212,175,55,.25); flex-shrink:0;
+}
+#town-layer .town-title{ font-weight:800; color:#ffe099; letter-spacing:.1em; font-size:0.82rem; }
+#town-layer .town-vault{ font-size:0.68rem; color:var(--tn-text); margin-left:auto; }
+#town-layer .town-opt{
+  margin-left:8px; padding:4px 10px; font-size:0.62rem; border:1px solid var(--tn-gold);
+  background:linear-gradient(180deg,#2A2618,#1F1D14); color:var(--tn-gold); border-radius:5px; cursor:pointer;
+}
+#town-layer .town-opt:active{ transform:scale(.95); }
+#town-layer .tx-gem{
+  display:inline-block; width:11px; height:11px; vertical-align:-1px; margin-right:2px;
+  clip-path:polygon(50% 0,100% 36%,79% 100%,21% 100%,0 36%);
+  background:linear-gradient(155deg, rgba(255,255,255,.85) 0%, var(--g) 28%, color-mix(in srgb,var(--g) 55%,#000) 100%);
+}
 
-/* 建築:bx,by 左上格;bw,bh 佔格;door 觸發格(通常在建築正下方) */
-const BUILDINGS = [
-  { id: 'hall', name: '寶石交易殿堂', kind: 'temple', bx: 2,  by: 2, bw: 3, bh: 3, door: [3, 5],  hint: '進行桌遊任務・商道戰役' },
-  { id: 'shop', name: '商店',        kind: 'shop',   bx: 10, by: 2, bw: 3, bh: 3, door: [11, 5], hint: '寶石交易 & 購買部隊技能' },
-  { id: 'gate', name: '城鎮門口',    kind: 'gate',   bx: 6,  by: 10, bw: 3, bh: 1, door: [7, 9],  hint: '前往世界地圖・戰線戰役' },
-];
-// 標記建築佔位為不可走(門口除外)
-BUILDINGS.forEach(b => {
-  for (let y = b.by; y < b.by + b.bh; y++) for (let x = b.bx; x < b.bx + b.bw; x++)
-    if (MAP[y] && MAP[y][x] !== undefined) MAP[y][x] = 'B';
-});
-// 樹木(裝飾,不可走)
-const TREES = [[2, 1], [12, 1], [1, 4], [13, 8], [2, 8], [12, 4], [4, 8], [10, 8]];
+#town-layer .town-viewport{
+  flex:1; position:relative; min-height:0; overflow:hidden;
+  background:#2c3e2f;
+  display:flex; align-items:stretch; justify-content:stretch;
+}
+#town-layer #town-canvas{
+  display:block; width:100%; height:100%;
+  image-rendering:pixelated; image-rendering:crisp-edges;
+  touch-action:none;
+}
+
+/* 提示列 */
+#town-layer .town-hint{
+  flex-shrink:0; text-align:center; padding:7px 12px; font-size:0.66rem; min-height:30px;
+  border-top:1px solid rgba(212,175,55,.18);
+}
+#town-layer .town-hint b{ color:#ffe099; }
+#town-layer .town-hint .town-dim{ color:var(--tn-dim); }
+#town-layer .town-hint .town-press{ color:var(--tn-gold); font-weight:800; margin-left:4px; }
+
+/* 方向鈕(手機友善) */
+#town-layer .town-dpad{
+  flex-shrink:0; display:flex; flex-direction:column; align-items:center; gap:5px; padding:6px 0 14px;
+}
+#town-layer .town-dpad-mid{ display:flex; gap:5px; align-items:center; }
+#town-layer .town-dpad button{
+  width:52px; height:44px; font-size:1rem; border:1px solid #3a4650; background:#1E2731; color:var(--tn-text);
+  border-radius:7px; cursor:pointer; transition:.1s;
+  touch-action:none; user-select:none; -webkit-user-select:none; -webkit-tap-highlight-color:transparent;
+}
+#town-layer .town-dpad button:active{ background:#2b3742; transform:scale(.94); }
+#town-layer .town-dpad .town-act{
+  width:78px; font-size:0.72rem; font-weight:800; border-color:#5a4a2a; color:var(--tn-dim);
+}
+#town-layer .town-dpad .town-act.ready{ border-color:var(--tn-gold); color:var(--tn-gold); background:linear-gradient(180deg,#2A2618,#1F1D14); animation:townReady 1s ease-in-out infinite; }
+@keyframes townReady{ 0%,100%{box-shadow:0 0 0 rgba(217,164,65,0)} 50%{box-shadow:0 0 12px rgba(217,164,65,.5)} }
+
+/* ── 世界地圖 / 商店 共用彈窗 ── */
+.town-modal{
+  position:absolute; inset:0; z-index:99992; display:none; align-items:center; justify-content:center;
+  background:rgba(0,0,0,.72); padding:14px;
+}
+.town-modal.show{ display:flex; }
+.town-modal .town-world, .town-modal .town-shop{
+  width:100%; max-width:440px; max-height:calc(var(--stage-h,716px) - 40px);
+  background:#161C24; border:1px solid rgba(212,175,55,.3); border-radius:8px;
+  display:flex; flex-direction:column; overflow:hidden; box-shadow:0 12px 40px rgba(0,0,0,.6);
+  font-family:'Microsoft JhengHei',sans-serif; color:#EAE4D6;
+}
+.town-modal .town-world-head{
+  display:flex; align-items:center; justify-content:space-between; padding:11px 14px;
+  border-bottom:1px solid rgba(212,175,55,.2); font-weight:800; color:#ffe099; font-size:0.82rem; flex-shrink:0;
+}
+.town-modal .town-x{ background:none; border:1px solid #444; color:#ccc; border-radius:4px; cursor:pointer; padding:2px 9px; font-size:0.8rem; }
+.town-modal .town-x:hover{ border-color:var(--tn-gold,#D9A441); color:var(--tn-gold,#D9A441); }
+
+/* 世界地圖 */
+.town-modal .town-world-map{
+  position:relative; flex:1; min-height:300px; margin:10px; border-radius:6px; overflow:hidden;
+  background:
+    radial-gradient(300px 200px at 30% 30%, #3E6B47 0%, transparent 60%),
+    radial-gradient(260px 200px at 75% 65%, #4A6B5A 0%, transparent 60%),
+    linear-gradient(160deg, #2C4A3A, #223540);
+  border:1px solid #31405A;
+}
+.town-modal .town-world-legend{
+  position:absolute; top:8px; left:8px; right:8px; font-size:0.56rem; color:#c7d0d8;
+  background:rgba(0,0,0,.4); padding:4px 8px; border-radius:4px; z-index:2;
+}
+.town-modal .town-node{
+  position:absolute; transform:translate(-50%,-50%); display:flex; flex-direction:column; align-items:center; gap:2px;
+  background:none; border:none; cursor:pointer; z-index:3;
+}
+.town-modal .town-node-ico{
+  font-size:1.7rem; filter:drop-shadow(0 2px 4px rgba(0,0,0,.7)); transition:transform .15s;
+  background:rgba(10,14,18,.55); border-radius:50%; padding:3px;
+}
+.town-modal .town-node:hover:not(.locked) .town-node-ico{ transform:scale(1.18); }
+.town-modal .town-node-name{
+  font-size:0.58rem; font-weight:800; color:#fff; background:rgba(10,14,18,.85);
+  border:1px solid var(--tn-gold,#D9A441); border-radius:4px; padding:1px 7px; white-space:nowrap;
+}
+.town-modal .town-node.locked{ cursor:default; }
+.town-modal .town-node.locked .town-node-ico{ filter:grayscale(1) brightness(.5); }
+.town-modal .town-node.locked .town-node-name{ border-color:#555; color:#999; }
+.town-modal .town-world-foot, .town-modal .town-shop .town-world-foot{
+  padding:9px 14px; border-top:1px solid rgba(212,175,55,.2); font-size:0.66rem; flex-shrink:0;
+}
+
+/* 商店 */
+.town-modal .town-shop-body{ flex:1; overflow-y:auto; padding:6px 12px 10px; }
+.town-modal .tx-row{
+  display:flex; align-items:center; gap:6px; padding:6px 8px; border:1px solid #31405A;
+  background:#1A212E; margin-bottom:5px; font-size:0.64rem; border-radius:3px;
+}
+.town-modal .tx-row .grow{ flex:1; min-width:0; }
+.town-modal .tx-row .price{ color:#93A0A8; font-size:0.58rem; white-space:nowrap; }
+.town-modal .tx-row button{
+  padding:3px 10px; font-size:0.6rem; flex-shrink:0; border:1px solid #31405A; background:#212A3A;
+  color:#EAE4D6; border-radius:3px; cursor:pointer;
+}
+.town-modal .tx-row button:hover:not(:disabled){ border-color:var(--tn-gold,#D9A441); color:var(--tn-gold,#D9A441); }
+.town-modal .tx-row button:disabled{ opacity:.35; cursor:default; }
+.town-modal .tx-tag{ font-size:0.56rem; color:#93A0A8; letter-spacing:.05em; }
+.town-modal .diff-opt-btn{ cursor:pointer; }
+
+@media (prefers-reduced-motion:reduce){
+  #town-layer .town-hero-body, #town-layer .town-door, #town-layer .town-act{ animation:none!important; }
+}const TREES = [[2, 1], [12, 1], [1, 4], [13, 8], [2, 8], [12, 4], [4, 8], [10, 8]];
 TREES.forEach(([x, y]) => { if (MAP[y] && MAP[y][x] === 'G') MAP[y][x] = 'T'; });
 
 const WORLD_NODES = [
