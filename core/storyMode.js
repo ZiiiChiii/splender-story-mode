@@ -70,82 +70,58 @@ export const StoryMode = {
     this.loadStoryProgress();
     const state = CoreState.get();
     const maxUnlocked = state.storyProgress.maxUnlockedLevel;
-    this._activeTab = tab || this._activeTab || 'main';
+    // 次線戰役只在「出城(城鎮門口→世界地圖)」進行;交易殿堂僅顯示主線。
+    // 若外部仍以 'tactics' 呼叫,導向世界地圖而非在此開次線頁。
+    if (tab === 'tactics') {
+      const modalEl = document.getElementById('story-map-modal');
+      if (modalEl) modalEl.classList.remove('show');
+      if (window.TownMode && window.TownMode.openWorldMap) { window.TownMode.openWorldMap(); return; }
+    }
+    this._activeTab = 'main';
 
     let modal = document.getElementById('story-map-modal');
     if (!modal) return;
 
-    // \u2694\ufe0f 次線頁籤:戰線戰役(戰棋模式)
-    if (this._activeTab === 'tactics') {
-      const tx = window.TacticsMode;
-      const vaultLine = window.TacticsVault ? window.TacticsVault.lineHtml() : '';
-      modal.innerHTML = `
-        <div class="modal" style="max-width:520px; max-height:calc(var(--stage-h, 716px) - 40px); display:flex; flex-direction:column; overflow:hidden; padding:16px;">
-          <h2 class="modal-title">\u2694\ufe0f 戰線戰役(戰棋)</h2>
-          <div style="display:flex; gap:6px; margin-bottom:8px;">
-            <button class="diff-opt-btn" style="flex:1;" onclick="window.playUniformSfx && window.playUniformSfx(); window.StoryMode.openStoryMapModal('main')">\ud83d\udcdc 主線・商道戰役</button>
-            <button class="diff-opt-btn active" style="flex:1; border-color:#ffcc00;">\u2694\ufe0f 次線・戰線戰役</button>
-          </div>
-          <div style="background:rgba(0,0,0,0.4); padding:9px 10px; border-radius:4px; border:1px solid rgba(212,175,55,0.25); text-align:left; margin-bottom:8px; font-size:0.66rem; color:#c7bfb5; line-height:1.55;">
-            主線在大會堂經商,你的軍事夥伴(貞德、赫克特、露娜)則在前線與「灰鴉傭兵團」作戰。
-            兩線共享 <b style="color:#ffe099">寶石庫</b>:主線首勝與戰場拾獲都會入庫,可在整備時為部隊永久刻紋強化。
-            戰線首勝還能<b style="color:#2ecc71">直接解鎖對應輔助官</b>——不玩戰棋也不影響主線推進,兩線互為助力、互不卡關。
-            <div style="margin-top:5px;">\ud83d\udc8e 寶石庫:${vaultLine || '(戰棋模組載入中…)'}</div>
-          </div>
-          <div style="display:grid; grid-template-columns:1fr; gap:6px; overflow-y:auto; flex:1; padding-right:2px; margin-bottom:8px;">
-            ${tx ? tx.chapterListHtml() : '<p style="font-size:0.7rem;color:#e67e22;">戰棋模組尚未載入,請重新整理頁面。</p>'}
-          </div>
-          <button class="btn-replay" style="margin:0; padding:8px; background:#3a2e22; border:1px solid #d4af37;" onclick="window.playUniformSfx && window.playUniformSfx(); window.closeStoryMapBackToTown()">關閉</button>
-        </div>`;
-      modal.classList.add('show');
-      return;
-    }
-
     let levelsHtml = STORY_MISSIONS.map(cfg => {
       const isUnlocked = cfg.id <= maxUnlocked;
       const isCurrent = cfg.id === state.storyProgress.currentLevel;
-      const activeClass = isCurrent ? 'active' : '';
-      const disabledAttr = isUnlocked ? '' : 'disabled';
+      const isCleared = (state.storyProgress.clearedLevels || []).includes(cfg.id);
       const astCfg = ASSISTANTS_DATABASE[cfg.rewardAssistantId];
-      const turnDisplay = cfg.setup.turnLimit >= 99 ? '無限' : cfg.setup.turnLimit;
-      const scoreDisplay = cfg.winCondition.targetScore || '特定';
+      const turnDisplay = cfg.setup.turnLimit >= 99 ? '無限' : cfg.setup.turnLimit + ' 回';
+      const scoreDisplay = cfg.winCondition.targetScore ? cfg.winCondition.targetScore + ' 分' : '特定條件';
 
       return `
-        <button class="diff-opt-btn ${activeClass}" ${disabledAttr} 
-          style="text-align:left; padding:6px; display:flex; flex-direction:column; justify-content:space-between; 
-                 opacity:${isUnlocked ? 1 : 0.2}; pointer-events:${isUnlocked ? 'auto' : 'none'}; 
-                 border-color:${isCurrent ? '#ffcc00' : '#4a3a30'}; background:${isCurrent ? '#2d2219' : 'rgba(0,0,0,0.2)'};" 
+        <button class="story-scroll-row ${isCurrent ? 'is-current' : ''}" ${isUnlocked ? '' : 'disabled'}
+          style="opacity:${isUnlocked ? 1 : 0.4}; pointer-events:${isUnlocked ? 'auto' : 'none'};"
           onclick="window.selectStoryLevel(${cfg.id}, true)">
-          <div style="font-weight:800; color:#ffe099; font-size:0.7rem; white-space:nowrap; text-overflow:ellipsis; overflow:hidden; width:100%;">第 ${cfg.id} 關 ${cfg.name} ${isCurrent ? '🎯' : ''}</div>
-          <div style="font-size:0.58rem; color:#fff;">${scoreDisplay}分 / ${turnDisplay}回</div>
-          <div style="font-size:0.52rem; color:#2ecc71; white-space:nowrap; text-overflow:ellipsis; overflow:hidden; width:100%;">🎁 獲取: ${astCfg ? astCfg.name.split(' ')[1] : ''}</div>
-        </button>
-      `;
+          <div class="ss-badge">${isCleared ? '✅' : (isUnlocked ? '第 ' + cfg.id + ' 關' : '🔒')}</div>
+          <div class="ss-body">
+            <div class="ss-name">${cfg.name} ${isCurrent ? '🎯' : ''}</div>
+            <div class="ss-meta">🎯 ${scoreDisplay}　⏳ ${turnDisplay}　🎁 ${astCfg ? astCfg.name : '—'}</div>
+          </div>
+          <div class="ss-arrow">${isUnlocked ? '›' : ''}</div>
+        </button>`;
     }).join('');
 
     const currentMission = STORY_MISSIONS[state.storyProgress.currentLevel - 1] || STORY_MISSIONS[0];
 
     modal.innerHTML = `
       <div class="modal" style="max-width:520px; max-height:calc(var(--stage-h, 716px) - 40px); display:flex; flex-direction:column; overflow:hidden; padding:16px;">
-        <h2 class="modal-title">📜 皇家故事模式戰役</h2>
-        <div style="display:flex; gap:6px; margin-bottom:8px;">
-          <button class="diff-opt-btn active" style="flex:1; border-color:#ffcc00;">📜 主線・商道戰役</button>
-          <button class="diff-opt-btn" style="flex:1;" onclick="window.playUniformSfx && window.playUniformSfx(); window.StoryMode.openStoryMapModal('tactics')">⚔️ 次線・戰線戰役</button>
-        </div>
-        <p style="font-size:0.75rem; color:var(--text-muted); margin-bottom:6px;">可任意點選已解鎖的關卡進行重複挑戰，或點選下一關繼續推進</p>
-        
-        <div style="background:rgba(0,0,0,0.4); padding:10px; border-radius:4px; border:1px solid rgba(212,175,55,0.25); text-align:left; margin-bottom:8px;">
+        <h2 class="modal-title">📜 商道戰役・主線章節</h2>
+        <p style="font-size:0.72rem; color:var(--text-muted); margin-bottom:6px;">點選已解鎖章節挑戰或重打。次線「戰線戰役」請由城鎮的「城鎮門口」出城前往。</p>
+
+        <div style="background:rgba(0,0,0,0.4); padding:10px; border-radius:4px; border:1px solid rgba(212,175,55,0.25); text-align:left; margin-bottom:8px; flex-shrink:0;">
           <div style="font-size:0.75rem; font-weight:800; color:#d4af37; margin-bottom:2px;">【${currentMission.speaker}】：</div>
           <div style="font-size:0.7rem; color:#fff; line-height:1.4; margin-bottom:4px;">"${currentMission.dialogue}"</div>
           <hr style="border:0; border-top:1px dashed rgba(212,175,55,0.2); margin:4px 0;">
           <div style="font-size:0.65rem; color:var(--text-muted);">${currentMission.story}</div>
         </div>
 
-        <div style="display:grid; grid-template-columns:repeat(4, 1fr); gap:5px; overflow-y:auto; flex:1; padding-right:2px; margin-bottom:8px;">
+        <div class="story-scroll-list">
           ${levelsHtml}
         </div>
 
-        <div style="display:flex; gap:6px; flex-shrink:0;">
+        <div style="display:flex; gap:6px; flex-shrink:0; margin-top:8px;">
           <button class="btn-primary" style="flex:1; padding:8px;" onclick="window.startSelectedStoryLevel()">開啟選定章節戰役</button>
           <button class="btn-replay" style="flex:1; margin:0; padding:8px; background:#3a2e22; border:1px solid #d4af37;" onclick="window.closeStoryMapBackToTown()">關閉</button>
         </div>
