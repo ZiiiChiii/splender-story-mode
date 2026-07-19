@@ -1,0 +1,271 @@
+// core/storyEvents.js — 🏘️ 地圖內劇情事件(故事模式第三敘事線)
+// 三線敘事的「黏合劑」:
+//   ① 地圖事件(本檔):序幕甦醒、階段轉場、長老指引、任務佈告欄
+//   ② 交易殿堂 → 主線桌遊 25 關(levelsData)
+//   ③ 城鎮門口 → 戰棋 3 戰(tacticsMode)
+// 設計原則:所有地圖事件皆為「單次演出 + 永不阻擋玩法」——
+//   事件只在進城時依進度播一段,錯過順序也不會卡關;
+//   長老與佈告欄隨時提供「下一步建議」,但玩家永遠可以自由選擇兩條線任一邊推進。
+// 依賴:window.StoryDialog(共用劇情引擎)。立繪取自 TownMode / TacticsMode(載入前有保底)。
+
+(function () {
+  'use strict';
+
+  const FLAG_KEY = 'splendor_story_events_2026';
+  const MAIN_KEY = 'splendor_story_progress_2026';
+  const TX_KEY = 'splendor_tactics_2026';
+
+  /* ── 進度讀取(直接讀存檔,不依賴模組載入順序) ── */
+  function mainProg() {
+    try {
+      const d = JSON.parse(localStorage.getItem(MAIN_KEY) || '{}');
+      return {
+        maxUnlockedLevel: d.maxUnlockedLevel || 1,
+        cleared: Array.isArray(d.clearedLevels) ? d.clearedLevels : []
+      };
+    } catch (e) { return { maxUnlockedLevel: 1, cleared: [] }; }
+  }
+  function txCleared() {
+    try {
+      const d = JSON.parse(localStorage.getItem(TX_KEY) || '{}');
+      return Array.isArray(d.cleared) ? d.cleared : [];
+    } catch (e) { return []; }
+  }
+  function flags() {
+    try { return JSON.parse(localStorage.getItem(FLAG_KEY) || '{}'); }
+    catch (e) { return {}; }
+  }
+  function markSeen(id) {
+    const f = flags(); f[id] = true;
+    try { localStorage.setItem(FLAG_KEY, JSON.stringify(f)); } catch (e) {}
+  }
+
+  /* ── 立繪來源(全部有保底,模組未載入時顯示純對話) ── */
+  const P = {
+    hero()  { return (window.TownMode && window.TownMode.heroPortraitURL)  ? { img: window.TownMode.heroPortraitURL(),  pixel: true } : {}; },
+    elder() { return (window.TownMode && window.TownMode.elderPortraitURL) ? { img: window.TownMode.elderPortraitURL(), pixel: true } : {}; },
+    cast(who, side) {
+      return (window.TacticsMode && window.TacticsMode.portraitOf)
+        ? window.TacticsMode.portraitOf(who, side || 'ally') : {};
+    }
+  };
+  const heroLine  = (text, mood) => Object.assign({ who: '你', side: 'ally', text, mood }, P.hero());
+  const elderLine = (text, mood) => Object.assign({ who: '長老 艾德溫', side: 'ally', text, mood }, P.elder());
+  const castLine  = (who, side, text, mood) => Object.assign({ who, side, text, mood }, P.cast(who, side));
+  const narr      = (text) => ({ who: '', side: 'n', text });
+
+  /* ══════════ 地圖劇情事件(依序檢查,一次進城最多播一段) ══════════ */
+  const EVENTS = [
+    {
+      id: 'intro',
+      cond: () => true,
+      headline: '序幕・陌生的甦醒',
+      subline: '微光村・廣場水池邊',
+      // 甦醒演出:主角被擺到水池邊(格中心,避開長老所在的阻擋格)
+      place: { x: 5.5, y: 10.4 },
+      script: () => [
+        narr('冰涼的水氣拂過臉頰。你在一陣劇烈的頭暈中睜開眼——陌生的天空、陌生的村莊,而你想不起自己是誰、從哪裡來。'),
+        narr('身邊的草地上,散落著幾顆五色的寶石碎屑。你下意識握住其中一顆——'),
+        heroLine('唔……!這是……力量?寶石在……回應我?', 'shout'),
+        narr('掌心傳來暖流,暈眩竟一掃而空。碎屑的光沒入你的皮膚,像認了主。'),
+        elderLine('孩子,醒了?昨夜是我把你從水池邊挪開的——你倒下的地方,寶石碎屑排成了一個圈。老朽活了七十年,只在傳說裡聽過這種「寶石共鳴」。'),
+        elderLine('這裡是微光村。別看名字亮,村子窮得很——後山的礦坑出了事,商路也斷了,能離開的人都離開了。'),
+        elderLine('但你不一樣。有共鳴天賦的人,做交易是天生的好手。去廣場北邊的「寶石交易殿堂」找內政官傑洛米吧,先讓自己活下去——之後的事,之後再說。'),
+        heroLine('……好。寶石交易殿堂,傑洛米。至少,先弄清楚我能做什麼。')
+      ]
+    },
+    {
+      id: 'mine_call',
+      // 主線第 3 關(赫克特的黑曜石封鎖)通關後 → 揭露礦坑真相,引導出城(戰棋第 1 戰)
+      cond: () => mainProg().cleared.includes(3) && !txCleared().includes(1),
+      headline: '第一戰前夜・礦坑的真相',
+      subline: '微光村・廣場',
+      script: () => [
+        narr('你替赫克特截下黑曜石產業的隔天清晨,守備隊長披甲佩盾,和長老一起在廣場上等你。'),
+        castLine('赫克特', 'ally', '查清楚了。市面上根本不是「缺貨」——後山紅岩礦道被灰鴉傭兵團武裝佔據,黑曜石全被扣在裡面!'),
+        elderLine('果然……礦坑,就是微光村貧窮的病根啊。礦一斷,鐵匠鋪熄火、商隊繞路,這村子才一年年枯下去。', 'sad'),
+        castLine('赫克特', 'ally', '守備隊人手不足,正面強攻是送死。但你不同——聖女貞德與占星師露娜都願意聽你調度,加上我的盾,足以清出一條路!'),
+        heroLine('這座村子收留了不知來歷的我。奪回礦坑,就當是我付的房租——赫克特,整隊吧!', 'shout'),
+        elderLine('去「城鎮門口」出城,世界地圖上就能看到紅岩礦坑。用交易殿堂賺來的寶石,先去商店把裝備鍛一鍛——商人的仗,要打得比誰都精。')
+      ]
+    },
+    {
+      id: 'mine_won',
+      cond: () => txCleared().includes(1),
+      headline: '凱旋・重新運轉的礦車',
+      subline: '微光村・廣場',
+      script: () => [
+        narr('礦道奪回的當天下午,第一台礦車就重新滾出了後山。村民圍在廣場上,好些人哭了。'),
+        elderLine('聽,礦車的聲音……老朽多少年沒聽到了。孩子,微光村欠你一份天大的人情。', 'happy'),
+        castLine('露娜', 'ally', '不過有件事很怪——傭兵團的委託書上,蓋的是首都商會的火漆印。一群「商人」,花大錢僱傭兵佔一座小村的礦?'),
+        heroLine('封鎖市場的黑手、佔礦的「客戶」……這兩條線,八成是同一條。收好那份委託書,線索總有用上的一天。'),
+        elderLine('嗯,首都的水深,急不得。眼下先把生意做大——交易殿堂裡,橡木鎮那邊的邀約已經到了。')
+      ]
+    },
+    {
+      id: 'granary_call',
+      cond: () => mainProg().cleared.includes(6) && !txCleared().includes(2),
+      headline: '警訊・橡木鎮的夜',
+      subline: '微光村・廣場',
+      script: () => [
+        narr('入夜,一名騎快馬的信使衝進村口,馬背上插著橡木鎮的軍旗。'),
+        castLine('赫克特', 'ally', '亞瑟子爵的急件——灰鴉傭兵團的黑影正朝橡木鎮糧倉集結,就在今夜!他點名要你帶隊馳援。'),
+        heroLine('糧倉一燒,橡木鎮的商路就斷了……和礦坑是同一個手法。這群灰鴉,背後的「客戶」胃口不小。'),
+        elderLine('商路是活水,斷一條,枯一片。孩子,從城鎮門口出發吧——橡木鎮的糧倉,拜託你了。')
+      ]
+    },
+    {
+      id: 'granary_won',
+      cond: () => txCleared().includes(2),
+      headline: '線索・被掐住的商脈',
+      subline: '微光村・廣場',
+      script: () => [
+        narr('糧倉保住了。回村的路上,露娜攤開星盤,眉頭越皺越緊。'),
+        castLine('貞德', 'ally', '礦道、糧倉……有人在「系統性」地掐斷這一帶的商脈。這不是劫掠,是戰略。'),
+        castLine('露娜', 'ally', '星盤指向邊境森林。下一步,他們會對商隊必經的林道下手——而且是主力盡出。'),
+        heroLine('那就繼續往前。生意做到哪,我們就守到哪——遲早,會在盡頭見到那位「客戶」本人。', 'shout')
+      ]
+    },
+    {
+      id: 'forest_call',
+      cond: () => mainProg().cleared.includes(14) && !txCleared().includes(3),
+      headline: '決戰前夕・燃燒的森林',
+      subline: '微光村・廣場',
+      script: () => [
+        narr('邊境傳來戒嚴的消息——萊戈拉斯封鎖林道、只給商人 16 回合的那道命令,起因正是灰鴉主力壓境。'),
+        castLine('赫克特', 'ally', '礦道、糧倉、林道——三筆帳,是時候一次算清了。這回連傭兵首領都親自壓陣!'),
+        castLine('露娜', 'ally', '星象顯示「破軍臨西」……翻譯:是場硬仗,但贏面在我們。出發前記得去商店補裝,別省那幾顆寶石~', 'happy'),
+        heroLine('打贏這仗,灰鴉的翅膀就折了。走,去城鎮門口——邊境森林,終局之戰!', 'angry')
+      ]
+    },
+    {
+      id: 'forest_won',
+      cond: () => txCleared().includes(3),
+      headline: '折翼・指向首都的影子',
+      subline: '微光村・廣場',
+      script: () => [
+        narr('灰鴉傭兵團主力潰散,首領被擒。臨走前,他咳著血留下了最後一句話——「僱我們的火漆印上,有一把影刃」。'),
+        castLine('貞德', 'ally', '影刃……首都……前線能做的,我們都做完了。剩下的戰場,不在森林,而在大會堂的談判桌上。'),
+        heroLine('那正好是我的主場。夥伴們守住了刀劍的戰線,接下來——換我用交易,把那位「大人物」逼出陰影。', 'shout'),
+        elderLine('去吧,孩子。首都的宮廷商戰步步殺機,但老朽相信:能與寶石共鳴的人,不會迷路。')
+      ]
+    },
+    {
+      id: 'shadow_reveal',
+      cond: () => mainProg().cleared.includes(18),
+      headline: '真相・影刃折斷之後',
+      subline: '微光村・廣場',
+      script: () => [
+        narr('你在首都擊敗了影刃刺客澤德的消息,連夜傳回微光村。廣場上,長老為你斟了一杯熱茶。'),
+        elderLine('火漆印上的影刃,就是那個刺客;而他背後,是畏懼你崛起的首都商會巨頭們……礦坑、糧倉、森林,兜兜轉轉,原來根在首都。'),
+        heroLine('他們用傭兵和刺客做生意,我用寶石和信譽。現在影刃斷了,巨頭們只剩最後一道門——皇家大會堂。'),
+        elderLine('王座就在前方了,孩子。微光村永遠是你回得來的地方——去,把至尊的冠冕拿回來給大家看看!', 'shout')
+      ]
+    },
+    {
+      id: 'finale',
+      cond: () => mainProg().cleared.includes(25),
+      headline: '尾聲・璀璨至尊的故鄉',
+      subline: '微光村・廣場',
+      script: () => [
+        narr('加冕禮的鐘聲傳遍王國。而新任璀璨至尊做的第一件事,是騎馬回到微光村——回到一切開始的水池邊。'),
+        elderLine('哈哈,至尊陛下親臨,老朽該行什麼禮才好?……瞧,礦車在跑、商隊在排隊、鐵匠鋪的火沒熄過——這都是你帶回來的。', 'happy'),
+        castLine('貞德', 'ally', '從水池邊的無名旅人,到皇家大會堂的至尊。這一路,是你的傳奇——也是我們所有人的。'),
+        heroLine('不。傳奇的不是我,是願意把寶石交到一個陌生人手裡的你們。——微光村,以後就是至尊的直轄商都了,做好發財的準備吧!', 'happy'),
+        narr('—— 商道戰役・主線 完 ——(交易殿堂與戰線仍可自由重返挑戰)')
+      ]
+    }
+  ];
+
+  /* ══════════ 對外介面 ══════════ */
+  const StoryEvents = {
+    /* 進城時檢查:播放第一個「條件成立且未看過」的事件(一次一段,不疊播) */
+    onTownEnter() {
+      if (!window.StoryDialog) return;
+      const f = flags();
+      for (const ev of EVENTS) {
+        if (f[ev.id] || !ev.cond()) continue;
+        // 甦醒事件:先把主角擺到指定位置(水池邊)
+        if (ev.place && window.TownMode) {
+          window.TownMode.px = ev.place.x; window.TownMode.py = ev.place.y;
+          window.TownMode.facing = 'down';
+        }
+        // 略延遲,讓城鎮先畫出第一幀作為劇情背景
+        setTimeout(() => {
+          window.StoryDialog.play({
+            headline: ev.headline, subline: ev.subline,
+            script: ev.script(),
+            onDone: () => markSeen(ev.id)
+          });
+        }, 260);
+        return true;
+      }
+      return false;
+    },
+
+    /* 是否還有待播事件(供長老頭上「❕」提示;每秒快取一次,避免逐幀讀存檔) */
+    _pendCache: { t: 0, v: false },
+    hasPending() {
+      const now = Date.now();
+      if (now - this._pendCache.t > 1000) {
+        const f = flags();
+        this._pendCache = { t: now, v: EVENTS.some(ev => !f[ev.id] && ev.cond()) };
+      }
+      return this._pendCache.v;
+    },
+
+    /* 下一步建議(長老與佈告欄共用的導航邏輯,雙線皆通、永不卡關) */
+    nextHint() {
+      const m = mainProg(), t = txCleared();
+      if (!m.cleared.includes(1)) return { where: 'hall', text: '前往「寶石交易殿堂」找內政官傑洛米,用一場交易證明你的本事(主線第 1 關)。' };
+      if (m.cleared.includes(3) && !t.includes(1)) return { where: 'gate', text: '灰鴉佔據了紅岩礦坑——從「城鎮門口」出城,率隊奪回微光村的命脈(戰線第 1 戰)。' };
+      if (m.cleared.includes(6) && !t.includes(2)) return { where: 'gate', text: '橡木鎮糧倉今夜將遭夜襲——從「城鎮門口」出城馳援(戰線第 2 戰)。' };
+      if (m.cleared.includes(14) && !t.includes(3)) return { where: 'gate', text: '灰鴉主力壓境邊境森林——從「城鎮門口」出城,與首領決一死戰(戰線第 3 戰)。' };
+      if (!m.cleared.includes(25)) {
+        // 找出已解鎖但未通關的最小主線關卡
+        let next = 1;
+        for (let i = 1; i <= 25; i++) { if (!m.cleared.includes(i)) { next = i; break; } }
+        if (next > m.maxUnlockedLevel) next = m.maxUnlockedLevel;
+        return { where: 'hall', text: `前往「寶石交易殿堂」繼續商道戰役(建議挑戰第 ${next} 關)。戰線與殿堂可自由穿插進行。` };
+      }
+      return { where: 'done', text: '主線與戰線皆已完成!交易殿堂與世界地圖仍可自由重返,鍛造你的至尊商道。' };
+    },
+
+    /* 與長老交談(可重複,依進度給指引 + 一句閒談) */
+    talkToElder() {
+      if (!window.StoryDialog) return;
+      const hint = this.nextHint();
+      const m = mainProg(), t = txCleared();
+      const chat =
+        t.includes(3) ? '灰鴉折翼之後,商隊夜裡也敢趕路了。這都是你們打出來的太平。' :
+        t.includes(1) ? '礦車又跑起來了。老朽每天光聽那聲音,就能多吃一碗飯。' :
+        m.cleared.includes(1) ? '傑洛米那張嘴雖毒,心是熱的——他到處跟人誇你呢,別說是老朽說的。' :
+        '寶石共鳴是天賦,更是責任。老朽相信,你會用它走出一條好路。';
+      window.StoryDialog.play({
+        headline: '長老 艾德溫',
+        subline: '微光村・廣場',
+        script: [ elderLine(chat), elderLine('【指引】' + hint.text) ],
+        canSkip: false
+      });
+    },
+
+    /* 任務佈告欄(可重複):進度總覽 + 下一步 */
+    openBoard() {
+      if (!window.StoryDialog) return;
+      const m = mainProg(), t = txCleared();
+      const mainDone = m.cleared.filter(x => x >= 1 && x <= 25).length;
+      window.StoryDialog.play({
+        headline: '📋 任務佈告欄',
+        subline: '微光村・廣場',
+        script: [
+          narr(`【商道戰役・主線】已通關 ${mainDone} / 25 關,目前開放至第 ${Math.min(25, m.maxUnlockedLevel)} 關(寶石交易殿堂)。`),
+          narr(`【戰線戰役・次線】已通關 ${t.length} / 3 戰(城鎮門口・世界地圖)。主線通關可獲寶石庫獎勵,供戰線鍛造與學技。`),
+          narr('【下一步】' + this.nextHint().text)
+        ],
+        canSkip: false
+      });
+    }
+  };
+
+  window.StoryEvents = StoryEvents;
+})();
