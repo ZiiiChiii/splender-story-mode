@@ -1,0 +1,170 @@
+/* storyDialog.css — 📖 共用劇情劇場(桌遊主線 & 戰棋次線統一格式)
+   視覺語彙沿用桌遊模式:金框對話盒 + 角色立繪 + 保留背景空間(半透明可見遊戲世界) */
+
+#story-dialog-layer{
+  position:absolute; inset:0; z-index:99996;
+  display:none; flex-direction:column; align-items:center; justify-content:flex-end;
+  padding:0 8px calc(18px + env(safe-area-inset-bottom, 0px));
+  box-sizing:border-box; overflow:hidden; user-select:none;
+  font-family:'Microsoft JhengHei','Heiti TC',sans-serif;
+  /* 保留背景空間:上方透出遊戲世界,下方漸暗聚焦對話 */
+  background:
+    radial-gradient(560px 320px at 50% 18%, rgba(38,50,72,.35) 0%, transparent 70%),
+    linear-gradient(180deg, rgba(10,14,20,.55) 0%, rgba(10,14,20,.62) 42%, rgba(6,9,13,.9) 100%);
+  opacity:0; pointer-events:none; transition:opacity .28s ease;
+}
+#story-dialog-layer.sd-fixed{ position:fixed; }
+#story-dialog-layer.sd-active{ display:flex; opacity:1; pointer-events:all; }
+#story-dialog-layer *{ box-sizing:border-box; margin:0; padding:0; }
+
+/* ── 章節抬頭 ── */
+#story-dialog-layer .sd-head{
+  position:absolute; top:12px; left:12px; right:86px; text-align:left; pointer-events:none;
+}
+#story-dialog-layer .sd-title{
+  color:#f1c40f; font-size:0.92rem; font-weight:800; letter-spacing:.12em;
+  text-shadow:0 2px 10px rgba(0,0,0,.7); line-height:1.4;
+}
+#story-dialog-layer .sd-sub{
+  margin-top:4px; font-size:0.62rem; color:#aeb8c4; letter-spacing:.06em; line-height:1.5;
+  background:rgba(0,0,0,.42); border-left:3px solid rgba(241,196,15,.55);
+  padding:4px 8px; border-radius:0 6px 6px 0; display:inline-block; max-width:100%;
+}
+#story-dialog-layer .sd-skip{
+  position:absolute; top:10px; right:10px; z-index:5;
+  font-family:inherit; font-size:0.6rem; letter-spacing:.08em; cursor:pointer;
+  color:#d9d2be; background:rgba(20,26,34,.85); border:1px solid #4a5468; border-radius:5px;
+  padding:5px 11px; transition:.15s;
+}
+#story-dialog-layer .sd-skip:hover{ border-color:#f1c40f; color:#f1c40f; }
+
+/* ── 舞台區(立繪) ── */
+#story-dialog-layer .sd-scene{
+  position:relative; flex:1; width:100%; max-width:850px; min-height:0; pointer-events:none;
+}
+#story-dialog-layer .sd-portrait{
+  position:absolute; bottom:-6px;
+  width:min(52%, 250px); height:min(72%, 400px);
+  display:flex; align-items:flex-end; justify-content:center;
+  transition:opacity .25s, filter .25s;
+}
+#story-dialog-layer .sd-portrait.side-ally{ left:4%; }
+#story-dialog-layer .sd-portrait.side-foe { right:4%; }
+#story-dialog-layer .sd-portrait.sd-hidden{ opacity:0; }
+#story-dialog-layer .sd-portrait img{
+  max-width:100%; max-height:100%; object-fit:contain; -webkit-user-drag:none;
+  filter:drop-shadow(0 10px 18px rgba(0,0,0,.6));
+}
+/* 陣營底光(呼應戰棋棋子腳下光環) */
+#story-dialog-layer .sd-portrait::after{
+  content:""; position:absolute; left:12%; right:12%; bottom:-2px; height:16px; border-radius:50%;
+  background:radial-gradient(ellipse, var(--sd-ring, rgba(241,196,15,.5)) 0%, transparent 72%);
+}
+#story-dialog-layer .sd-portrait.side-ally{ --sd-ring:rgba(241,196,15,.45); }
+#story-dialog-layer .sd-portrait.side-foe { --sd-ring:rgba(224,87,91,.55); }
+/* 像素精靈立繪(戰棋角色):放大保持點陣質感 + 襯框 */
+#story-dialog-layer .sd-portrait.sd-pixel{ width:min(44%,190px); height:min(58%,300px); }
+#story-dialog-layer .sd-portrait.sd-pixel img{
+  image-rendering:pixelated; image-rendering:crisp-edges; width:88%; height:auto; max-height:none;
+}
+/* 入場 / 開口 / 憤怒突進 */
+#story-dialog-layer .sd-portrait.sd-enter{ animation:sdEnter .5s cubic-bezier(.2,.8,.3,1); }
+@keyframes sdEnter{
+  0%{ opacity:0; transform:translateY(26px) scale(.96); filter:brightness(.4); }
+  100%{ opacity:1; transform:translateY(0) scale(1); }
+}
+#story-dialog-layer .sd-portrait.sd-talk{ animation:sdTalk .3s ease-out; }
+@keyframes sdTalk{ 0%{transform:translateY(0)} 40%{transform:translateY(-6px)} 100%{transform:translateY(0)} }
+#story-dialog-layer .sd-portrait.mood-angry{ animation:sdLunge .38s cubic-bezier(.25,.9,.35,1); }
+#story-dialog-layer .sd-portrait.side-foe.mood-angry{ animation-name:sdLungeFoe; }
+@keyframes sdLunge{ 0%{transform:translateX(0)} 35%{transform:translateX(16px) scale(1.05)} 100%{transform:translateX(0)} }
+@keyframes sdLungeFoe{ 0%{transform:translateX(0)} 35%{transform:translateX(-16px) scale(1.05)} 100%{transform:translateX(0)} }
+#story-dialog-layer .sd-portrait.mood-whisper,
+#story-dialog-layer .sd-portrait.mood-sad{ filter:brightness(.75) saturate(.8); }
+
+/* ── 🏆 目標橫幅:獨立列、絕不與對話重疊 ── */
+#story-dialog-layer .sd-goal{
+  width:100%; max-width:850px; margin-bottom:8px; text-align:left;
+  background:rgba(30,10,10,.78); border:1px solid #e74c3c; color:#ff9d94;
+  padding:6px 12px; font-size:0.7rem; line-height:1.5; letter-spacing:.03em;
+  border-radius:6px; box-shadow:0 2px 10px rgba(0,0,0,.4);
+}
+
+/* ── 對話盒(沿用桌遊金框視覺) ── */
+#story-dialog-layer .sd-box{
+  position:relative; width:100%; max-width:850px; min-height:132px;
+  background:rgba(5,8,12,.95); border:2px solid #f1c40f; border-radius:12px;
+  box-shadow:0 0 20px rgba(241,196,15,.2);
+  padding:18px 16px 26px; cursor:pointer;
+  transition:border-color .2s, box-shadow .2s;
+}
+#story-dialog-layer .sd-box.sd-shake{ animation:sdBoxShake .42s; }
+@keyframes sdBoxShake{
+  0%,100%{ transform:translate(0,0); }
+  15%{ transform:translate(-6px,2px); } 30%{ transform:translate(6px,-3px); }
+  45%{ transform:translate(-5px,-2px); } 60%{ transform:translate(4px,2px); }
+  78%{ transform:translate(-3px,1px); }
+}
+#story-dialog-layer .sd-box.mood-angry{
+  border-color:#e0575b; box-shadow:0 0 22px rgba(224,87,91,.4);
+}
+#story-dialog-layer .sd-box.is-narr{ border-color:#8B95A6; box-shadow:0 0 14px rgba(139,149,166,.18); }
+
+/* 名牌 */
+#story-dialog-layer .sd-name{
+  position:absolute; top:-26px; left:16px; padding:4px 16px;
+  background:#f1c40f; color:#000; font-weight:800; font-size:0.82rem;
+  border-radius:6px 6px 0 0; box-shadow:0 -3px 10px rgba(0,0,0,.3); letter-spacing:.04em;
+}
+#story-dialog-layer .sd-name.side-foe{ background:#e0575b; color:#fff; }
+#story-dialog-layer .sd-name.side-n{ background:#8B95A6; color:#10141B; }
+#story-dialog-layer .sd-name.mood-angry{ animation:sdNamePulse .5s ease-in-out 2; }
+@keyframes sdNamePulse{
+  0%,100%{ filter:none; transform:scale(1); }
+  50%{ filter:brightness(1.35) drop-shadow(0 0 8px rgba(224,87,91,.9)); transform:scale(1.08); }
+}
+#story-dialog-layer .sd-name.mood-happy{ animation:sdNameGlow 1s ease-in-out; }
+@keyframes sdNameGlow{ 50%{ filter:drop-shadow(0 0 10px rgba(241,196,15,.95)) brightness(1.25); } }
+
+/* 內文與逐字動畫 */
+#story-dialog-layer .sd-text{
+  font-size:0.92rem; line-height:1.75; letter-spacing:.04em; color:#f1f2f6;
+  text-align:left; min-height:56px; word-break:break-word;
+}
+#story-dialog-layer .sd-box.is-narr .sd-text{ color:#b8c0cc; text-align:center; padding-top:8px; }
+#story-dialog-layer .sd-box.mood-angry .sd-text{ font-size:1.06rem; color:#ffe2dc; font-weight:700; }
+#story-dialog-layer .sd-box.mood-shout .sd-text{ font-size:1rem; font-weight:700; }
+#story-dialog-layer .sd-box.mood-whisper .sd-text{ font-size:0.82rem; color:#aeb6c2; }
+#story-dialog-layer .sd-box.mood-sad .sd-text{ color:#c9d4e4; }
+
+#story-dialog-layer .sd-ch{ display:inline-block; white-space:pre-wrap; }
+#story-dialog-layer .sd-ch.sd-pop{ animation:sdChPop .22s cubic-bezier(.2,.8,.3,1); }
+@keyframes sdChPop{ 0%{ opacity:0; transform:translateY(5px) scale(.7); } 100%{ opacity:1; transform:none; } }
+/* 驚嘆/問號/破折 → 放大強調字元(生氣語氣時更醒目) */
+#story-dialog-layer .sd-ch.sd-em{ font-size:1.22em; font-weight:900; }
+#story-dialog-layer .sd-box.mood-angry .sd-ch.sd-em,
+#story-dialog-layer .sd-box.mood-shout .sd-ch.sd-em{ color:#ff6b5e; }
+#story-dialog-layer .sd-box.mood-angry .sd-ch.sd-em.sd-pop{ animation:sdChBang .34s cubic-bezier(.2,.8,.3,1); }
+@keyframes sdChBang{
+  0%{ opacity:0; transform:scale(2.4) rotate(8deg); }
+  55%{ opacity:1; transform:scale(.9) rotate(-3deg); }
+  100%{ transform:scale(1) rotate(0); }
+}
+#story-dialog-layer .sd-ch.sd-still{ animation:none!important; opacity:1; }
+
+/* 繼續提示 */
+#story-dialog-layer .sd-hint{
+  position:absolute; right:16px; bottom:8px; font-size:0.72rem; color:#f1c40f;
+  animation:sdHint .8s infinite alternate; pointer-events:none;
+}
+@keyframes sdHint{ from{ opacity:.3; transform:translateY(0); } to{ opacity:1; transform:translateY(-3px); } }
+
+/* 窄螢幕微調 */
+@media (max-width:420px){
+  #story-dialog-layer .sd-portrait{ width:min(58%,210px); }
+  #story-dialog-layer .sd-text{ font-size:0.86rem; }
+}
+@media (prefers-reduced-motion:reduce){
+  #story-dialog-layer .sd-portrait, #story-dialog-layer .sd-box, #story-dialog-layer .sd-name,
+  #story-dialog-layer .sd-ch, #story-dialog-layer .sd-hint{ animation:none!important; }
+}
