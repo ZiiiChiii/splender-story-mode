@@ -95,7 +95,7 @@ export const StoryMode = {
           <div style="display:grid; grid-template-columns:1fr; gap:6px; overflow-y:auto; flex:1; padding-right:2px; margin-bottom:8px;">
             ${tx ? tx.chapterListHtml() : '<p style="font-size:0.7rem;color:#e67e22;">戰棋模組尚未載入,請重新整理頁面。</p>'}
           </div>
-          <button class="btn-replay" style="margin:0; padding:8px; background:#3a2e22; border:1px solid #d4af37;" onclick="window.playUniformSfx && window.playUniformSfx(); document.getElementById('story-map-modal').classList.remove('show')">關閉</button>
+          <button class="btn-replay" style="margin:0; padding:8px; background:#3a2e22; border:1px solid #d4af37;" onclick="window.playUniformSfx && window.playUniformSfx(); window.closeStoryMapBackToTown()">關閉</button>
         </div>`;
       modal.classList.add('show');
       return;
@@ -147,7 +147,7 @@ export const StoryMode = {
 
         <div style="display:flex; gap:6px; flex-shrink:0;">
           <button class="btn-primary" style="flex:1; padding:8px;" onclick="window.startSelectedStoryLevel()">開啟選定章節戰役</button>
-          <button class="btn-replay" style="flex:1; margin:0; padding:8px; background:#3a2e22; border:1px solid #d4af37;" onclick="document.getElementById('story-map-modal').classList.remove('show')">關閉</button>
+          <button class="btn-replay" style="flex:1; margin:0; padding:8px; background:#3a2e22; border:1px solid #d4af37;" onclick="window.closeStoryMapBackToTown()">關閉</button>
         </div>
       </div>
     `;
@@ -174,7 +174,9 @@ window.startSelectedStoryLevel = function() {
   document.getElementById('story-map-modal').classList.remove('show');
   const modal = document.getElementById('game-options-modal');
   if (modal) modal.classList.remove('show');
-  
+  // 進入桌局:城鎮小地圖收起,回城鎮改由桌局結束的「返回城鎮」鈕負責
+  if (window.TownMode) { window.TownMode._resumeAfterModal = false; window.TownMode.exit(); }
+
   const state = CoreState.get();
   state.mode = 'storyMode';
 
@@ -186,5 +188,15 @@ window.startSelectedStoryLevel = function() {
     });
   } else {
     window.ActionDispatcher.dispatch('INIT_GAME');
+  }
+};
+
+// 關閉故事地圖:若來自城鎮樞紐,關閉後返回城鎮小地圖
+window.closeStoryMapBackToTown = function () {
+  const modal = document.getElementById('story-map-modal');
+  if (modal) modal.classList.remove('show');
+  if (window.TownMode && window.TownMode._resumeAfterModal) {
+    window.TownMode._resumeAfterModal = false;
+    window.TownMode.enter();
   }
 };
