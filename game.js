@@ -1220,6 +1220,16 @@ window.chooseGameMode = (mode) => {
   if (p) p.style.display = 'none';
   if (t) t.textContent = '🎮 切換遊戲模式 ▾';
   ActionDispatcher.dispatch('SWITCH_MODE', { mode: mode });
+  // 🏘️ 故事模式:切入後進 RPG 城鎮樞紐小地圖(桌局已於背景備妥,走到交易殿堂再進行)
+  if (mode === 'storyMode' && window.TownMode) {
+    if (window.StoryMode && window.StoryMode.loadStoryProgress) window.StoryMode.loadStoryProgress();
+    window.TownMode.enter();
+  }
+};
+
+// 供其他模組呼叫:回到城鎮樞紐(例如桌遊任務結束後)
+window.returnToTown = () => {
+  if (CoreState && CoreState.get().mode === 'storyMode' && window.TownMode) window.TownMode.enter();
 };
 
 window.openGameOptionsModal = () => {
