@@ -1219,6 +1219,8 @@ window.chooseGameMode = (mode) => {
   const t = document.getElementById('mode-switch-toggle');
   if (p) p.style.display = 'none';
   if (t) t.textContent = '🎮 切換遊戲模式 ▾';
+  // 離開故事模式:清掉城鎮回彈旗標並收起城鎮圖層
+  if (mode !== 'storyMode' && window.TownMode) { window.TownMode._resumeAfterModal = false; window.TownMode.exit(); }
   ActionDispatcher.dispatch('SWITCH_MODE', { mode: mode });
   // 🏘️ 故事模式:切入後進 RPG 城鎮樞紐小地圖(桌局已於背景備妥,走到交易殿堂再進行)
   if (mode === 'storyMode' && window.TownMode) {
@@ -1250,7 +1252,14 @@ window.openGameOptionsModal = () => {
   document.getElementById('game-options-modal').classList.add('show');
 };
 
-window.closeGameOptionsModal = () => document.getElementById('game-options-modal').classList.remove('show');
+window.closeGameOptionsModal = () => {
+  document.getElementById('game-options-modal').classList.remove('show');
+  // 若從城鎮開啟選項且未切換模式 → 返回城鎮
+  if (window.TownMode && window.TownMode._resumeAfterModal && CoreState.get().mode === 'storyMode') {
+    window.TownMode._resumeAfterModal = false;
+    window.TownMode.enter();
+  }
+};
 window.closeWinModal = () => { document.getElementById('win-modal').classList.remove('show'); };
 window.restartGame = () => { document.getElementById('win-modal').classList.remove('show'); ActionDispatcher.dispatch('INIT_GAME'); };
 
