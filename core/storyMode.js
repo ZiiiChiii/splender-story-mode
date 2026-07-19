@@ -28,10 +28,14 @@ export const StoryMode = {
   saveStoryProgress(completedLvlId) {
     const s = CoreState.get().storyProgress;
 
-    // \u2694\ufe0f 戰線聯動:主線每關「首次」通關 → 發放共享寶石庫獎勵(供戰棋次線鍛造使用)
+    // 📖 通關紀錄:一律寫入 clearedLevels(地圖劇情事件、佈告欄進度都依賴它);
+    //    寶石庫獎勵另外判斷 TacticsVault 是否就緒,兩者解耦避免漏記
     if (!Array.isArray(s.clearedLevels)) s.clearedLevels = [];
-    if (!s.clearedLevels.includes(completedLvlId) && window.TacticsVault) {
-      s.clearedLevels.push(completedLvlId);
+    const firstClear = !s.clearedLevels.includes(completedLvlId);
+    if (firstClear) s.clearedLevels.push(completedLvlId);
+
+    // \u2694\ufe0f 戰線聯動:主線每關「首次」通關 → 發放共享寶石庫獎勵(供戰棋次線鍛造使用)
+    if (firstClear && window.TacticsVault) {
       const colorCycle = ['r', 'g', 'k', 'w', 'u'];   // 對應 ast1~5 的色系循環
       const gems = { [colorCycle[(completedLvlId - 1) % 5]]: 2 };
       if (completedLvlId % 5 === 0) gems.k = (gems.k || 0) + 1;  // 章末加贈黑曜石
