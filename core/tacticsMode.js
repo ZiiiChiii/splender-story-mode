@@ -58,8 +58,9 @@ const TxSave = {
         cleared: Array.isArray(d.cleared) ? d.cleared : [],
         forge: d.forge || {},
         potions: Math.min(3, d.potions | 0),
+        skills: d.skills || {},   // { unitId: [skillId,...] } 商店購得的額外技能
       };
-    } catch (e) { this.data = { cleared: [], forge: {}, potions: 0 }; }
+    } catch (e) { this.data = { cleared: [], forge: {}, potions: 0, skills: {} }; }
     return this.data;
   },
   save() { try { localStorage.setItem(TX_SAVE_KEY, JSON.stringify(this.data)); } catch (e) {} },
@@ -71,6 +72,13 @@ const TxSave = {
     this.load();
     if (!this.data.forge[unitId]) this.data.forge[unitId] = {};
     this.data.forge[unitId][forgeId] = (this.data.forge[unitId][forgeId] | 0) + 1;
+    this.save();
+  },
+  hasSkill(unitId, skillId) { this.load(); return (this.data.skills[unitId] || []).includes(skillId); },
+  addSkill(unitId, skillId) {
+    this.load();
+    if (!this.data.skills[unitId]) this.data.skills[unitId] = [];
+    if (!this.data.skills[unitId].includes(skillId)) this.data.skills[unitId].push(skillId);
     this.save();
   }
 };
@@ -144,7 +152,19 @@ const SKILLS = {
   bash:   { name: '鐵血盾擊', mp: 4, rng: [1, 1], target: 'enemy', kind: 'dmg', mult: 0.8, stun: 1, desc: '0.8 倍傷害並暈眩 1 回合' },
   bolt:   { name: '星隕晶彈', mp: 5, rng: [2, 3], target: 'tile', kind: 'aoe', mult: 1.2, desc: '十字範圍星術傷害(射程 2–3)' },
   heal:   { name: '星光治癒', mp: 4, rng: [0, 2], target: 'ally', kind: 'heal', amount: 11, desc: '回復我方 11 點生命' },
+  // ── 以下為商店可購入的進階技能 ──
+  smite:  { name: '審判連斬', mp: 6, rng: [1, 1], target: 'enemy', kind: 'dmg', mult: 2.2, desc: '對相鄰敵人 2.2 倍重擊' },
+  bulwark:{ name: '不動壁壘', mp: 5, rng: [1, 1], target: 'enemy', kind: 'dmg', mult: 1.2, stun: 2, desc: '1.2 倍傷害並暈眩 2 回合' },
+  nova:   { name: '流星風暴', mp: 8, rng: [2, 4], target: 'tile', kind: 'aoe', mult: 1.6, desc: '大範圍星術(射程 2–4,1.6 倍)' },
+  bless:  { name: '聖域庇護', mp: 6, rng: [0, 2], target: 'ally', kind: 'heal', amount: 20, desc: '回復我方 20 點生命' },
 };
+// 商店販售的技能:購入後永久加入該部隊技能列(以寶石庫支付)
+const SKILL_SHOP = [
+  { unit: 'joan',   skill: 'smite',   cost: { r: 3, k: 1 } },
+  { unit: 'hector', skill: 'bulwark', cost: { u: 3, k: 1 } },
+  { unit: 'luna',   skill: 'nova',    cost: { k: 2, r: 2 } },
+  { unit: 'luna',   skill: 'bless',   cost: { g: 3, w: 1 } },
+];
 const FORGE = [
   { id: 'atk', name: '磨刃',     stat: 'atk',   amt: 2, cost: { r: 2 }, max: 3, desc: '攻擊 +2' },
   { id: 'def', name: '鑲甲',     stat: 'def',   amt: 2, cost: { u: 2 }, max: 3, desc: '防禦 +2' },
@@ -338,8 +358,10 @@ export const TacticsMode = {
   /* ── 出擊整備(共享寶石庫鍛造) ── */
   buildParty() {
     return PARTY_BASE.map(b => {
-      const u = { ...b, rng: [...b.rng] };
+      const u = { ...b, rng: [...b.rng], skills: [...b.skills] };
       FORGE.forEach(f => { u[f.stat] += f.amt * TxSave.forgeCount(b.id, f.id); });
+      // 併入商店購得的技能
+      (TxSave.load().skills[b.id] || []).forEach(sid => { if (!u.skills.includes(sid)) u.skills.push(sid); });
       return u;
     });
   },
@@ -406,7 +428,7 @@ export const TacticsMode = {
         TxSave.data.potions++; TxSave.save(); sfx(); refresh();
       };
     };
-    document.getElementById('tx-back').onclick = () => { sfx(); this.close(); if (window.StoryMode) window.StoryMode.openStoryMapModal('tactics'); };
+    document.getElementById('tx-back').onclick = () => { sfx(); this.returnFromBattle(); };
     document.getElementById('tx-deploy').onclick = () => { sfx(); this.startBattle(); };
     refresh();
   },
@@ -559,7 +581,7 @@ export const TacticsMode = {
     }
     document.getElementById('tx-endturn').onclick = () => { if (B.phase === 'ally' && !B.busy) this.endAllyPhase(); };
     document.getElementById('tx-exit').onclick = () => {
-      if (confirm('撤退將放棄本場戰鬥(已入庫的拾獲保留),確定?')) { this.close(); if (window.StoryMode) window.StoryMode.openStoryMapModal('tactics'); }
+      if (confirm('撤退將放棄本場戰鬥(已入庫的拾獲保留),確定?')) { this.returnFromBattle(); }
     };
   },
 
@@ -1016,7 +1038,7 @@ export const TacticsMode = {
     const bind = (id, fn) => { const b = document.getElementById(id); if (b) b.onclick = () => { sfx(); fn(); }; };
     bind('tx-retry', () => this.showPrep());
     bind('tx-next', () => this.open(ch.id));
-    bind('tx-map', () => { this.close(); if (window.StoryMode) window.StoryMode.openStoryMapModal('tactics'); });
+    bind('tx-map', () => { this.returnFromBattle(); });
     if (win) {
       const after = this.filterScript(ch.storyAfter);
       if (after.length) {
@@ -1024,7 +1046,7 @@ export const TacticsMode = {
         this.showStory(after, () => { this.ensureLayer().innerHTML = resultHtml;
           bind('tx-retry', () => this.showPrep());
           bind('tx-next', () => this.open(ch.id));
-          bind('tx-map', () => { this.close(); if (window.StoryMode) window.StoryMode.openStoryMapModal('tactics'); });
+          bind('tx-map', () => { this.returnFromBattle(); });
         });
       }
     }
@@ -1051,7 +1073,108 @@ export const TacticsMode = {
   openFromMap(idx) {
     const modal = document.getElementById('story-map-modal');
     if (modal) modal.classList.remove('show');
+    this._returnTo = 'storymap';
     this.open(idx);
+  },
+
+  /* ── 城鎮樞紐接口 ── */
+  isChapterCleared(id) { return TxSave.isCleared(id); },
+  maxUnlockedChapter() { return TxSave.maxUnlockedChapter(); },
+  openFromTown(idx) {
+    this._returnTo = 'town';
+    if (window.TownMode) window.TownMode.exit();  // 收起城鎮小地圖
+    this.open(idx);
+  },
+  // 戰棋結束/返回:依來源決定回城鎮或回舊戰役地圖
+  returnFromBattle() {
+    this.close();
+    if (this._returnTo === 'town' && window.TownMode) {
+      window.TownMode.enter();
+    } else if (window.StoryMode) {
+      window.StoryMode.openStoryMapModal('tactics');
+    }
+  },
+
+  /* 🏪 商店:寶石交易 + 部隊技能購買(從城鎮商店開啟) */
+  openShop() {
+    this._returnTo = 'town';
+    let modal = document.getElementById('tx-shop-modal');
+    const host = (window.TownMode && window.TownMode.ensureLayer)
+      ? window.TownMode.ensureLayer() : (document.getElementById('stage') || document.body);
+    if (!modal) {
+      modal = document.createElement('div');
+      modal.id = 'tx-shop-modal'; modal.className = 'town-modal';
+      host.appendChild(modal);
+    }
+    this._shopTab = this._shopTab || 'skill';
+    this.renderShop(modal);
+    modal.classList.add('show');
+  },
+  renderShop(modal) {
+    modal = modal || document.getElementById('tx-shop-modal');
+    if (!modal) return;
+    const v = TacticsVault.read();
+    const costStr = cost => Object.entries(cost).map(([k, n]) => TacticsVault.iconHtml(k, '×' + n)).join(' ');
+    const canPay = cost => Object.entries(cost).every(([k, n]) => (v[k] | 0) >= n);
+    const tab = this._shopTab;
+
+    // 技能區
+    const nameOf = { joan: '貞德', hector: '赫克特', luna: '露娜' };
+    const skillHtml = SKILL_SHOP.map((it, i) => {
+      const s = SKILLS[it.skill];
+      const owned = TxSave.hasSkill(it.unit, it.skill);
+      return `<div class="tx-row">
+        <span class="grow"><b style="color:var(--tx-ally)">${nameOf[it.unit]}</b>・${esc(s.name)}
+          <span style="color:var(--tx-dim);font-size:0.55rem;">${esc(s.desc)}(MP${s.mp})</span></span>
+        <span class="price">${costStr(it.cost)}</span>
+        <button data-buy-skill="${i}" ${owned ? 'disabled' : (canPay(it.cost) ? '' : 'disabled')}>${owned ? '已學會' : '學習'}</button>
+      </div>`;
+    }).join('');
+
+    // 寶石交易區(以匯率互換:任 3 顆同色 → 1 顆他色;簡單防呆)
+    const gemName = { r: '紅', u: '藍', g: '綠', w: '白', k: '黑' };
+    const tradeHtml = ['r', 'u', 'g', 'w', 'k'].map(from => `
+      <div class="tx-row">
+        <span class="grow">${TacticsVault.iconHtml(from)}${gemName[from]}寶石 ×3　→　換取:</span>
+        <span style="display:flex;gap:3px;flex-wrap:wrap;">
+          ${['r', 'u', 'g', 'w', 'k'].filter(t => t !== from).map(to =>
+            `<button data-trade="${from}:${to}" ${(v[from] | 0) >= 3 ? '' : 'disabled'} style="padding:2px 6px;font-size:0.56rem;">${gemName[to]}</button>`
+          ).join('')}
+        </span>
+      </div>`).join('');
+
+    modal.innerHTML = `
+      <div class="town-shop">
+        <div class="town-world-head">
+          <span>🏪 商店</span>
+          <button class="town-x" onclick="document.getElementById('tx-shop-modal').classList.remove('show')">✕</button>
+        </div>
+        <div style="display:flex;gap:6px;padding:8px 10px 0;">
+          <button class="diff-opt-btn ${tab === 'skill' ? 'active' : ''}" style="flex:1;${tab === 'skill' ? 'border-color:#ffcc00;' : ''}" onclick="window.TacticsMode._shopTab='skill';window.TacticsMode.renderShop()">⚔️ 部隊技能</button>
+          <button class="diff-opt-btn ${tab === 'trade' ? 'active' : ''}" style="flex:1;${tab === 'trade' ? 'border-color:#ffcc00;' : ''}" onclick="window.TacticsMode._shopTab='trade';window.TacticsMode.renderShop()">💱 寶石交易</button>
+        </div>
+        <div class="town-shop-body">
+          ${tab === 'skill'
+            ? `<p class="tx-tag" style="margin:6px 0;">以寶石庫學習永久技能,學會後在戰場行動選單即可施放。</p>${skillHtml}`
+            : `<p class="tx-tag" style="margin:6px 0;">同色 3 顆兌換任一他色 1 顆,調配鍛造與學技所需的顏色。</p>${tradeHtml}`}
+        </div>
+        <div class="town-world-foot">💎 寶石庫:<span id="tx-shop-vault">${TacticsVault.lineHtml()}</span></div>
+      </div>`;
+
+    modal.querySelectorAll('[data-buy-skill]').forEach(b => b.onclick = () => {
+      const it = SKILL_SHOP[+b.dataset.buySkill];
+      if (TxSave.hasSkill(it.unit, it.skill)) return;
+      if (!TacticsVault.spend(it.cost)) return;
+      TxSave.addSkill(it.unit, it.skill); sfx(); this.renderShop();
+      if (window.TownMode) window.TownMode.updateVault();
+    });
+    modal.querySelectorAll('[data-trade]').forEach(b => b.onclick = () => {
+      const [from, to] = b.dataset.trade.split(':');
+      if ((TacticsVault.read()[from] | 0) < 3) return;
+      if (!TacticsVault.spend({ [from]: 3 })) return;
+      TacticsVault.grant({ [to]: 1 }); sfx(); this.renderShop();
+      if (window.TownMode) window.TownMode.updateVault();
+    });
   },
 };
 if (typeof window !== 'undefined') window.TacticsMode = TacticsMode;
