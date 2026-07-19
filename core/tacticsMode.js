@@ -202,7 +202,7 @@ const TX_CHAPTERS = [
       { who: '赫克特', side: 'ally', text: '你就是傑洛米那老頭看好的商人朋友介紹來的?哼,商人的朋友……希望妳的劍比算盤利。', req: { mainLv: 3 } },
       { who: '貞德', side: 'ally', text: '礦工們斷了生計,信仰不能當飯吃。清出一條路吧,騎士閣下——費用照算,戰利品歸我們。' },
       { who: '露娜', side: 'ally', text: '星象顯示今日「破軍臨東」……簡單說,適合打架!礦道裡的寶石,打完通通搬回寶石庫~' },
-      { who: '灰鴉傭兵', side: 'foe', text: '站住!這條礦道被「客戶」包下了。識相的滾回去,不識相的——躺著回去。' },
+      { who: '灰鴉傭兵', side: 'foe', mood: 'angry', text: '站住!這條礦道被「客戶」包下了。識相的滾回去,不識相的——躺著回去。' },
     ],
     storyAfter: [
       { who: '赫克特', side: 'ally', text: '礦道清出來了。這下鐵匠鋪的黑曜石訂單有著落了……欠妳們一次,我的盾隨時為妳們而舉。' },
@@ -260,7 +260,7 @@ const TX_CHAPTERS = [
       { who: '萊戈拉斯', side: 'ally', text: '灰鴉傭兵團的主力到了,連首領都親自壓陣。人類,我的箭守林道北口,南面的缺口……交給你們。' },
       { who: '萊戈拉斯', side: 'ally', text: '你們的商人朋友在戒嚴中還能準時交付軍需,是個信人。為了他,我允許你們踏入精靈的林地。', req: { mainLv: 14 } },
       { who: '赫克特', side: 'ally', text: '礦道、糧倉、林道——三筆帳,今天一次算。灰鴉,你的翅膀到此為止了。', req: { clearedCh: 2 } },
-      { who: '傭兵首領・灰鴉', side: 'foe', text: '喲,一路追到這來了?可惜,這單的價碼高到你們無法想像——首都的大人物,要這片森林燒起來。' },
+      { who: '傭兵首領・灰鴉', side: 'foe', mood: 'angry', text: '喲,一路追到這來了?可惜,這單的價碼高到你們無法想像——首都的大人物,要這片森林燒起來。' },
       { who: '貞德', side: 'ally', text: '首都的大人物……很好,又一條線索。先打贏這仗,再去會會那位「大人物」。' },
     ],
     storyAfter: [
@@ -328,31 +328,35 @@ export const TacticsMode = {
     });
   },
 
-  /* ── 劇情畫面 ── */
+  /* ── 劇情畫面:改用共用引擎 StoryDialog(與主線桌遊完全相同的視覺小說格式) ──
+     立繪來源:戰場單位 → 像素精靈放大(貞德/赫克特/露娜/灰鴉眾);
+     客座貴族(亞瑟/萊戈拉斯) → 主線輔助官立繪,強化「同一個世界」的連貫感 */
+  _castPortrait(line) {
+    const CAST = {
+      '貞德':   { sprite: 'joan' },
+      '赫克特': { sprite: 'hector' },
+      '露娜':   { sprite: 'luna' },
+      '亞瑟':     { img: 'https://i.ibb.co/hzw3Vfm/image.png' },
+      '萊戈拉斯': { img: 'https://i.ibb.co/GQ2Yh0yH/image.png' },
+      '灰鴉傭兵':     { sprite: 'raven' },
+      '灰鴉弩手':     { sprite: 'ravenx' },
+      '灰鴉咒術師':   { sprite: 'ravenm' },
+      '傭兵首領・灰鴉': { sprite: 'ravenc' },
+    };
+    const c = CAST[line.who];
+    if (!c) return {};
+    if (c.sprite) return { img: spriteURL(c.sprite, line.side === 'foe'), pixel: true };
+    return { img: c.img };
+  },
   showStory(script, done) {
     const ch = this.chapter;
-    let i = 0;
-    this.ensureLayer().innerHTML = `
-      <div class="tx-story">
-        <div class="tx-scene">⚔️ 戰線戰役 第 ${ch.id} 戰:${esc(ch.name)}<br><span class="tx-tag">${esc(ch.intro)}</span></div>
-        <button class="tx-skip" id="tx-skip">跳過 ≫</button>
-        <div class="tx-dlg" id="tx-dlg">
-          <div class="tx-dlg-name" id="tx-dlg-name"></div>
-          <div class="tx-dlg-text" id="tx-dlg-text"></div>
-          <div class="tx-dlg-hint">▼ 點擊繼續</div>
-        </div>
-      </div>`;
-    const nameEl = document.getElementById('tx-dlg-name'), textEl = document.getElementById('tx-dlg-text');
-    const render = () => {
-      const line = script[i];
-      nameEl.className = 'tx-dlg-name side-' + line.side;
-      nameEl.textContent = line.who || '旁白';
-      textEl.textContent = line.text;
-      textEl.style.cssText = line.who ? '' : 'color:#b8c0cc;text-align:center;padding-top:10px;';
-    };
-    document.getElementById('tx-dlg').onclick = () => { sfx(); i++; if (i >= script.length) done(); else render(); };
-    document.getElementById('tx-skip').onclick = (e) => { e.stopPropagation(); sfx(); done(); };
-    render();
+    if (!script || !script.length || !window.StoryDialog) { done(); return; }
+    window.StoryDialog.play({
+      headline: `⚔️ 戰線戰役 第 ${ch.id} 戰:${ch.name}`,
+      subline: ch.intro,
+      script: script.map(l => Object.assign({}, this._castPortrait(l), l)),
+      onDone: done
+    });
   },
 
   /* ── 出擊整備(共享寶石庫鍛造) ── */
@@ -1040,15 +1044,9 @@ export const TacticsMode = {
     bind('tx-next', () => this.open(ch.id));
     bind('tx-map', () => { this.returnFromBattle(); });
     if (win) {
+      // 共用劇情引擎為獨立覆蓋層,結算畫面保留在底下,播完自動回到結算
       const after = this.filterScript(ch.storyAfter);
-      if (after.length) {
-        const resultHtml = this.layer.innerHTML;
-        this.showStory(after, () => { this.ensureLayer().innerHTML = resultHtml;
-          bind('tx-retry', () => this.showPrep());
-          bind('tx-next', () => this.open(ch.id));
-          bind('tx-map', () => { this.returnFromBattle(); });
-        });
-      }
+      if (after.length) this.showStory(after, () => {});
     }
   },
 
