@@ -1288,8 +1288,11 @@ window.saveCurrentProgress = () => SingleMode.saveCurrentProgress();
 // ==========================================
 // 5. 故事模式視覺小說劇場（全 25 關自動接入靜態任務資料庫）
 // ==========================================
+// 主線劇情現在改由共用引擎 core/storyDialog.js 演出:
+// 與戰棋次線相同格式(立繪+金框對話盒+打字機+情緒動畫),
+// 「通關條件」獨立為對話盒上方的橫幅,不再與對話文字重疊。
 window.storyModule = {
-  currentStageId: 1, dialogueStep: 0, isTyping: false, currentTween: null, textObj: { charCount: 0 }, onStoryCompleteCallback: null,
+  currentStageId: 1, onStoryCompleteCallback: null,
 
   _getStageData(stageId) {
     const mission = (window.STORY_MISSIONS || [])[stageId - 1];
@@ -1322,32 +1325,32 @@ window.storyModule = {
     }
     const stageData = this._getStageData(stageId);
     if (!stageData) { if (callback) callback(); return; }
-    this.currentStageId = stageId; this.dialogueStep = 0; this.onStoryCompleteCallback = callback;
+    this.currentStageId = stageId; this.onStoryCompleteCallback = callback;
 
-    const layer = document.getElementById("story-layer");
-    if (layer) layer.classList.add('story-active');
+    // 引擎缺席時的保底:直接進入遊戲,不阻塞主流程
+    if (!window.StoryDialog) { if (callback) callback(); return; }
 
-    document.getElementById("story-chapter-title").innerText = stageData.chapter + " - " + stageData.title;
-    document.getElementById("story-intro-panel").innerText = stageData.bg;
-    document.getElementById("story-condition-badge").innerText = "🏆 目標：" + stageData.condition;
-    document.getElementById("story-char-img").src = stageData.img || `https://images.placeholders.dev/?width=320&height=520&text=No.${stageId}&bgColor=%232c3e50&textColor=%23ffffff`;
-    this.animateCharacterIn();
+    const img = stageData.img || `https://images.placeholders.dev/?width=320&height=520&text=No.${stageId}&bgColor=%232c3e50&textColor=%23ffffff`;
+
+    // 統一劇本格式:旁白鋪陳世界 → 委託人開口(情緒依標點自動推斷) → 激昂收尾
+    window.StoryDialog.play({
+      headline: stageData.chapter + " - " + stageData.title,
+      goal: "🏆 目標：" + stageData.condition,
+      script: [
+        { who: '', side: 'n', text: stageData.bg },
+        { who: stageData.name, side: 'ally', img, text: stageData.text },
+        { who: stageData.name, side: 'ally', img, mood: 'shout', text: '就是這樣——拿出你的交易手腕，讓我見識見識！' }
+      ],
+      onDone: () => this.endStory()
+    });
   },
-  animateCharacterIn() { gsap.fromTo("#story-character", { x: -150, opacity: 0 }, { x: 0, opacity: 1, duration: 1, ease: "power2.out" }); this.renderDialogue(); },
-  renderDialogue() {
-    const stageData = this._getStageData(this.currentStageId);
-    if (!stageData) return;
-    let targetText = this.dialogueStep === 0 ? stageData.text : "準備挑戰！";
-    document.getElementById('story-name-tag').innerText = stageData.name;
-    const textElement = document.getElementById('story-dialogue-text'); textElement.innerText = ""; this.isTyping = true; this.textObj.charCount = 0;
-    this.currentTween = gsap.to(this.textObj, { charCount: targetText.length, duration: targetText.length * 0.04, ease: "none", onUpdate: () => { textElement.innerText = targetText.substr(0, Math.ceil(this.textObj.charCount)); }, onComplete: () => { this.isTyping = false; } });
-  },
-  nextDialogue() { if (this.isTyping) { if (this.currentTween) this.currentTween.progress(1); return; } if (this.dialogueStep === 0) { this.dialogueStep = 1; this.renderDialogue(); } else { this.endStory(); } },
+  // 舊介面相容:外部若仍呼叫 nextDialogue,轉交給共用引擎推進
+  nextDialogue() { if (window.StoryDialog) window.StoryDialog.advance(); },
   endStory() {
-    const layer = document.getElementById("story-layer");
-    if (layer) layer.classList.remove('story-active');
     if (typeof this.onStoryCompleteCallback === "function") {
-      this.onStoryCompleteCallback();
+      const cb = this.onStoryCompleteCallback;
+      this.onStoryCompleteCallback = null;
+      cb();
     }
   }
 };
