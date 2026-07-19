@@ -10,6 +10,7 @@
 
 <link rel="stylesheet" href="style.css">
 <link rel="stylesheet" href="tactics.css">
+<link rel="stylesheet" href="town.css">
   <!-- 🖋️ 貴族名稱字體（Child Fun Sans）：非阻塞載入，CDN 失敗也不影響開站 -->
   <link rel="stylesheet" href="https://fontsapi.zeoseven.com/219/main/result.css" media="print" onload="this.media='all'">
   <noscript><link rel="stylesheet" href="https://fontsapi.zeoseven.com/219/main/result.css"></noscript>
@@ -217,6 +218,7 @@
 </div>
 
 <div id="tactics-layer"></div>
+<div id="town-layer"></div>
 
 <div class="shell">
   <div class="top-meta-wrap">
@@ -447,5 +449,6 @@
   onerror="var s=document.createElement('script'); s.src='onlineMode.js'; s.onerror=function(){ window.__onlineModeMissing=true; }; document.body.appendChild(s);"></script>
 <script src="game.js" type="module"></script>
 <script type="module">import "./core/tacticsMode.js";</script>
+<script type="module">import "./core/townMode.js";</script>
 </body>
 </html>
