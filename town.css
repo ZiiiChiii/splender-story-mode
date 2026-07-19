@@ -16,7 +16,12 @@
   border-bottom:1px solid rgba(212,175,55,.25); flex-shrink:0;
 }
 #town-layer .town-title{ font-weight:800; color:#ffe099; letter-spacing:.1em; font-size:0.82rem; }
-#town-layer .town-vault{ font-size:0.68rem; color:var(--tn-text); }
+#town-layer .town-vault{ font-size:0.68rem; color:var(--tn-text); margin-left:auto; }
+#town-layer .town-opt{
+  margin-left:8px; padding:4px 10px; font-size:0.62rem; border:1px solid var(--tn-gold);
+  background:linear-gradient(180deg,#2A2618,#1F1D14); color:var(--tn-gold); border-radius:5px; cursor:pointer;
+}
+#town-layer .town-opt:active{ transform:scale(.95); }
 #town-layer .tx-gem{
   display:inline-block; width:11px; height:11px; vertical-align:-1px; margin-right:2px;
   clip-path:polygon(50% 0,100% 36%,79% 100%,21% 100%,0 36%);
