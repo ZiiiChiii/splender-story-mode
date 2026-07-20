@@ -110,7 +110,7 @@ export const StoryMode = {
     }
   },
 
-  openStoryMapModal(tab) {
+  openStoryMapModal(tab, picked = false) {
     this.loadStoryProgress();
     const state = CoreState.get();
     const maxUnlocked = state.storyProgress.maxUnlockedLevel;
@@ -151,23 +151,26 @@ export const StoryMode = {
     const curColor = gemNames[['r', 'g', 'k', 'w', 'u'][(currentMission.id - 1) % 5]];
     const isCurCleared = (state.storyProgress.clearedLevels || []).includes(currentMission.id);
 
+    // 📋 詳情框:僅在「點選關卡後」顯示,且只含通關條件與獎勵(劇情文字一律不出現於選關介面)
+    const detailHtml = picked ? `
+        <div style="background:rgba(0,0,0,0.4); padding:10px; border-radius:4px; border:1px solid rgba(212,175,55,0.25); text-align:left; margin-bottom:8px; flex-shrink:0;">
+          <div style="font-size:0.75rem; font-weight:800; color:#d4af37; margin-bottom:4px;">第 ${currentMission.id} 關 ${currentMission.name}${isCurCleared ? '　✅ 已通關' : ''}</div>
+          <div style="font-size:0.66rem; color:#ffe099; line-height:1.7;">
+            🎯 過關條件:${this.describeWinCondition(currentMission)}<br>
+            ⏳ 時限:${curTurn}<br>
+            🎁 首次通關:解鎖「${curAst ? curAst.name : '—'}」+ ${curColor} ×2${currentMission.id % 5 === 0 ? ' + 黑曜石 ×1' : ''}<br>
+            🔁 重複通關:${curColor} ×1(可反覆刷關累積寶石庫)
+          </div>
+        </div>` : `
+        <div style="background:rgba(0,0,0,0.25); padding:10px; border-radius:4px; border:1px dashed rgba(212,175,55,0.2); text-align:center; margin-bottom:8px; flex-shrink:0; font-size:0.68rem; color:var(--text-muted);">
+          👆 點選下方章節,查看過關條件與獎勵
+        </div>`;
+
     modal.innerHTML = `
       <div class="modal" style="max-width:520px; max-height:calc(var(--stage-h, 716px) - 40px); display:flex; flex-direction:column; overflow:hidden; padding:16px;">
         <h2 class="modal-title">📜 商道戰役・主線章節</h2>
         <p style="font-size:0.72rem; color:var(--text-muted); margin-bottom:6px;">點選章節查看詳情與挑戰。次線「戰線戰役」請由城鎮的「城鎮門口」出城前往。</p>
-
-        <div style="background:rgba(0,0,0,0.4); padding:10px; border-radius:4px; border:1px solid rgba(212,175,55,0.25); text-align:left; margin-bottom:8px; flex-shrink:0;">
-          <div style="font-size:0.75rem; font-weight:800; color:#d4af37; margin-bottom:2px;">第 ${currentMission.id} 關 ${currentMission.name}【${currentMission.speaker}】：</div>
-          <div style="font-size:0.7rem; color:#fff; line-height:1.4; margin-bottom:4px;">"${currentMission.dialogue}"</div>
-          <hr style="border:0; border-top:1px dashed rgba(212,175,55,0.2); margin:4px 0;">
-          <div style="font-size:0.66rem; color:#ffe099; line-height:1.6;">
-            🎯 過關條件:${this.describeWinCondition(currentMission)}<br>
-            ⏳ 時限:${curTurn}　🎁 首次通關:解鎖「${curAst ? curAst.name : '—'}」+ ${curColor} ×2${currentMission.id % 5 === 0 ? ' + 黑曜石 ×1' : ''}<br>
-            🔁 重複通關:${curColor} ×1(可反覆刷關累積寶石庫)${isCurCleared ? '　✅ 已通關' : ''}
-          </div>
-          <hr style="border:0; border-top:1px dashed rgba(212,175,55,0.2); margin:4px 0;">
-          <div style="font-size:0.65rem; color:var(--text-muted);">${currentMission.story}</div>
-        </div>
+        ${detailHtml}
 
         <div class="story-scroll-list">
           ${levelsHtml}
@@ -193,7 +196,7 @@ window.selectStoryLevel = function(lvl, isFromModalClick = false) {
 
   CoreState.get().storyProgress.currentLevel = lvl;
   CoreState.get().settings.selectedAssistant = `ast${lvl}`; 
-  StoryMode.openStoryMapModal();
+  StoryMode.openStoryMapModal(undefined, true);  // 點選後才展開詳情
   if (typeof window.render === 'function') window.render(); 
 };
 
