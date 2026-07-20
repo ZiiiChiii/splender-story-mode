@@ -182,6 +182,17 @@ const FORGE = [
 ];
 const POTION_COST = { g: 1 }, POTION_HEAL = 12, POTION_MAX = 3;
 
+/* ══════════ 🔗 雙線劇情閘門(與主線 storyMode 對接,兩邊劇情對上才能推進) ══════════
+   各戰役所需的主線通關進度(單調遞增,確保與前章依序解鎖不矛盾):
+   戰1←主3、戰2←主6、戰3←主14、戰4←主15 … 戰10←主21(第二部與主線 15-21 嚴格交錯) */
+const CH_MAIN_REQ = [3, 6, 14, 15, 16, 17, 18, 19, 20, 21];
+function mainClearedList() {
+  try {
+    const d = JSON.parse(localStorage.getItem('splendor_story_progress_2026') || '{}');
+    return Array.isArray(d.clearedLevels) ? d.clearedLevels : [];
+  } catch (e) { return []; }
+}
+
 const PARTY_BASE = [
   { id: 'joan',   name: '貞德',   cls: '聖女・前線劍士', sprite: 'joan',   lead: true,
     maxHp: 26, atk: 8, def: 3, mov: 5, rng: [1, 1], maxMp: 10, skills: ['gale', 'pierce'] },
@@ -208,8 +219,8 @@ const ENEMY_TYPES = {
    劇情回聲:req.mainLv → 主線解鎖進度達標才顯示;req.clearedCh → 戰棋前章已通關才顯示 */
 const TX_CHAPTERS = [
   {
-    id: 1, name: '紅岩礦道的攻防', par: 8, rewardAst: 'ast3', astName: '鐵血騎士 赫克特',
-    firstGems: { r: 2, u: 1 },
+    id: 1, name: '紅岩礦道的攻防', par: 8,
+    firstGems: { r: 3, u: 2 },
     intro: '主線呼應:第 3 關「鐵血的訂單」— 黑曜石封鎖的真相',
     storyBefore: [
       { who: '', side: 'n', text: '微光村後山,紅岩礦道深處。你依著赫克特的情報親自率隊出城——商會口中「被封鎖」的黑曜石礦,實情是被武裝傭兵佔了。' },
@@ -237,8 +248,8 @@ const TX_CHAPTERS = [
     },
   },
   {
-    id: 2, name: '橡木鎮糧倉夜襲', par: 9, rewardAst: 'ast6', astName: '帝國雄獅 亞瑟',
-    firstGems: { u: 2, w: 2 },
+    id: 2, name: '橡木鎮糧倉夜襲', par: 9,
+    firstGems: { u: 3, w: 2 },
     intro: '主線呼應:第 6 關「雄獅的胃口」— 燒錢的軍隊在燒什麼',
     storyBefore: [
       { who: '', side: 'n', text: '橡木鎮,深夜。警鐘劃破夜空——灰鴉傭兵團的黑影正朝糧倉逼近。' },
@@ -268,8 +279,8 @@ const TX_CHAPTERS = [
     },
   },
   {
-    id: 3, name: '邊境森林阻擊戰', par: 10, rewardAst: 'ast14', astName: '精靈遊俠 萊戈拉斯',
-    firstGems: { k: 2, w: 1, r: 1 },
+    id: 3, name: '邊境森林阻擊戰', par: 10,
+    firstGems: { k: 3, w: 2, r: 1 },
     intro: '主線呼應:第 14 關「遊俠的森林限速」— 戒嚴令背後的那場敵襲',
     storyBefore: [
       { who: '', side: 'n', text: '邊境森林。萊戈拉斯封鎖林道、只留 16 回合給商人的那道戒嚴令——起因就是眼前這場敵襲。' },
@@ -303,8 +314,8 @@ const TX_CHAPTERS = [
 
   /* ════ 第二部・影盟篇(4-10):灰鴉背後的職業刺客結社浮出水面 ════ */
   {
-    id: 4, name: '黑市暗巷的清剿', par: 9, rewardAst: 'ast7', astName: '密盟密使 查理曼',
-    firstGems: { k: 2, u: 1, r: 1 },
+    id: 4, name: '黑市暗巷的清剿', par: 9,
+    firstGems: { k: 3, u: 2, r: 1 },
     intro: '主線呼應:第 7 關「暗夜的密盟」— 查理曼口中「遍布全鎮的眼線」',
     storyBefore: [
       { who: '', side: 'n', text: '橡木鎮黑市,午夜。查理曼的情報網突然斷了三條線——潛回來的灰鴉殘黨,帶著一批身手截然不同的「新同事」。' },
@@ -333,8 +344,8 @@ const TX_CHAPTERS = [
     },
   },
   {
-    id: 5, name: '熔爐余燼保衛戰', par: 10, rewardAst: 'ast8', astName: '傳奇鐵匠 瓦肯',
-    firstGems: { r: 2, k: 1, w: 1 },
+    id: 5, name: '熔爐余燼保衛戰', par: 10,
+    firstGems: { r: 3, k: 2, w: 1 },
     intro: '主線呼應:第 8 關「火山重工的訂單」— 皇家聖器背後的暗火',
     storyBefore: [
       { who: '', side: 'n', text: '瓦肯的鐵匠鋪,爐火徹夜未熄。影盟的斥候在屋脊上換了三班——他們要的不是錢,是讓皇家聖器永遠出不了爐。' },
@@ -363,8 +374,8 @@ const TX_CHAPTERS = [
     },
   },
   {
-    id: 6, name: '傀儡工房事變', par: 11, rewardAst: 'ast12', astName: '鍊金術師 帕拉塞爾斯',
-    firstGems: { w: 2, u: 2 },
+    id: 6, name: '傀儡工房事變', par: 11,
+    firstGems: { w: 3, u: 3 },
     intro: '主線呼應:第 12 關「鍊金術的對決」— 被影盟咒印駭走的造物',
     storyBefore: [
       { who: '', side: 'n', text: '巨石要塞外環,鍊金工房。齒輪聲整齊得可怕——一排傀儡睜著琥珀色的眼,列隊走向要塞大門。' },
@@ -392,8 +403,8 @@ const TX_CHAPTERS = [
     },
   },
   {
-    id: 7, name: '地底金庫劫案', par: 11, rewardAst: 'ast13', astName: '地下領主 索林',
-    firstGems: { g: 2, k: 2 },
+    id: 7, name: '地底金庫劫案', par: 11,
+    firstGems: { g: 3, k: 3 },
     intro: '主線呼應:第 13 關「地下領主的黃金稅」— 幸運數字守不住的東西',
     storyBefore: [
       { who: '', side: 'n', text: '要塞地底,索林的金庫。警鈴響徹坑道——影盟這次帶來了穿全身板甲的「商會重甲衛」,連礦車軌道都被壓得吱呀作響。' },
@@ -421,8 +432,8 @@ const TX_CHAPTERS = [
     },
   },
   {
-    id: 8, name: '首都下水道潛行', par: 12, rewardAst: 'ast16', astName: '帝國外交官 麥特尼',
-    firstGems: { u: 2, g: 2, k: 1 },
+    id: 8, name: '首都下水道潛行', par: 12,
+    firstGems: { u: 3, g: 3, k: 1 },
     intro: '主線呼應:第 16 關「外交官的引薦信」— 大會堂底下比想像更深的水',
     storyBefore: [
       { who: '', side: 'n', text: '翡翠首都,下水道。麥特尼的密信只有一句話:「影盟正把某樣東西,一箱一箱運進大會堂的地基」。' },
@@ -451,8 +462,8 @@ const TX_CHAPTERS = [
     },
   },
   {
-    id: 9, name: '王港碼頭風暴', par: 12, rewardAst: 'ast19', astName: '大航海家 麥哲倫',
-    firstGems: { w: 2, r: 2, u: 1 },
+    id: 9, name: '王港碼頭風暴', par: 12,
+    firstGems: { w: 3, r: 3, u: 1 },
     intro: '主線呼應:第 19 關「新大陸的黃金潮」— 巨頭最不想讓它靠岸的船',
     storyBefore: [
       { who: '', side: 'n', text: '王港,暴雨。麥哲倫的旗艦剛下錨,碼頭的起重機間就閃過成片的黑斗篷——影盟傾巢而出,重甲衛壓陣。' },
@@ -482,8 +493,8 @@ const TX_CHAPTERS = [
     },
   },
   {
-    id: 10, name: '影盟總壇・影落', par: 13, rewardAst: 'ast18', astName: '影刃刺客 澤德',
-    firstGems: { k: 3, r: 2, w: 1 },
+    id: 10, name: '影盟總壇・影落', par: 13,
+    firstGems: { k: 4, r: 3, w: 2 },
     intro: '主線呼應:第 21 關「跨越階級的代價」— 禁運鐵閘背後,巨頭的最後獠牙',
     storyBefore: [
       { who: '', side: 'n', text: '首都地下,廢棄錢莊。帳台後的暗門通向影盟總壇——牆上掛滿契約,每一張都蓋著雙頭鷹咬天秤的火漆。' },
@@ -536,9 +547,37 @@ export const TacticsMode = {
     return el;
   },
 
+  /* 🔗 章節閘門:前章通關 + 主線劇情進度到位,兩者齊備才可進入 */
+  chapterGate(id) {
+    const prevOk = id === 1 || TxSave.isCleared(id - 1);
+    const needMain = CH_MAIN_REQ[id - 1] || 0;
+    const mainOk = !needMain || mainClearedList().includes(needMain);
+    return { ok: prevOk && mainOk, prevOk, mainOk, needMain };
+  },
+
   open(chIdx) {
     const ch = TX_CHAPTERS[chIdx];
     if (!ch) return;
+    const gate = this.chapterGate(ch.id);
+    if (!gate.ok) {
+      // 🔒 劇情鎖:以對話說明「為何還不能開戰」,不進入戰役
+      if (window.StoryDialog) {
+        const mName = (window.STORY_MISSIONS && window.STORY_MISSIONS[gate.needMain - 1])
+          ? `「${window.STORY_MISSIONS[gate.needMain - 1].name}」` : '';
+        const script = gate.prevOk
+          ? [
+            { who: '', side: 'n', text: `${ch.name}的方向傳來零星的敵蹤回報,但斥候搖了搖頭——時機未到。` },
+            Object.assign({ who: '露娜', side: 'ally', text: `星象還沒走到那一步……大會堂的局勢是前線的糧草。先回「寶石交易殿堂」通過主線第 ${gate.needMain} 關${mName},商路的消息一到,這裡的號角自然會響。` }, this.portraitOf('露娜', 'ally')),
+            Object.assign({ who: '你', side: 'ally', text: '明白了——談判桌上見真章,前線的事,急不得。' }, this.portraitOf('你', 'ally')),
+          ]
+          : [
+            { who: '', side: 'n', text: '這條戰線還籠罩在迷霧中。' },
+            Object.assign({ who: '赫克特', side: 'ally', text: `一步一步來,指揮官——先打贏第 ${ch.id - 1} 戰,部隊才推得到這裡。` }, this.portraitOf('赫克特', 'ally')),
+          ];
+        window.StoryDialog.play({ headline: `⚔️ 戰線待命・${ch.name}`, subline: '劇情尚未銜接', script, canSkip: false });
+      }
+      return;
+    }
     this.chapter = ch;
     this.ensureLayer().classList.add('tx-active');
     this.showStory(this.filterScript(ch.storyBefore), () => this.showPrep());
@@ -629,59 +668,108 @@ export const TacticsMode = {
       <div class="tx-prep">
         <div class="tx-prep-head">
           <h2>⚒️ 出擊整備・${esc(ch.name)}</h2>
-          <div class="note">寶石庫與主線商道戰役共通:主線通關、戰場拾獲都會存入這裡;在此以寶石為部隊「刻紋」永久強化。</div>
+          <div class="note">寶石庫與主線商道戰役共通。點擊角色卡上的晶紋,以寶石永久強化該名夥伴。</div>
           <div style="margin-top:5px;font-size:0.68rem;">💎 寶石庫:<span id="tx-vault-line"></span>　🧪 藥水 ×<span id="tx-pot-n"></span></div>
         </div>
-        <div class="tx-prep-body" id="tx-prep-body"></div>
+        <div class="tx-prep-body">
+          <div class="txp-cards" id="tx-prep-body"></div>
+        </div>
         <div class="tx-prep-foot">
           <button id="tx-back">🏘️ 回地圖</button>
           <button class="tx-primary" id="tx-deploy">⚔ 出 擊</button>
         </div>
       </div>`;
+
+    const FICO = { atk: '⚔️', def: '🛡️', hp: '❤️', mov: '👟', mp: '💠' };
+    const STAT_LABEL = { atk: '攻擊', def: '防禦', maxHp: '生命', mov: '移動', maxMp: '晶力' };
+    let flashInfo = null; // 剛升級的 {uid, text}:重繪後套用閃光與浮字動畫
+
     const refresh = () => {
       document.getElementById('tx-vault-line').innerHTML = TacticsVault.lineHtml();
       document.getElementById('tx-pot-n').textContent = TxSave.load().potions;
       const v = TacticsVault.read();
-      const costStr = cost => Object.entries(cost).map(([k, n]) => TacticsVault.iconHtml(k, '×' + n)).join(' ');
+      const costStr = cost => Object.entries(cost).map(([k, n]) => TacticsVault.iconHtml(k, '×' + n)).join('');
       const canPay = cost => Object.entries(cost).every(([k, n]) => v[k] >= n);
-      document.getElementById('tx-prep-body').innerHTML = `
-        <h3>晶紋鍛造(永久強化)</h3>
-        ${this.buildParty().map(u => `
-          <div class="tx-funit">${esc(u.name)}・${esc(u.cls)}</div>
-          <div style="margin-bottom:4px;">
-            <span class="tx-chip">HP ${u.maxHp}</span><span class="tx-chip">MP ${u.maxMp}</span>
-            <span class="tx-chip">攻 ${u.atk}</span><span class="tx-chip">防 ${u.def}</span>
-            <span class="tx-chip">移 ${u.mov}</span>
-            <span class="tx-chip">技:${u.skills.map(s => esc(SKILLS[s].name)).join('、')}</span>
+      const body = document.getElementById('tx-prep-body');
+      const wasReady = body.classList.contains('txp-ready');
+
+      body.innerHTML = this.buildParty().map((u, i) => `
+        <div class="txp-card" data-uid="${u.id}" style="--i:${i};">
+          <div class="txp-top">
+            <div class="txp-portrait-wrap"><img class="txp-portrait" alt="${esc(u.name)}" src="${spriteURL(u.sprite, false)}"></div>
+            <div class="txp-id">
+              <div class="txp-name">${esc(u.name)}${u.lead ? ' <span class="txp-lead">主將</span>' : ''}</div>
+              <div class="txp-cls">${esc(u.cls)}</div>
+              <div class="txp-skills">✨ ${u.skills.map(s => esc(SKILLS[s].name)).join('・')}</div>
+            </div>
           </div>
-          ${FORGE.map(f => {
-            const n = TxSave.forgeCount(u.id, f.id);
-            const full = n >= f.max;
-            return `<div class="tx-row">
-              <span class="grow">${esc(f.name)} <span style="color:var(--tx-dim);font-size:0.55rem;">${esc(f.desc)}(${n}/${f.max})</span></span>
-              <span class="price">${costStr(f.cost)}</span>
-              <button data-forge="${u.id}:${f.id}" ${(!full && canPay(f.cost)) ? '' : 'disabled'}>${full ? '已滿' : '刻紋'}</button>
-            </div>`;
-          }).join('')}`).join('')}
-        <h3>補給</h3>
-        <div class="tx-row">
-          <span class="grow">治療藥水(戰鬥中回復 ${POTION_HEAL} HP,持有上限 ${POTION_MAX})</span>
-          <span class="price">${costStr(POTION_COST)}</span>
-          <button id="tx-buy-pot" ${(TxSave.load().potions < POTION_MAX && canPay(POTION_COST)) ? '' : 'disabled'}>兌換</button>
+          <div class="txp-stats">
+            <div class="txp-bar"><label>❤️HP</label><div class="txp-track"><div class="txp-fill txp-hp" style="width:${Math.min(100, u.maxHp / 60 * 100)}%"></div></div><b>${u.maxHp}</b></div>
+            <div class="txp-bar"><label>💠MP</label><div class="txp-track"><div class="txp-fill txp-mp" style="width:${Math.min(100, u.maxMp / 24 * 100)}%"></div></div><b>${u.maxMp}</b></div>
+            <div class="txp-mini"><span>⚔️ 攻 <b>${u.atk}</b></span><span>🛡️ 防 <b>${u.def}</b></span><span>👟 移 <b>${u.mov}</b></span></div>
+          </div>
+          <div class="txp-forges">
+            ${FORGE.map(f => {
+              const n = TxSave.forgeCount(u.id, f.id);
+              const full = n >= f.max;
+              const ok = !full && canPay(f.cost);
+              const pips = Array.from({ length: f.max }, (_, k) => `<i class="${k < n ? 'on' : ''}"></i>`).join('');
+              return `<button class="txp-forge ${full ? 'full' : ''}" data-forge="${u.id}:${f.id}" ${ok || full ? '' : 'disabled'} ${full ? 'disabled' : ''} title="${esc(f.desc)}">
+                <span class="txp-fico">${FICO[f.id]}</span>
+                <span class="txp-fname">${esc(f.name)}</span>
+                <span class="txp-pips">${pips}</span>
+                <span class="txp-cost">${full ? '<b class="txp-max">MAX</b>' : costStr(f.cost)}</span>
+              </button>`;
+            }).join('')}
+          </div>
+        </div>`).join('') + `
+        <div class="txp-card txp-supply" style="--i:3;">
+          <div class="txp-top">
+            <div class="txp-potion-art">🧪</div>
+            <div class="txp-id">
+              <div class="txp-name">治療藥水</div>
+              <div class="txp-cls">戰鬥中回復 ${POTION_HEAL} HP・持有上限 ${POTION_MAX}</div>
+              <div class="txp-skills">目前持有:<b id="txp-pot-inline">${TxSave.load().potions}</b> / ${POTION_MAX}</div>
+            </div>
+            <button class="txp-forge txp-buy" id="tx-buy-pot" ${(TxSave.load().potions < POTION_MAX && canPay(POTION_COST)) ? '' : 'disabled'}>
+              <span class="txp-fname">兌換</span><span class="txp-cost">${costStr(POTION_COST)}</span>
+            </button>
+          </div>
         </div>
-        <p class="tx-tag" style="margin-top:8px;line-height:1.7;">提示:寶石不夠?回主線商道戰役通關可獲得寶石;本戰場擊敗傭兵與開啟寶箱 ❖ 也會直接入庫。</p>`;
-      layer.querySelectorAll('[data-forge]').forEach(b => b.onclick = () => {
+        <p class="tx-tag" style="line-height:1.7;">提示:寶石不夠?回主線商道戰役刷關可獲寶石;戰場擊敵與寶箱 ❖ 也會直接入庫。</p>`;
+
+      if (wasReady) body.classList.add('txp-ready'); // 已入場過 → 不重播進場動畫
+      requestAnimationFrame(() => body.classList.add('txp-ready'));
+
+      // ✨ 升級回饋:卡片金光 + 浮字 + 對應數值彈跳
+      if (flashInfo) {
+        const card = body.querySelector(`.txp-card[data-uid="${flashInfo.uid}"]`);
+        if (card) {
+          card.classList.add('txp-flash');
+          const fl = document.createElement('span');
+          fl.className = 'txp-float'; fl.textContent = flashInfo.text;
+          card.appendChild(fl);
+          setTimeout(() => { card.classList.remove('txp-flash'); fl.remove(); }, 950);
+        }
+        flashInfo = null;
+      }
+
+      body.querySelectorAll('[data-forge]').forEach(b => b.onclick = () => {
         const [uid, fid] = b.dataset.forge.split(':');
         const f = FORGE.find(x => x.id === fid);
         if (TxSave.forgeCount(uid, fid) >= f.max) return;
         if (!TacticsVault.spend(f.cost)) return;
-        TxSave.addForge(uid, fid); sfx(); refresh();
+        TxSave.addForge(uid, fid); sfx();
+        flashInfo = { uid, text: `${FICO[f.id]} ${STAT_LABEL[f.stat]} +${f.amt}` };
+        refresh();
       });
-      const bp = document.getElementById('tx-buy-pot');
+      const bp = body.querySelector('#tx-buy-pot');
       if (bp) bp.onclick = () => {
         if (TxSave.load().potions >= POTION_MAX) return;
         if (!TacticsVault.spend(POTION_COST)) return;
-        TxSave.data.potions++; TxSave.save(); sfx(); refresh();
+        TxSave.data.potions++; TxSave.save(); sfx();
+        flashInfo = { uid: undefined, text: '' };
+        refresh();
       };
     };
     document.getElementById('tx-back').onclick = () => { sfx(); this.returnFromBattle(); };
@@ -1262,19 +1350,21 @@ export const TacticsMode = {
   showResult(win) {
     const B = this.B, ch = B.ch;
     const firstClear = win && !TxSave.isCleared(ch.id);
-    let astUnlockedNow = false;
+    let potionGranted = false;
     if (win) {
       if (firstClear) {
         TxSave.markCleared(ch.id);
         TacticsVault.grant(ch.firstGems);
-        astUnlockedNow = unlockAssistant(ch.rewardAst);
+        // 🧪 首勝加贈治療藥水 ×1(不超過持有上限);輔助官改由主線專屬獲得,避免重複
+        TxSave.load();
+        if (TxSave.data.potions < POTION_MAX) { TxSave.data.potions++; TxSave.save(); potionGranted = true; }
       }
     }
     const lootRows = GEM_KEYS.filter(k => B.loot[k] > 0)
       .map(k => `<div class="r2"><span>${TacticsVault.iconHtml(k)}${GEM_INFO[k].name}(戰場拾獲)</span><span>×${B.loot[k]}</span></div>`).join('');
     const firstRows = firstClear
       ? GEM_KEYS.filter(k => ch.firstGems[k]).map(k => `<div class="r2"><span>${TacticsVault.iconHtml(k)}${GEM_INFO[k].name}(首勝獎勵)</span><span>×${ch.firstGems[k]}</span></div>`).join('')
-        + `<div class="r2"><span style="color:#2ecc71">🤝 ${astUnlockedNow ? '解鎖輔助官' : '輔助官(已持有)'}</span><span style="color:#2ecc71">${esc(ch.astName)}</span></div>`
+        + (potionGranted ? `<div class="r2"><span style="color:#2ecc71">🧪 治療藥水(首勝加贈)</span><span style="color:#2ecc71">×1</span></div>` : '')
       : (win ? `<div class="r2"><span class="tx-tag">已通關戰役:僅保留戰場拾獲</span><span></span></div>` : '');
     const nextExists = win && TX_CHAPTERS[ch.id]; // ch.id 即下一章 index
     this.ensureLayer().innerHTML = `
@@ -1304,19 +1394,20 @@ export const TacticsMode = {
 
   /* ── 戰役地圖頁籤資料(供 storyMode 使用) ── */
   chapterListHtml() {
-    const maxCh = TxSave.maxUnlockedChapter();
     return TX_CHAPTERS.map((ch, idx) => {
-      const unlocked = ch.id <= maxCh;
+      const gate = this.chapterGate(ch.id);
       const cleared = TxSave.isCleared(ch.id);
+      const clickable = gate.prevOk;   // 前章已過即可點;僅主線未到者點擊會播劇情鎖對話
+      const tag = cleared ? '✅' : (!gate.prevOk ? '🔒' : (!gate.mainOk ? `📜🔒 需主線第 ${gate.needMain} 關` : ''));
       return `
-        <button class="diff-opt-btn" ${unlocked ? '' : 'disabled'}
+        <button class="diff-opt-btn" ${clickable ? '' : 'disabled'}
           style="text-align:left; padding:8px; display:flex; flex-direction:column; gap:3px;
-                 opacity:${unlocked ? 1 : 0.25}; pointer-events:${unlocked ? 'auto' : 'none'};
-                 border-color:${cleared ? '#2ecc71' : '#4a3a30'};"
+                 opacity:${clickable ? (gate.ok || cleared ? 1 : 0.7) : 0.25}; pointer-events:${clickable ? 'auto' : 'none'};
+                 border-color:${cleared ? '#2ecc71' : (clickable && !gate.ok ? 'rgba(224,87,91,0.5)' : '#4a3a30')};"
           onclick="window.playUniformSfx && window.playUniformSfx(); window.TacticsMode.openFromMap(${idx})">
-          <div style="font-weight:800; color:#ffe099; font-size:0.72rem;">第 ${ch.id} 戰 ${ch.name} ${cleared ? '✅' : ''}</div>
+          <div style="font-weight:800; color:#ffe099; font-size:0.72rem;">第 ${ch.id} 戰 ${ch.name} ${tag}</div>
           <div style="font-size:0.55rem; color:#b8c0cc;">${ch.intro}</div>
-          <div style="font-size:0.55rem; color:#2ecc71;">🎁 首勝:解鎖「${ch.astName}」+ 寶石獎勵</div>
+          <div style="font-size:0.55rem; color:#2ecc71;">🎁 首勝:寶石大禮 + 治療藥水 ×1(輔助官請於主線獲取)</div>
         </button>`;
     }).join('');
   },
