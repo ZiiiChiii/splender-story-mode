@@ -830,7 +830,8 @@ window.render = function() {
             conditionText += ` <span style="color:#2ecc71;">(高分卡: ${t.highPointCards}/3)</span>`;
           }
 
-          bannerText.innerHTML = `<span style="color:#ffe099; font-weight:800;">⚔️【${mission.name}】</span> 目標：${conditionText} <span style="color:#ffcc00; font-size:0.55rem; margin-left:6px;">[ 🗺️ 點此可自選或重挑關卡 ]</span>`;
+          // 一行式緊湊顯示:縮小字級 + nowrap/ellipsis,保證單行完成
+          bannerText.innerHTML = `<span style="display:block; font-size:0.6rem; line-height:1.3; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;"><span style="color:#ffe099; font-weight:800;">⚔️【${mission.name}】</span>目標：${conditionText} <span style="color:#ffcc00;">🗺️選關</span></span>`;
         } else {
           bannerText.textContent = "📜 故事戰役檔案加載中...";
         }
@@ -1337,13 +1338,14 @@ window.storyModule = {
     const img = stageData.img || `https://images.placeholders.dev/?width=320&height=520&text=No.${stageId}&bgColor=%232c3e50&textColor=%23ffffff`;
 
     // 統一劇本格式:旁白鋪陳世界 → 委託人開口(情緒依標點自動推斷) → 激昂收尾
+    // → 🎯 目標改為劇情結束前的最後一段對話提醒(不再使用獨立目標橫幅)
     window.StoryDialog.play({
       headline: stageData.chapter + " - " + stageData.title,
-      goal: "🏆 目標：" + stageData.condition,
       script: [
         { who: '', side: 'n', text: stageData.bg },
         { who: stageData.name, side: 'ally', img, text: stageData.text },
-        { who: stageData.name, side: 'ally', img, mood: 'shout', text: '就是這樣——拿出你的交易手腕，讓我見識見識！' }
+        { who: stageData.name, side: 'ally', img, mood: 'shout', text: '就是這樣——拿出你的交易手腕，讓我見識見識！' },
+        { who: '', side: 'n', text: '🎯 本關目標：' + stageData.condition + '　(祝交易順利!)' }
       ],
       onDone: () => this.endStory()
     });
