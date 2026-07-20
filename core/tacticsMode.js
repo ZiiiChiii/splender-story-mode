@@ -124,6 +124,14 @@ const SPRITES = {
   ravenc: { pal: { r:'#C0392B', R:'#8E2A20', i:'#8C94A4', I:'#5E6674', S:'#E3B489', e:'#28242E', s:'#C08A5E', a:'#525866', A:'#3A3F4A', G:'#D9A441', D:'#3B3F49', b:'#2E323B', W:'#E8ECF2', w:'#AAB4C4' },
     rows: ['....GG..........','...iiiii........','..iiiiiii....W..','..iIiGiIi....Ww.','..i.SSSS.....Ww.','..R.SeSeS....Ww.','.RR.sSSs.....Ww.','.RRaaaaaa...Ww..','.RRaGaaGaa..Ww..','.RRaaaaaaaaSG...','.RRaAaaaAaS.....','.RRsaaaaaas.....','.RR.aaaaaa......','.R..aGaaGa......','....DDDDDD......','....DD..DD......','...bbb..bbb.....','................'] },
 };
+/* 🌑 第二部(影盟篇)敵軍:沿用既有點陣網格、替換調色盤(風格一致、體積零成本)
+   影盟 = 火漆印「影刃」背後的職業刺客結社;傀儡 = 被影盟駭走的鍊金造物;重甲衛 = 商會巨頭私兵 */
+SPRITES.shade = { rows: SPRITES.raven.rows, pal: { r:'#6E51A8', i:'#4A3F63', I:'#332B47', S:'#D9C6DC', e:'#7BE0D8', s:'#B49CB8', a:'#2B2438', A:'#1E1930', D:'#241F30', b:'#181423', P:'#9B7BD8', p:'#C9B8E8' } };
+SPRITES.shadex = { rows: SPRITES.ravenx.rows, pal: { o:'#3A3350', O:'#272238', S:'#D9C6DC', e:'#7BE0D8', s:'#B49CB8', a:'#2B2438', A:'#1E1930', D:'#241F30', b:'#181423', X:'#6E51A8', x:'#4A3768', T:'#C9B8E8' } };
+SPRITES.shadem = { rows: SPRITES.ravenm.rows, pal: { k:'#6E2438', K:'#4A1826', S:'#DCC1C8', e:'#FFB4C0', s:'#B499A0', R:'#8E2A3C', r:'#5E1C28', O:'#E0575B', o:'#A03038', I:'#6B4350', G:'#FFD98C' } };
+SPRITES.golem  = { rows: SPRITES.hector.rows, pal: { m:'#9A907C', M:'#7C7362', S:'#B4AB95', e:'#FFB040', s:'#8F8670', c:'#8A8578', C:'#6C6858', E:'#8A8A92', F:'#6C6C76', f:'#54545E', B:'#57493F', D:'#4A3E34', b:'#3A3028', G:'#FFB040' } };
+SPRITES.brute  = { rows: SPRITES.hector.rows, pal: { m:'#B0472F', M:'#7C2E1E', S:'#E3B489', e:'#28242E', s:'#C08A5E', c:'#8E3A2A', C:'#5E2418', E:'#C9A227', F:'#7C2E1E', f:'#571F14', B:'#4A3018', D:'#3B2E24', b:'#2E241C', G:'#FFD98C' } };
+SPRITES.shadec = { rows: SPRITES.ravenc.rows, pal: { r:'#9B7BD8', R:'#6E51A8', i:'#3A3350', I:'#272238', S:'#D9C6DC', e:'#7BE0D8', s:'#B49CB8', a:'#2B2438', A:'#1E1930', G:'#C9B8E8', D:'#241F30', b:'#181423', W:'#E8E4F2', w:'#B4A8D8' } };
 const SPRITE_CACHE = {};
 function spriteURL(key, flip) {
   const id = key + (flip ? '_f' : '');
@@ -187,9 +195,16 @@ const ENEMY_TYPES = {
   ravenx: { name: '灰鴉弩手',   sprite: 'ravenx', hp: 16, atk: 7,  def: 1, mov: 4, rng: [1, 2] },
   ravenm: { name: '灰鴉咒術師', sprite: 'ravenm', hp: 16, atk: 9,  def: 1, mov: 3, rng: [1, 2] },
   ravenc: { name: '傭兵首領・灰鴉', sprite: 'ravenc', hp: 34, atk: 10, def: 4, mov: 4, rng: [1, 1] },
+  // ── 第二部(影盟篇) ──
+  shade:  { name: '影盟刺客',   sprite: 'shade',  hp: 19, atk: 10, def: 2, mov: 5, rng: [1, 1] },
+  shadex: { name: '影盟弩手',   sprite: 'shadex', hp: 17, atk: 8,  def: 1, mov: 4, rng: [1, 2] },
+  shadem: { name: '影盟咒師',   sprite: 'shadem', hp: 18, atk: 10, def: 1, mov: 3, rng: [1, 2] },
+  golem:  { name: '鍊金傀儡',   sprite: 'golem',  hp: 28, atk: 8,  def: 6, mov: 2, rng: [1, 1] },
+  brute:  { name: '商會重甲衛', sprite: 'brute',  hp: 38, atk: 9,  def: 6, mov: 3, rng: [1, 1] },
+  shadec: { name: '影盟統領・寇克斯', sprite: 'shadec', hp: 48, atk: 12, def: 5, mov: 4, rng: [1, 1] },
 };
 
-/* ══════════════ 三場戰役(次線劇情,鉤住主線) ══════════════
+/* ══════════════ 十場戰役(次線劇情,鉤住主線;1-3 灰鴉篇 / 4-10 影盟篇) ══════════════
    劇情回聲:req.mainLv → 主線解鎖進度達標才顯示;req.clearedCh → 戰棋前章已通關才顯示 */
 const TX_CHAPTERS = [
   {
@@ -268,8 +283,8 @@ const TX_CHAPTERS = [
     storyAfter: [
       { who: '傭兵首領・灰鴉', side: 'foe', text: '咳……記住,僱我們的火漆印上有一把「影刃」……你們動不了那位大人的……' },
       { who: '萊戈拉斯', side: 'ally', text: '森林守住了。戒嚴令即刻解除——那位商人的貨,可以走了。人類,精靈的迅捷與你們同在。' },
-      { who: '露娜', side: 'ally', text: '影刃……首都……星象在警告我們,真正的商戰才正要開始。(次線劇情將隨主線第四章持續展開)' },
-      { who: '', side: 'n', text: '—— 戰線戰役・第一部 完 ——' },
+      { who: '露娜', side: 'ally', text: '影刃……首都……星象在警告我們:狩獵沒有結束,只是換了獵物。' },
+      { who: '', side: 'n', text: '—— 戰線戰役・第一部(灰鴉篇)完;第二部(影盟篇)自此展開 ——' },
     ],
     map: {
       rows: ['........', '.F.MM.F.', '........', '..F..C..', '........', '..C..F..', '........', '.F.MM.F.'],
@@ -285,7 +300,222 @@ const TX_CHAPTERS = [
       ],
     },
   },
+
+  /* ════ 第二部・影盟篇(4-10):灰鴉背後的職業刺客結社浮出水面 ════ */
+  {
+    id: 4, name: '黑市暗巷的清剿', par: 9, rewardAst: 'ast7', astName: '密盟密使 查理曼',
+    firstGems: { k: 2, u: 1, r: 1 },
+    intro: '主線呼應:第 7 關「暗夜的密盟」— 查理曼口中「遍布全鎮的眼線」',
+    storyBefore: [
+      { who: '', side: 'n', text: '橡木鎮黑市,午夜。查理曼的情報網突然斷了三條線——潛回來的灰鴉殘黨,帶著一批身手截然不同的「新同事」。' },
+      { who: '查理曼', side: 'ally', text: '看清楚那些黑斗篷,小傢伙。那不是傭兵——是「影盟」,拿契約殺人的職業結社。灰鴉的殘黨,已經被他們收編了。', req: { mainLv: 7 } },
+      { who: '露娜', side: 'ally', text: '委託書火漆印上的影刃……原來不是裝飾,是他們的徽記!礦坑那條線,一路連到這裡了。', req: { clearedCh: 3 } },
+      { who: '你', side: 'ally', text: '眼線、殘黨、影盟——今晚把這條暗巷掃乾淨,順便讓「客戶」知道:他的影子,藏不住了。', mood: 'shout' },
+      { who: '影盟刺客', side: 'foe', mood: 'whisper', text: '……契約編號 044,目標:多嘴的密使,與礙事的商人。' },
+      { who: '赫克特', side: 'ally', text: '連殺人都要開編號?哼,正好——今天的「驗收」,由我們來做!', mood: 'angry' },
+    ],
+    storyAfter: [
+      { who: '查理曼', side: 'ally', text: '欠你一次。影盟接單只認一種印:雙頭鷹咬著天秤——那是首都商會巨頭專用的家徽,錯不了。' },
+      { who: '你', side: 'ally', text: '巨頭、影刃、灰鴉——鏈條齊了。剩下的,就是順著它一路拉到首都。' },
+      { who: '露娜', side: 'ally', text: '星盤警告:他們的下一刀,會砍向「軍備」。瓦肯大師的熔爐……要小心了。' },
+    ],
+    map: {
+      rows: ['........', '.M.M.M..', '........', '..M.M.C.', '........', '.M.M.M..', '........'],
+      chests: [{ x: 6, y: 3, gem: 'u' }],
+      playerSpawns: [[0, 2], [0, 3], [0, 4]],
+      enemies: [
+        { type: 'raven',  x: 4, y: 2, drop: 'r' },
+        { type: 'shade',  x: 5, y: 4, drop: 'k' },
+        { type: 'ravenx', x: 6, y: 1, drop: 'u' },
+        { type: 'shade',  x: 6, y: 5, drop: 'k' },
+        { type: 'shadem', x: 7, y: 3, drop: 'u' },
+      ],
+    },
+  },
+  {
+    id: 5, name: '熔爐余燼保衛戰', par: 10, rewardAst: 'ast8', astName: '傳奇鐵匠 瓦肯',
+    firstGems: { r: 2, k: 1, w: 1 },
+    intro: '主線呼應:第 8 關「火山重工的訂單」— 皇家聖器背後的暗火',
+    storyBefore: [
+      { who: '', side: 'n', text: '瓦肯的鐵匠鋪,爐火徹夜未熄。影盟的斥候在屋脊上換了三班——他們要的不是錢,是讓皇家聖器永遠出不了爐。' },
+      { who: '瓦肯', side: 'ally', text: '有人想在我的爐子裡摻沙子?!老子打了四十年鐵,還沒見過敢動我熔爐的活人!', req: { mainLv: 8 }, mood: 'angry' },
+      { who: '赫克特', side: 'ally', text: '聖器斷供,軍備就斷;軍備一斷,邊境就開了口子。這一手,比燒糧倉更毒。', req: { clearedCh: 4 } },
+      { who: '你', side: 'ally', text: '爐火不能熄。各位,護住鐵匠鋪——把這群摸黑來的影子,料理成回爐的廢鐵!', mood: 'shout' },
+      { who: '影盟弩手', side: 'foe', text: '契約寫得很清楚:熔爐熄火,加倍付款。放箭。' },
+    ],
+    storyAfter: [
+      { who: '瓦肯', side: 'ally', text: '好身手!從今天起,你部隊的傢伙事,我的爐子優先打——這是鐵匠的信譽!', mood: 'happy' },
+      { who: '露娜', side: 'ally', text: '俘虜招了:影盟正在「借」帕拉塞爾斯大師的鍊金傀儡……用某種咒印,整批整批地借。' },
+      { who: '你', side: 'ally', text: '傀儡不會拿錢,只會聽令。若被他們駭走——要塞的算式,就要變成兇器了。' },
+    ],
+    map: {
+      rows: ['........', '..MM..F.', '........', '.M....C.', '........', '..MM..F.', '........'],
+      chests: [{ x: 6, y: 3, gem: 'r' }],
+      playerSpawns: [[0, 2], [0, 3], [0, 4]],
+      enemies: [
+        { type: 'shade',  x: 4, y: 1, drop: 'r' },
+        { type: 'shadex', x: 6, y: 2, drop: 'w' },
+        { type: 'raven',  x: 5, y: 3, drop: 'r' },
+        { type: 'shade',  x: 4, y: 5, drop: 'k' },
+        { type: 'shadex', x: 6, y: 4, drop: 'u' },
+        { type: 'shadem', x: 7, y: 3, drop: 'k' },
+      ],
+    },
+  },
+  {
+    id: 6, name: '傀儡工房事變', par: 11, rewardAst: 'ast12', astName: '鍊金術師 帕拉塞爾斯',
+    firstGems: { w: 2, u: 2 },
+    intro: '主線呼應:第 12 關「鍊金術的對決」— 被影盟咒印駭走的造物',
+    storyBefore: [
+      { who: '', side: 'n', text: '巨石要塞外環,鍊金工房。齒輪聲整齊得可怕——一排傀儡睜著琥珀色的眼,列隊走向要塞大門。' },
+      { who: '帕拉塞爾斯', side: 'ally', text: '我的算式是完美的!被污染的是「輸入」——影盟的咒師往控制核心裡塞了偽造指令!快,把它們打停機,我才能重寫核心!', req: { mainLv: 12 }, mood: 'angry' },
+      { who: '露娜', side: 'ally', text: '星術對石頭效果打折……大家小心,這些鐵疙瘩又硬又沉,別被圍住!', req: { clearedCh: 5 } },
+      { who: '你', side: 'ally', text: '傀儡無罪,拔線就好——集中火力,一具一具來。咒師才是真正的目標!' },
+      { who: '影盟咒師', side: 'foe', text: '多完美的兵源:不領餉、不怕死、不背叛。大師,感謝你的傑作~' },
+    ],
+    storyAfter: [
+      { who: '帕拉塞爾斯', side: 'ally', text: '核心重寫完畢……你救了我的畢生心血,也救了要塞。從今以後,我的算式為你所用。', mood: 'happy' },
+      { who: '赫克特', side: 'ally', text: '影盟開始「借」別人的力量打仗了。下一個被盯上的,恐怕是——索林的金庫。' },
+    ],
+    map: {
+      rows: ['.......', '.M...M.', '...C...', '.......', '.F...F.', '.......', '.M...M.', '.......'],
+      chests: [{ x: 3, y: 2, gem: 'w' }],
+      playerSpawns: [[0, 3], [0, 4], [0, 5]],
+      enemies: [
+        { type: 'golem',  x: 3, y: 1, drop: 'u' },
+        { type: 'golem',  x: 5, y: 3, drop: 'w' },
+        { type: 'golem',  x: 3, y: 6, drop: 'g' },
+        { type: 'shadem', x: 5, y: 5, drop: 'k' },
+        { type: 'shadex', x: 6, y: 2, drop: 'u' },
+        { type: 'golem',  x: 5, y: 7, drop: 'k' },
+      ],
+    },
+  },
+  {
+    id: 7, name: '地底金庫劫案', par: 11, rewardAst: 'ast13', astName: '地下領主 索林',
+    firstGems: { g: 2, k: 2 },
+    intro: '主線呼應:第 13 關「地下領主的黃金稅」— 幸運數字守不住的東西',
+    storyBefore: [
+      { who: '', side: 'n', text: '要塞地底,索林的金庫。警鈴響徹坑道——影盟這次帶來了穿全身板甲的「商會重甲衛」,連礦車軌道都被壓得吱呀作響。' },
+      { who: '索林', side: 'ally', text: '我的金庫!我的幸運數字擋得住稅吏、擋得住小偷,居然擋不住這群鐵罐頭?!商人,幫我守住,酬勞好說!', req: { mainLv: 13 }, mood: 'angry' },
+      { who: '帕拉塞爾斯', side: 'ally', text: '板甲的關節是弱點——貞德的突刺可以無視防禦,交給她收頭。', req: { clearedCh: 6 } },
+      { who: '你', side: 'ally', text: '重甲衛……巨頭連私兵都派出來了,看來我們戳到他的痛處了。守住金庫,一枚金幣都別讓他們碰!', mood: 'shout' },
+      { who: '商會重甲衛', side: 'foe', text: '奉巨頭之命,凍結此金庫「不良資產」。閒雜人等,碾過去。' },
+    ],
+    storyAfter: [
+      { who: '索林', side: 'ally', text: '哈!金庫毫髮無傷——你的部隊記在我最幸運的那頁帳上了。地底的門,永遠為你開。', mood: 'happy' },
+      { who: '露娜', side: 'ally', text: '「不良資產」……他們開始用商業術語搶劫了。首都那邊,麥特尼大人捎來密信:下水道有動靜。' },
+    ],
+    map: {
+      rows: ['........', '.MM..F..', '.....M..', '..C...C.', '.....M..', '.MM..F..', '........'],
+      chests: [{ x: 2, y: 3, gem: 'g' }, { x: 6, y: 3, gem: 'k' }],
+      playerSpawns: [[0, 2], [0, 3], [0, 4]],
+      enemies: [
+        { type: 'brute',  x: 4, y: 3, drop: 'k' },
+        { type: 'shade',  x: 5, y: 1, drop: 'r' },
+        { type: 'shade',  x: 5, y: 5, drop: 'u' },
+        { type: 'shadex', x: 6, y: 2, drop: 'w' },
+        { type: 'shadex', x: 6, y: 4, drop: 'u' },
+        { type: 'shadem', x: 7, y: 3, drop: 'k' },
+      ],
+    },
+  },
+  {
+    id: 8, name: '首都下水道潛行', par: 12, rewardAst: 'ast16', astName: '帝國外交官 麥特尼',
+    firstGems: { u: 2, g: 2, k: 1 },
+    intro: '主線呼應:第 16 關「外交官的引薦信」— 大會堂底下比想像更深的水',
+    storyBefore: [
+      { who: '', side: 'n', text: '翡翠首都,下水道。麥特尼的密信只有一句話:「影盟正把某樣東西,一箱一箱運進大會堂的地基」。' },
+      { who: '麥特尼', side: 'ally', text: '在首都,檯面上的規矩我罩得住;檯面下的……就得靠你了。把那些箱子攔下來,引薦信的事,好談。', req: { mainLv: 16 } },
+      { who: '貞德', side: 'ally', text: '箱子的封條——雙頭鷹咬天秤。查理曼說的巨頭家徽,和黑市那批貨完全一致。', req: { clearedCh: 7 } },
+      { who: '你', side: 'ally', text: '把炸藥埋進大會堂地基?不,巨頭要埋的是「把柄」。攔下箱子,他在首都的體面就到頭了。' },
+      { who: '影盟刺客', side: 'foe', mood: 'whisper', text: '……水聲很好,能蓋住一切。包括你們的腳步,和你們的下場。' },
+    ],
+    storyAfter: [
+      { who: '麥特尼', side: 'ally', text: '箱子裡是偽造的貴族債券——足夠把半個宮廷拖下水。你替首都拆了一顆炸彈,外交官記帳,從不賴帳。', mood: 'happy' },
+      { who: '露娜', side: 'ally', text: '影盟損失慘重,但星盤顯示他們在王港碼頭還有最後一批「大貨」——麥哲倫大人的船隊,危險了。' },
+    ],
+    map: {
+      rows: ['........', '.M.MM.F.', '........', '.F..M.C.', '........', '.C.M..F.', '........', '.M.MM.F.'],
+      chests: [{ x: 6, y: 3, gem: 'u' }, { x: 1, y: 5, gem: 'g' }],
+      playerSpawns: [[0, 3], [0, 4], [1, 6]],
+      enemies: [
+        { type: 'shade',  x: 4, y: 0, drop: 'r' },
+        { type: 'shade',  x: 4, y: 2, drop: 'r' },
+        { type: 'shadex', x: 6, y: 2, drop: 'w' },
+        { type: 'shade',  x: 5, y: 6, drop: 'k' },
+        { type: 'shadex', x: 5, y: 5, drop: 'u' },
+        { type: 'shadem', x: 7, y: 4, drop: 'k' },
+        { type: 'brute',  x: 6, y: 6, drop: 'k' },
+      ],
+    },
+  },
+  {
+    id: 9, name: '王港碼頭風暴', par: 12, rewardAst: 'ast19', astName: '大航海家 麥哲倫',
+    firstGems: { w: 2, r: 2, u: 1 },
+    intro: '主線呼應:第 19 關「新大陸的黃金潮」— 巨頭最不想讓它靠岸的船',
+    storyBefore: [
+      { who: '', side: 'n', text: '王港,暴雨。麥哲倫的旗艦剛下錨,碼頭的起重機間就閃過成片的黑斗篷——影盟傾巢而出,重甲衛壓陣。' },
+      { who: '麥哲倫', side: 'ally', text: '我的船跨過了半個世界的風暴,不會沉在自家碼頭!朋友,甲板上的貨關係著新大陸航線——拜託了!', req: { mainLv: 19 }, mood: 'shout' },
+      { who: '赫克特', side: 'ally', text: '巨頭怕的不是貨,是「新航線」——航線一通,他壟斷的舊商路就一文不值了。', req: { clearedCh: 8 } },
+      { who: '你', side: 'ally', text: '所以他寧可燒掉整座碼頭。各位,風暴夜正好練兵——讓影盟見識,什麼叫護航!', mood: 'shout' },
+      { who: '商會重甲衛', side: 'foe', mood: 'angry', text: '巨頭有令:船,不准靠岸;貨,不准落地;人——不准活著談生意!' },
+    ],
+    storyAfter: [
+      { who: '麥哲倫', side: 'ally', text: '船保住了,航線通了!哈哈,今晚全碼頭的酒我請——你的名字,會跟著新航線寫進海圖!', mood: 'happy' },
+      { who: '貞德', side: 'ally', text: '影盟主力折在這裡了。俘虜供出總壇位置——首都地下,一座廢棄的錢莊。統領寇克斯,就在那裡。' },
+      { who: '你', side: 'ally', text: '錢莊養刺客,真是巨頭的作風。整備吧——下一戰,連根拔起。' },
+    ],
+    map: {
+      rows: ['........', '.MM..MM.', '...C....', '........', '....C...', '.MM..MM.', '........'],
+      chests: [{ x: 3, y: 2, gem: 'w' }, { x: 4, y: 4, gem: 'r' }],
+      playerSpawns: [[0, 2], [0, 3], [0, 4]],
+      enemies: [
+        { type: 'shade',  x: 4, y: 1, drop: 'r' },
+        { type: 'brute',  x: 5, y: 3, drop: 'k' },
+        { type: 'brute',  x: 6, y: 2, drop: 'w' },
+        { type: 'shadex', x: 6, y: 4, drop: 'u' },
+        { type: 'shadex', x: 7, y: 3, drop: 'w' },
+        { type: 'shade',  x: 4, y: 6, drop: 'k' },
+        { type: 'shadem', x: 7, y: 5, drop: 'k' },
+      ],
+    },
+  },
+  {
+    id: 10, name: '影盟總壇・影落', par: 13, rewardAst: 'ast18', astName: '影刃刺客 澤德',
+    firstGems: { k: 3, r: 2, w: 1 },
+    intro: '主線呼應:第 21 關「跨越階級的代價」— 禁運鐵閘背後,巨頭的最後獠牙',
+    storyBefore: [
+      { who: '', side: 'n', text: '首都地下,廢棄錢莊。帳台後的暗門通向影盟總壇——牆上掛滿契約,每一張都蓋著雙頭鷹咬天秤的火漆。' },
+      { who: '露娜', side: 'ally', text: '首席刺客澤德不在……契約板上寫著:他接了「親自解決那個商人」的單。大家,他衝著你去了!', req: { mainLv: 18 } },
+      { who: '你', side: 'ally', text: '那正好,總壇少一個高手。今天拆了這座殺人錢莊,讓「契約」這兩個字,回到商人手裡。', mood: 'shout' },
+      { who: '影盟統領・寇克斯', side: 'foe', mood: 'angry', text: '從礦坑追到我的大門口……知道你毀了多少張契約嗎?!今天,老夫親自替巨頭「結清」你這筆帳!' },
+      { who: '貞德', side: 'ally', text: '礦坑、糧倉、森林、黑市、熔爐、工房、金庫、下水道、碼頭——九筆帳,一次收。動手!', mood: 'shout' },
+    ],
+    storyAfter: [
+      { who: '影盟統領・寇克斯', side: 'foe', mood: 'whisper', text: '咳……結社完了……但巨頭們還坐在大會堂裡……用「合法」的方式……等著你……' },
+      { who: '你', side: 'ally', text: '那就用「合法」的方式打倒他們——在談判桌上,一分威望一分威望地贏回來。' },
+      { who: '赫克特', side: 'ally', text: '前線的仗,到此打完了。指揮官——大會堂那張桌子,就交給你了。我們在微光村,等你加冕的鐘聲。' },
+      { who: '', side: 'n', text: '—— 戰線戰役・第二部(影盟篇)完 ——(最終的商戰,在皇家大會堂等著你)' },
+    ],
+    map: {
+      rows: ['........', '.F.MM.F.', '........', '..M..M..', '...CC...', '..M..M..', '........', '.F.MM.F.'],
+      chests: [{ x: 3, y: 4, gem: 'k' }, { x: 4, y: 4, gem: 'r' }],
+      playerSpawns: [[0, 3], [0, 4], [0, 5]],
+      enemies: [
+        { type: 'shade',  x: 4, y: 2, drop: 'r' },
+        { type: 'shadex', x: 5, y: 1, drop: 'w' },
+        { type: 'brute',  x: 6, y: 3, drop: 'k' },
+        { type: 'brute',  x: 6, y: 4, drop: 'w' },
+        { type: 'shade',  x: 4, y: 6, drop: 'u' },
+        { type: 'shadem', x: 6, y: 6, drop: 'k' },
+        { type: 'shadem', x: 5, y: 7, drop: 'u' },
+        { type: 'shadec', x: 7, y: 3, drop: ['k', 'r'] },
+      ],
+    },
+  },
 ];
+
 
 /* ══════════════ 戰棋主控 ══════════════ */
 const esc = s => String(s).replace(/[&<>"]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
@@ -347,10 +577,23 @@ export const TacticsMode = {
       '露娜':   { sprite: 'luna' },
       '亞瑟':     { img: 'https://i.ibb.co/hzw3Vfm/image.png' },
       '萊戈拉斯': { img: 'https://i.ibb.co/GQ2Yh0yH/image.png' },
+      // 第二部客座(沿用主線輔助官立繪,跨線同一形象)
+      '查理曼':     { img: 'https://i.ibb.co/nNSjxvvd/image.png' },
+      '瓦肯':       { img: 'https://i.ibb.co/zHGC8vsm/image.png' },
+      '帕拉塞爾斯': { img: 'https://i.ibb.co/zHGC8vsm/image.png' },
+      '索林':       { img: 'https://i.ibb.co/QvHvZZWc/image.png' },
+      '麥特尼':     { img: 'https://i.ibb.co/zHGC8vsm/image.png' },
+      '麥哲倫':     { img: 'https://i.ibb.co/hzw3Vfm/image.png' },
       '灰鴉傭兵':     { sprite: 'raven' },
       '灰鴉弩手':     { sprite: 'ravenx' },
       '灰鴉咒術師':   { sprite: 'ravenm' },
       '傭兵首領・灰鴉': { sprite: 'ravenc' },
+      '影盟刺客':     { sprite: 'shade' },
+      '影盟弩手':     { sprite: 'shadex' },
+      '影盟咒師':     { sprite: 'shadem' },
+      '鍊金傀儡':     { sprite: 'golem' },
+      '商會重甲衛':   { sprite: 'brute' },
+      '影盟統領・寇克斯': { sprite: 'shadec' },
     };
     const c = CAST[line.who];
     if (!c) return {};
@@ -391,7 +634,7 @@ export const TacticsMode = {
         </div>
         <div class="tx-prep-body" id="tx-prep-body"></div>
         <div class="tx-prep-foot">
-          <button id="tx-back">← 返回大會堂</button>
+          <button id="tx-back">🏘️ 回地圖</button>
           <button class="tx-primary" id="tx-deploy">⚔ 出 擊</button>
         </div>
       </div>`;
@@ -565,7 +808,7 @@ export const TacticsMode = {
         <span class="tx-tag">回合 <span id="tx-turn">${B.turn}</span></span>
         <span class="tx-phase p-ally" id="tx-phase">我方行動</span>
         <span class="tx-bag" id="tx-bag"></span>
-        <button class="tx-exit" id="tx-exit">✕ 撤退</button>
+        <button class="tx-exit" id="tx-exit">🏘️ 回地圖</button>
       </div>
       <div class="tx-board-wrap"><div class="tx-board-anchor">
         <div class="tx-board" id="tx-board"></div><div id="tx-fx"></div>
@@ -594,7 +837,7 @@ export const TacticsMode = {
     }
     document.getElementById('tx-endturn').onclick = () => { if (B.phase === 'ally' && !B.busy) this.endAllyPhase(); };
     document.getElementById('tx-exit').onclick = () => {
-      if (confirm('撤退將放棄本場戰鬥(已入庫的拾獲保留),確定?')) { this.returnFromBattle(); }
+      if (confirm('離開將放棄本場戰鬥(已入庫的拾獲保留),返回地圖。確定?')) { this.returnFromBattle(); }
     };
   },
 
@@ -604,7 +847,7 @@ export const TacticsMode = {
     if (bag) bag.innerHTML = TacticsVault.lineHtml() + ` <span style="color:var(--tx-dim)">🧪×${B.potions}</span>`;
     const tEl = document.getElementById('tx-turn'); if (tEl) tEl.textContent = B.turn;
     const pill = document.getElementById('tx-phase');
-    if (pill) { pill.className = 'tx-phase ' + (B.phase === 'ally' ? 'p-ally' : 'p-foe'); pill.textContent = B.phase === 'ally' ? '我方行動' : '灰鴉團行動'; }
+    if (pill) { pill.className = 'tx-phase ' + (B.phase === 'ally' ? 'p-ally' : 'p-foe'); pill.textContent = B.phase === 'ally' ? '我方行動' : '敵軍行動'; }
     this.layer.querySelectorAll('.tx-cell').forEach(c => {
       const x = +c.dataset.x, y = +c.dataset.y, k = x + ',' + y;
       c.className = 'tx-cell t-' + (B.rows[y][x] === '.' ? 'P' : B.rows[y][x]);
@@ -937,7 +1180,7 @@ export const TacticsMode = {
     B.busy = true; B.phase = 'foe'; B.mode = 'idle'; B.sel = null;
     const m = document.getElementById('tx-menu'); if (m) m.innerHTML = '';
     this.log(`灰鴉團回合 ${B.turn}`, 'foe');
-    this.fxBanner('灰鴉團行動', 'var(--tx-foe)');
+    this.fxBanner('敵軍行動', 'var(--tx-foe)');
     this.renderBoard();
     const foes = B.units.filter(u => u.side === 'foe' && u.alive);
     let i = 0;
