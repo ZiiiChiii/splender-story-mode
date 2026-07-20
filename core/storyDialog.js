@@ -140,7 +140,9 @@
 
       // 名牌
       const nameEl = layer.querySelector('#sd-name');
-      nameEl.textContent = line.who || '旁白';
+      // 旁白不顯示名牌(留白即可,無須「旁白」標題)
+      nameEl.textContent = line.who || '';
+      nameEl.style.display = line.who ? '' : 'none';
       nameEl.className = 'sd-name side-' + side + ' mood-' + mood;
 
       // 對話盒情緒(憤怒 → 震動一次)
