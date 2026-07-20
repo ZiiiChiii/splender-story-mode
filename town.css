@@ -48,21 +48,39 @@
 #town-layer .town-hint .town-dim{ color:var(--tn-dim); }
 #town-layer .town-hint .town-press{ color:var(--tn-gold); font-weight:800; margin-left:4px; }
 
-/* 方向鈕(手機友善) */
-#town-layer .town-dpad{
-  flex-shrink:0; display:flex; flex-direction:column; align-items:center; gap:5px; padding:6px 0 14px;
+/* 🕹️ 懸浮虛擬搖桿 + 互動鈕(僅觸控裝置顯示;桌機以鍵盤操作,地圖佔滿原方向鈕空間) */
+#town-layer .town-stick{
+  position:absolute; left:16px; bottom:18px; width:112px; height:112px; border-radius:50%;
+  background:radial-gradient(circle at 50% 45%, rgba(30,39,49,.42), rgba(14,18,24,.5));
+  border:1px solid rgba(217,164,65,.4); box-shadow:0 4px 14px rgba(0,0,0,.35);
+  display:none; touch-action:none; z-index:6; -webkit-tap-highlight-color:transparent;
 }
-#town-layer .town-dpad-mid{ display:flex; gap:5px; align-items:center; }
-#town-layer .town-dpad button{
-  width:52px; height:44px; font-size:1rem; border:1px solid #3a4650; background:#1E2731; color:var(--tn-text);
-  border-radius:7px; cursor:pointer; transition:.1s;
-  touch-action:none; user-select:none; -webkit-user-select:none; -webkit-tap-highlight-color:transparent;
+#town-layer .town-stick::before{ /* 方向刻度 */
+  content:""; position:absolute; inset:8px; border-radius:50%;
+  border:1px dashed rgba(234,228,214,.18); pointer-events:none;
 }
-#town-layer .town-dpad button:active{ background:#2b3742; transform:scale(.94); }
-#town-layer .town-dpad .town-act{
-  width:78px; font-size:0.72rem; font-weight:800; border-color:#5a4a2a; color:var(--tn-dim);
+#town-layer .town-stick-knob{
+  position:absolute; left:50%; top:50%; width:48px; height:48px; margin:-24px 0 0 -24px;
+  border-radius:50%; pointer-events:none;
+  background:radial-gradient(circle at 38% 32%, rgba(255,224,153,.85), rgba(217,164,65,.55) 60%, rgba(120,90,35,.55));
+  border:1px solid rgba(255,224,153,.6); box-shadow:0 2px 8px rgba(0,0,0,.45);
+  transition:transform .05s linear;
 }
-#town-layer .town-dpad .town-act.ready{ border-color:var(--tn-gold); color:var(--tn-gold); background:linear-gradient(180deg,#2A2618,#1F1D14); animation:townReady 1s ease-in-out infinite; }
+#town-layer .town-float-act{
+  position:absolute; right:18px; bottom:26px; width:76px; height:76px; border-radius:50%;
+  display:none; align-items:center; justify-content:center; z-index:6; cursor:pointer;
+  font-family:inherit; font-size:0.74rem; font-weight:800; letter-spacing:.08em;
+  color:var(--tn-dim); background:rgba(20,26,34,.45); border:1px solid rgba(90,74,42,.7);
+  backdrop-filter:blur(2px); -webkit-tap-highlight-color:transparent; touch-action:manipulation;
+}
+#town-layer .town-float-act:active{ transform:scale(.93); }
+#town-layer .town-float-act.ready{
+  color:var(--tn-gold); border-color:var(--tn-gold);
+  background:radial-gradient(circle at 50% 40%, rgba(58,50,24,.75), rgba(31,29,20,.7));
+  animation:townReady 1s ease-in-out infinite;
+}
+#town-layer.touch-ui .town-stick{ display:block; }
+#town-layer.touch-ui .town-float-act{ display:flex; }
 @keyframes townReady{ 0%,100%{box-shadow:0 0 0 rgba(217,164,65,0)} 50%{box-shadow:0 0 12px rgba(217,164,65,.5)} }
 
 /* ── 世界地圖 / 商店 共用彈窗 ── */
