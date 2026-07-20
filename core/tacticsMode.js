@@ -1427,4 +1427,5 @@ export const TacticsMode = {
     });
   },
 };
+TacticsMode.chapters = TX_CHAPTERS;  // 📖 供劇情回顧(旅人手記)讀取完整章節劇本
 if (typeof window !== 'undefined') window.TacticsMode = TacticsMode;
