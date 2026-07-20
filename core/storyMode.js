@@ -85,6 +85,40 @@ export const StoryMode = {
     }
   },
 
+  /* ══════════ 🔗 雙線劇情閘門(與戰線 tacticsMode 對接) ══════════
+     主線在同步點需先打贏對應戰線戰役,劇情才銜接得上:
+     m4←戰1、m7←戰2、m15←戰3、m16←戰4、m17←戰5、m18←戰6、m19←戰7、m20←戰8、m21←戰9、m22←戰10 */
+  MAIN_TX_GATES: { 4: 1, 7: 2, 15: 3, 16: 4, 17: 5, 18: 6, 19: 7, 20: 8, 21: 9, 22: 10 },
+  _txClearedList() {
+    try {
+      const d = JSON.parse(localStorage.getItem('splendor_tactics_2026') || '{}');
+      return Array.isArray(d.cleared) ? d.cleared : [];
+    } catch (e) { return []; }
+  },
+  levelGate(id) {
+    const needTx = this.MAIN_TX_GATES[id] || 0;
+    const ok = !needTx || this._txClearedList().includes(needTx);
+    return { ok, needTx };
+  },
+  /* 🔒 劇情鎖對話:說明為何本關尚未開放(需先打贏戰線第 X 戰) */
+  playLevelLockStory(id) {
+    if (!window.StoryDialog) return;
+    const gate = this.levelGate(id);
+    const chName = (window.TacticsMode && window.TacticsMode.chapters && window.TacticsMode.chapters[gate.needTx - 1])
+      ? `「${window.TacticsMode.chapters[gate.needTx - 1].name}」` : '';
+    const por = (who) => (window.TacticsMode && window.TacticsMode.portraitOf) ? window.TacticsMode.portraitOf(who, 'ally') : {};
+    window.StoryDialog.play({
+      headline: `📜 商談延期・第 ${id} 關`,
+      subline: '劇情尚未銜接',
+      script: [
+        { who: '', side: 'n', text: '談判桌尚未擺開,一封火漆封緘的前線急報先一步壓在了案上。' },
+        Object.assign({ who: '赫克特', side: 'ally', text: `商路被掐在敵人手裡,這一關的委託人不會上桌。指揮官——先出城打贏戰線第 ${gate.needTx} 戰${chName},把路打通!`, mood: 'shout' }, por('赫克特')),
+        Object.assign({ who: '你', side: 'ally', text: '……收拾行囊。刀劍開路,再回來用交易收尾。' }, por('你')),
+      ],
+      canSkip: false
+    });
+  },
+
   /* 🎯 依 winCondition 型別產生人話版過關條件(選關詳情框用) */
   describeWinCondition(m) {
     const w = m.winCondition || {};
@@ -127,18 +161,21 @@ export const StoryMode = {
     if (!modal) return;
 
     // 📋 精簡選關列:只保留關卡名稱;條件與獎勵於點選後在上方詳情框顯示
+    // 🔗 劇情閘門:進度已到但戰線未跟上的關卡顯示 ⚔️🔒,點擊播放劇情鎖對話
     let levelsHtml = STORY_MISSIONS.map(cfg => {
       const isUnlocked = cfg.id <= maxUnlocked;
+      const gate = this.levelGate(cfg.id);
+      const txLocked = isUnlocked && !gate.ok;
       const isCurrent = cfg.id === state.storyProgress.currentLevel;
       const isCleared = (state.storyProgress.clearedLevels || []).includes(cfg.id);
 
       return `
         <button class="story-scroll-row ${isCurrent ? 'is-current' : ''}" ${isUnlocked ? '' : 'disabled'}
-          style="opacity:${isUnlocked ? 1 : 0.4}; pointer-events:${isUnlocked ? 'auto' : 'none'};"
+          style="opacity:${isUnlocked ? (txLocked ? 0.75 : 1) : 0.4}; pointer-events:${isUnlocked ? 'auto' : 'none'};${txLocked ? ' border-color:rgba(224,87,91,0.5);' : ''}"
           onclick="window.selectStoryLevel(${cfg.id}, true)">
-          <div class="ss-badge">${isCleared ? '✅' : (isUnlocked ? '第 ' + cfg.id + ' 關' : '🔒')}</div>
+          <div class="ss-badge">${isCleared ? '✅' : (txLocked ? '⚔️🔒' : (isUnlocked ? '第 ' + cfg.id + ' 關' : '🔒'))}</div>
           <div class="ss-body">
-            <div class="ss-name">${cfg.name} ${isCurrent ? '🎯' : ''}</div>
+            <div class="ss-name">${cfg.name} ${isCurrent ? '🎯' : ''}${txLocked ? ` <span style="font-size:0.55rem; color:#E0999B;">需先打贏戰線第 ${gate.needTx} 戰</span>` : ''}</div>
           </div>
           <div class="ss-arrow">${isUnlocked ? '›' : ''}</div>
         </button>`;
@@ -194,6 +231,9 @@ window.selectStoryLevel = function(lvl, isFromModalClick = false) {
     return;
   }
 
+  // 🔒 劇情閘門:戰線未跟上 → 播劇情鎖對話,不選定該關
+  if (!StoryMode.levelGate(lvl).ok) { StoryMode.playLevelLockStory(lvl); return; }
+
   CoreState.get().storyProgress.currentLevel = lvl;
   CoreState.get().settings.selectedAssistant = `ast${lvl}`; 
   StoryMode.openStoryMapModal(undefined, true);  // 點選後才展開詳情
@@ -202,6 +242,9 @@ window.selectStoryLevel = function(lvl, isFromModalClick = false) {
 
 window.startSelectedStoryLevel = function() {
   if (typeof window.playUniformSfx === 'function') window.playUniformSfx();
+  // 🔒 保險:當前選定關被劇情閘門鎖住時,改播鎖定對話
+  const gLvl = CoreState.get().storyProgress?.currentLevel || 1;
+  if (!StoryMode.levelGate(gLvl).ok) { StoryMode.playLevelLockStory(gLvl); return; }
   document.getElementById('story-map-modal').classList.remove('show');
   const modal = document.getElementById('game-options-modal');
   if (modal) modal.classList.remove('show');
