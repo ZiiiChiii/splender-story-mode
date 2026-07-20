@@ -692,6 +692,10 @@ window.render = function() {
   document.getElementById('turn-txt').textContent = fullState.turn;
   document.getElementById('score-txt').textContent = player.score;
 
+  // 🏘️ 故事模式:顯示「回地圖」鈕,隨時可離開當前交易返回城鎮(桌局狀態保留於背景)
+  const b2t = document.getElementById('back-to-town-btn');
+  if (b2t) b2t.style.display = (fullState.mode === 'storyMode') ? '' : 'none';
+
   const isSingleMode = fullState.mode === 'singlePlayer';
   const isvsAI = fullState.mode === 'vsAI';
   const isStoryMode = fullState.mode === 'storyMode';
