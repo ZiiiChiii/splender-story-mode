@@ -508,6 +508,7 @@ export const TownMode = {
 
   enter() {
     this.active = true;
+    if (window.setTownBgm) window.setTownBgm(true);   // 🎵 城鎮地圖背景樂(466)
     this.px = 7; this.py = 8; this.facing = 'down'; this.frame = 0; this.frameT = 0;
     this.keys = {};
     const el = this.ensureLayer();
@@ -545,6 +546,7 @@ export const TownMode = {
 
   exit() {
     this.active = false;
+    if (window.setTownBgm) window.setTownBgm(false);   // 🎵 離開地圖 → 還原模式/戰場音樂
     if (this.raf) { cancelAnimationFrame(this.raf); this.raf = null; }
     if (this.keyHandler) window.removeEventListener('keydown', this.keyHandler);
     if (this.keyUpHandler) window.removeEventListener('keyup', this.keyUpHandler);
