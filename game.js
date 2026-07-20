@@ -662,10 +662,12 @@ const BG_TRACKS = {
   default:   'https://assets.mixkit.co/music/785/785.mp3',
   vsAI:      'https://assets.mixkit.co/music/917/917.mp3',  // 帝國爭霸專屬戰曲
   storyMode: 'https://assets.mixkit.co/music/233/233.mp3',  // 📜 寶石交易對局(故事模式)
+  town:      'https://assets.mixkit.co/music/466/466.mp3',  // 🏘️ 城鎮地圖漫遊
   tactics:   'https://assets.mixkit.co/music/734/734.mp3'   // ⚔️ 戰棋對戰
 };
 let _currentBgTrack = null;
-let _battleBgmOn = false;   // 戰棋覆蓋層開啟時,壓過模式音樂
+let _battleBgmOn = false;   // 戰棋覆蓋層開啟時,壓過一切
+let _townBgmOn = false;     // 城鎮地圖開啟時,壓過模式音樂(但讓位給戰棋)
 
 function applyBgTrack(want) {
   const bg = document.getElementById('bg-music');
@@ -684,12 +686,22 @@ function applyBgTrack(want) {
 }
 
 function syncBgMusicToMode(mode) {
+  // 🎚️ 優先序:戰棋 734 > 城鎮地圖 466 > 模式音樂
   if (_battleBgmOn) return;   // ⚔️ 戰棋進行中 → 由戰場音樂主導
+  if (_townBgmOn) { applyBgTrack(BG_TRACKS.town); return; }
   const want = (mode === 'vsAI') ? BG_TRACKS.vsAI
     : (mode === 'storyMode') ? BG_TRACKS.storyMode
     : BG_TRACKS.default;
   applyBgTrack(want);
 }
+
+/* 🏘️ 城鎮地圖開關背景樂(由 townMode 呼叫) */
+window.setTownBgm = function(on) {
+  _townBgmOn = !!on;
+  let mode = 'default';
+  try { mode = CoreState.get().mode; } catch (e) {}
+  syncBgMusicToMode(mode);
+};
 
 /* ⚔️ 戰棋層開關背景樂:on → 戰曲;off → 還原當前模式音樂(由 tacticsMode 呼叫) */
 window.setBattleBgm = function(on) {
