@@ -829,12 +829,17 @@ export const TownMode = {
       this.ensureLayer().appendChild(modal);
     }
     const nodesHtml = WORLD_NODES.map(n => {
-      const cleared = window.TacticsMode && window.TacticsMode.isChapterCleared && window.TacticsMode.isChapterCleared(n.chIdx + 1);
-      const unlocked = (n.chIdx + 1) <= maxCh;
-      return `<button class="town-node ${unlocked ? '' : 'locked'}" style="left:${n.x}%; top:${n.y}%;"
-        ${unlocked ? '' : 'disabled'} onclick="window.TownMode.gotoBattle(${n.chIdx})">
+      const id = n.chIdx + 1;
+      const cleared = window.TacticsMode && window.TacticsMode.isChapterCleared && window.TacticsMode.isChapterCleared(id);
+      const gate = (window.TacticsMode && window.TacticsMode.chapterGate)
+        ? window.TacticsMode.chapterGate(id) : { ok: id <= maxCh, prevOk: id <= maxCh };
+      // 三態:✅已通關 / 可進入 / 🔒鎖定(前章未過=完全鎖;僅主線未到=可點,點擊播劇情鎖對話)
+      const clickable = gate.prevOk;
+      const label = cleared ? '' : (!gate.prevOk ? ' 🔒' : (!gate.mainOk ? ' 📜🔒' : ''));
+      return `<button class="town-node ${gate.ok || cleared ? '' : 'locked'}" style="left:${n.x}%; top:${n.y}%;"
+        ${clickable ? '' : 'disabled'} onclick="window.TownMode.gotoBattle(${n.chIdx})">
         <span class="town-node-ico">${cleared ? '✅' : n.icon}</span>
-        <span class="town-node-name">${esc(n.name)}${unlocked ? '' : ' 🔒'}</span>
+        <span class="town-node-name">${esc(n.name)}${label}</span>
       </button>`;
     }).join('');
     modal.innerHTML = `
@@ -844,7 +849,7 @@ export const TownMode = {
           <button class="town-x" onclick="document.getElementById('town-world-modal').classList.remove('show')">✕</button>
         </div>
         <div class="town-world-map">
-          <div class="town-world-legend">選擇一處戰場前往。✅ 為已通關,🔒 需先通關前一戰。</div>
+          <div class="town-world-legend">✅ 已通關｜🔒 需先通關前一戰｜📜🔒 需主線劇情跟上(點擊可聽取詳情)。</div>
           ${nodesHtml}
         </div>
         <div class="town-world-foot">💎 寶石庫:<span id="town-world-vault">${window.TacticsVault ? window.TacticsVault.lineHtml() : ''}</span></div>
