@@ -45,6 +45,7 @@ const NPCS = [
 ];
 const PROPS = [
   { id: 'board', name: '任務佈告欄', x: 9, y: 5, hint: '查看進度與下一步指引' },
+  { id: 'recap', name: '旅人手記', x: 11, y: 7, hint: '翻閱手記・回顧已完成的劇情' },
 ];
 // NPC / 道具所在格不可走
 NPCS.forEach(n => { if (MAP[n.y] && MAP[n.y][n.x] !== undefined) MAP[n.y][n.x] = 'B'; });
@@ -469,6 +470,19 @@ function drawBoard(ctx, gx, gy, ox, oy) {
   px(ctx, x + 18, y + 11, 3, 3, '#D9534F');                                            // 紅蠟章
 }
 
+/* 📖 旅人手記(木製讀經台 + 攤開的手記):互動可回顧已完成劇情 */
+function drawRecap(ctx, gx, gy, ox, oy) {
+  const x = gx * TILE - ox, y = gy * TILE - oy;
+  px(ctx, x + 13, y + 16, 6, 14, '#6B4A2B');                                           // 立柱
+  px(ctx, x + 10, y + 28, 12, 3, '#5A3D22');                                           // 底座
+  px(ctx, x + 5, y + 10, 22, 4, '#7A5230');                                            // 斜台
+  px(ctx, x + 4, y + 4, 11, 8, '#EFE8D4'); px(ctx, x + 17, y + 4, 11, 8, '#E8DCC0');   // 左右頁
+  px(ctx, x + 15, y + 3, 2, 10, '#8A6A3C');                                            // 書脊
+  px(ctx, x + 6, y + 6, 7, 1, '#B09A6E'); px(ctx, x + 6, y + 9, 7, 1, '#B09A6E');      // 左頁字行
+  px(ctx, x + 19, y + 6, 7, 1, '#C0AA7C'); px(ctx, x + 19, y + 9, 7, 1, '#C0AA7C');    // 右頁字行
+  px(ctx, x + 24, y + 2, 2, 4, '#D9A441');                                             // 金色書籤
+}
+
 /* 供劇情引擎使用的像素立繪(dataURL,pixel 模式放大) */
 let HERO_PORTRAIT = null, ELDER_PORTRAIT = null;
 
@@ -729,7 +743,7 @@ export const TownMode = {
     BUILDINGS.forEach(b => drawables.push({ y: (b.by + b.bh) * TILE, fn: () => drawBuilding(ctx, b, ox, oy) }));
     TREES.forEach(([tx, ty]) => { if (MAP[ty][tx] === 'T') drawables.push({ y: (ty + 1) * TILE, fn: () => drawTree(ctx, tx, ty, ox, oy) }); });
     NPCS.forEach(n => drawables.push({ y: (n.y + 1) * TILE, fn: () => drawElder(ctx, n.x, n.y, ox, oy) }));
-    PROPS.forEach(p => drawables.push({ y: (p.y + 1) * TILE, fn: () => drawBoard(ctx, p.x, p.y, ox, oy) }));
+    PROPS.forEach(p => drawables.push({ y: (p.y + 1) * TILE, fn: () => (p.id === 'recap' ? drawRecap : drawBoard)(ctx, p.x, p.y, ox, oy) }));
     const heroSX = this.px * TILE - ox, heroSY = this.py * TILE - oy;
     drawables.push({ y: this.py * TILE, fn: () => drawHero(ctx, heroSX, heroSY, this.facing, this.frame) });
     drawables.sort((a, b) => a.y - b.y);
@@ -794,6 +808,7 @@ export const TownMode = {
     else if (near.id === 'shop') this.openShop();
     else if (near.id === 'elder') { if (window.StoryEvents) window.StoryEvents.talkToElder(); }
     else if (near.id === 'board') { if (window.StoryEvents) window.StoryEvents.openBoard(); }
+    else if (near.id === 'recap') { if (window.StoryEvents) window.StoryEvents.openRecap(); }
   },
 
   /* 🏛️ 交易殿堂 → 桌遊主線任務(先收城鎮圖層,避免蓋住彈窗) */
