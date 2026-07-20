@@ -659,15 +659,17 @@ window.reselectAiOpponent = function() {
 // 🎵 依遊戲模式切換背景音樂
 // ==========================================
 const BG_TRACKS = {
-  default: 'https://assets.mixkit.co/music/785/785.mp3',
-  vsAI:    'https://assets.mixkit.co/music/917/917.mp3'   // 帝國爭霸專屬戰曲
+  default:   'https://assets.mixkit.co/music/785/785.mp3',
+  vsAI:      'https://assets.mixkit.co/music/917/917.mp3',  // 帝國爭霸專屬戰曲
+  storyMode: 'https://assets.mixkit.co/music/233/233.mp3',  // 📜 寶石交易對局(故事模式)
+  tactics:   'https://assets.mixkit.co/music/734/734.mp3'   // ⚔️ 戰棋對戰
 };
 let _currentBgTrack = null;
+let _battleBgmOn = false;   // 戰棋覆蓋層開啟時,壓過模式音樂
 
-function syncBgMusicToMode(mode) {
+function applyBgTrack(want) {
   const bg = document.getElementById('bg-music');
   if (!bg) return;
-  const want = (mode === 'vsAI') ? BG_TRACKS.vsAI : BG_TRACKS.default;
   if (_currentBgTrack === want) return;
   _currentBgTrack = want;
 
@@ -680,6 +682,25 @@ function syncBgMusicToMode(mode) {
   // 原本正在播放才自動續播（不違反瀏覽器自動播放限制，也尊重靜音設定）
   if (wasPlaying && !musicMuted) bg.play().catch(() => {});
 }
+
+function syncBgMusicToMode(mode) {
+  if (_battleBgmOn) return;   // ⚔️ 戰棋進行中 → 由戰場音樂主導
+  const want = (mode === 'vsAI') ? BG_TRACKS.vsAI
+    : (mode === 'storyMode') ? BG_TRACKS.storyMode
+    : BG_TRACKS.default;
+  applyBgTrack(want);
+}
+
+/* ⚔️ 戰棋層開關背景樂:on → 戰曲;off → 還原當前模式音樂(由 tacticsMode 呼叫) */
+window.setBattleBgm = function(on) {
+  _battleBgmOn = !!on;
+  if (on) applyBgTrack(BG_TRACKS.tactics);
+  else {
+    let mode = 'default';
+    try { mode = CoreState.get().mode; } catch (e) {}
+    syncBgMusicToMode(mode);
+  }
+};
 
 // ==========================================
 // 4. 全域 Render 控制器 (版面模式完全分離)
