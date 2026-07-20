@@ -151,6 +151,56 @@
       ]
     },
     {
+      id: 'arc2_call',
+      // 第二部開幕:灰鴉篇打完 + 主線第 7 關(查理曼警告眼線)通關 → 黑市告急
+      cond: () => txCleared().includes(3) && mainProg().cleared.includes(7) && !txCleared().includes(4),
+      headline: '第二部・影盟篇 開幕',
+      subline: '微光村・廣場',
+      script: () => [
+        narr('深夜,一隻信鴿撞進長老家的窗——腳環上綁著查理曼的暗號密信,字跡潦草得反常。'),
+        elderLine('黑市之主親筆求援,這可是頭一遭……信上說:灰鴉的殘黨回來了,還帶著一批「影子一樣」的新同伴。'),
+        castLine('露娜', 'ally', '影子……火漆印上的影刃!長老,那不是傭兵——恐怕是拿契約殺人的職業結社,終於自己走到檯面上了。'),
+        heroLine('灰鴉只是爪子,現在露出來的才是獠牙。整隊——去城鎮門口出城,黑市暗巷,會一會這群「影子」。', 'shout')
+      ]
+    },
+    {
+      id: 'shade_debut',
+      cond: () => txCleared().includes(4),
+      headline: '情報・雙頭鷹與天秤',
+      subline: '微光村・廣場',
+      script: () => [
+        narr('黑市巷戰翌日,查理曼的回禮送到:一枚拓印下來的火漆——雙頭鷹咬著天秤。'),
+        castLine('貞德', 'ally', '「影盟」,拿契約殺人的結社;而這枚家徽,屬於首都商會的巨頭。礦坑到黑市,所有的線,都繫在同一隻手上。'),
+        heroLine('那隻手很快就要縮回大會堂了。前線交給夥伴,談判桌交給我——兩條路,一起往首都逼近。'),
+        elderLine('熔爐、要塞、首都……接下來每一站都是硬仗。孩子,佈告欄會幫你記著兩邊的進度,別衝過頭,也別忘了回村歇口氣。')
+      ]
+    },
+    {
+      id: 'hq_call',
+      // 影盟主力覆滅(碼頭戰後) + 主線第 21 關(禁運)通關 → 直搗總壇
+      cond: () => txCleared().includes(9) && mainProg().cleared.includes(21) && !txCleared().includes(10),
+      headline: '決戰前夜・錢莊的暗門',
+      subline: '微光村・廣場',
+      script: () => [
+        narr('禁運被你撐破的當晚,俘虜供出的位置得到了證實:首都地下的廢棄錢莊,就是影盟總壇。'),
+        castLine('赫克特', 'ally', '巨頭在明處用禁運困你,影盟在暗處磨刀。拔掉總壇,他就只剩檯面上那一條路可走了。'),
+        castLine('露娜', 'ally', '星象「將星壓垣」——一戰定音的格局。把鍛造和藥水補滿,統領寇克斯不是善茬。'),
+        heroLine('九筆帳收到現在,就差這最後一筆。出發——影盟總壇,結案!', 'angry')
+      ]
+    },
+    {
+      id: 'hq_won',
+      cond: () => txCleared().includes(10),
+      headline: '影落・前線的凱歌',
+      subline: '微光村・廣場',
+      script: () => [
+        narr('影盟覆滅的消息傳回微光村時,鐘樓的鐘被敲了整整十下——一戰一響。'),
+        castLine('貞德', 'ally', '從紅岩礦坑到影盟總壇,十場戰役,前線的仗打完了。剩下的敵人,只會坐在談判桌對面。'),
+        elderLine('刀劍能守住商路,但能讓商路活起來的,終究是交易。孩子,大會堂的最後幾張桌子,去把它們贏下來。', 'happy'),
+        heroLine('夥伴們用十場勝仗把路鋪到了大會堂門口。最後一段——換我上桌。', 'shout')
+      ]
+    },
+    {
       id: 'shadow_reveal',
       cond: () => mainProg().cleared.includes(18),
       headline: '真相・影刃折斷之後',
@@ -214,13 +264,33 @@
       return this._pendCache.v;
     },
 
-    /* 下一步建議(長老與佈告欄共用的導航邏輯,雙線皆通、永不卡關) */
+    /* 下一步建議(長老與佈告欄共用的導航邏輯,雙線皆通、永不卡關)
+       每場戰線戰役都有「建議先通關的主線關卡」:主線進度到位且該戰未打 → 建議出城;
+       否則建議繼續殿堂。戰線解鎖本身只依序(前一戰通關即開),提示僅是最舒適的節奏。 */
+    _txPlan: [
+      { ch: 1,  rec: 3,  name: '紅岩礦坑',   text: '灰鴉佔據了紅岩礦坑——率隊奪回微光村的命脈' },
+      { ch: 2,  rec: 6,  name: '橡木鎮糧倉', text: '橡木鎮糧倉今夜將遭夜襲——出城馳援' },
+      { ch: 3,  rec: 14, name: '邊境森林',   text: '灰鴉主力壓境邊境森林——與首領決一死戰' },
+      { ch: 4,  rec: 7,  name: '黑市暗巷',   text: '查理曼的黑市遭影盟襲擊——清剿暗巷' },
+      { ch: 5,  rec: 8,  name: '火山熔爐',   text: '影盟要熄滅瓦肯的熔爐——守住軍備命脈' },
+      { ch: 6,  rec: 12, name: '傀儡工房',   text: '鍊金傀儡被咒印駭走——助帕拉塞爾斯奪回核心' },
+      { ch: 7,  rec: 13, name: '地底金庫',   text: '重甲衛正在劫掠索林的金庫——地底攔截' },
+      { ch: 8,  rec: 16, name: '首都下水道', text: '神秘貨箱正運進大會堂地基——潛入攔截' },
+      { ch: 9,  rec: 19, name: '王港碼頭',   text: '影盟傾巢突襲麥哲倫船隊——暴雨夜護航' },
+      { ch: 10, rec: 21, name: '影盟總壇',   text: '直搗廢棄錢莊地下的影盟總壇——終結影刃' },
+    ],
     nextHint() {
       const m = mainProg(), t = txCleared();
       if (!m.cleared.includes(1)) return { where: 'hall', text: '前往「寶石交易殿堂」找內政官傑洛米,用一場交易證明你的本事(主線第 1 關)。' };
-      if (m.cleared.includes(3) && !t.includes(1)) return { where: 'gate', text: '灰鴉佔據了紅岩礦坑——從「城鎮門口」出城,率隊奪回微光村的命脈(戰線第 1 戰)。' };
-      if (m.cleared.includes(6) && !t.includes(2)) return { where: 'gate', text: '橡木鎮糧倉今夜將遭夜襲——從「城鎮門口」出城馳援(戰線第 2 戰)。' };
-      if (m.cleared.includes(14) && !t.includes(3)) return { where: 'gate', text: '灰鴉主力壓境邊境森林——從「城鎮門口」出城,與首領決一死戰(戰線第 3 戰)。' };
+      // 找出第一場未通關的戰線戰役;若已解鎖且主線建議進度到位 → 建議出城
+      for (const p of this._txPlan) {
+        if (t.includes(p.ch)) continue;
+        const unlocked = p.ch === 1 || t.includes(p.ch - 1);
+        if (unlocked && m.cleared.includes(p.rec)) {
+          return { where: 'gate', text: `${p.text}(從「城鎮門口」出城 → ${p.name},戰線第 ${p.ch} 戰)。` };
+        }
+        break; // 未解鎖或主線未到 → 回頭建議殿堂
+      }
       if (!m.cleared.includes(25)) {
         // 找出已解鎖但未通關的最小主線關卡
         let next = 1;
@@ -237,6 +307,8 @@
       const hint = this.nextHint();
       const m = mainProg(), t = txCleared();
       const chat =
+        t.includes(10) ? '影盟覆滅那晚的十響鐘聲,老朽一輩子忘不了。前線太平了,剩下的路,好好走。' :
+        t.includes(4) ? '連職業刺客都被你們打退了……孩子,老朽現在只擔心巨頭狗急跳牆,凡事多帶夥伴。' :
         t.includes(3) ? '灰鴉折翼之後,商隊夜裡也敢趕路了。這都是你們打出來的太平。' :
         t.includes(1) ? '礦車又跑起來了。老朽每天光聽那聲音,就能多吃一碗飯。' :
         m.cleared.includes(1) ? '傑洛米那張嘴雖毒,心是熱的——他到處跟人誇你呢,別說是老朽說的。' :
@@ -259,7 +331,7 @@
         subline: '微光村・廣場',
         script: [
           narr(`【商道戰役・主線】已通關 ${mainDone} / 25 關,目前開放至第 ${Math.min(25, m.maxUnlockedLevel)} 關(寶石交易殿堂)。`),
-          narr(`【戰線戰役・次線】已通關 ${t.length} / 3 戰(城鎮門口・世界地圖)。主線通關可獲寶石庫獎勵,供戰線鍛造與學技。`),
+          narr(`【戰線戰役・次線】已通關 ${t.length} / 10 戰(城鎮門口・世界地圖)。第一部・灰鴉篇(1-3)、第二部・影盟篇(4-10)。主線通關可獲寶石庫獎勵,供戰線鍛造與學技。`),
           narr('【下一步】' + this.nextHint().text)
         ],
         canSkip: false
