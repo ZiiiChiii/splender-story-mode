@@ -34,15 +34,30 @@ export const StoryMode = {
     const firstClear = !s.clearedLevels.includes(completedLvlId);
     if (firstClear) s.clearedLevels.push(completedLvlId);
 
-    // \u2694\ufe0f 戰線聯動:主線每關「首次」通關 → 發放共享寶石庫獎勵(供戰棋次線鍛造使用)
-    if (firstClear && window.TacticsVault) {
-      const colorCycle = ['r', 'g', 'k', 'w', 'u'];   // 對應 ast1~5 的色系循環
-      const gems = { [colorCycle[(completedLvlId - 1) % 5]]: 2 };
-      if (completedLvlId % 5 === 0) gems.k = (gems.k || 0) + 1;  // 章末加贈黑曜石
+    // \u2694\ufe0f 戰線聯動:主線通關 → 發放共享寶石庫獎勵(供戰棋次線鍛造使用)
+    //    首次通關:對應色 ×2(章末關再加贈黑曜石 ×1);🔁 重複刷關:對應色 ×1(可反覆農寶石)
+    const colorCycle = ['r', 'g', 'k', 'w', 'u'];   // 對應 ast1~5 的色系循環
+    let gems = null;
+    if (window.TacticsVault) {
+      const c = colorCycle[(completedLvlId - 1) % 5];
+      if (firstClear) {
+        gems = { [c]: 2 };
+        if (completedLvlId % 5 === 0) gems.k = (gems.k || 0) + 1;  // 章末加贈黑曜石
+      } else {
+        gems = { [c]: 1 };
+      }
       window.TacticsVault.grant(gems);
-      this._lastGemReward = gems;
-    } else {
-      this._lastGemReward = null;
+    }
+    this._lastGemReward = gems;
+
+    // 於勝利視窗補充寶石入庫說明(saveStoryProgress 在視窗文字設定之後被呼叫)
+    if (gems) {
+      const bodyEl = document.getElementById('modal-body-txt');
+      const GEM_NAMES = { r: '紅寶石', u: '藍寶石', g: '翡翠', w: '白鑽', k: '黑曜石' };
+      if (bodyEl) {
+        bodyEl.textContent += `\n💎 ${firstClear ? '首次通關' : '重複通關'}寶石入庫:` +
+          Object.entries(gems).map(([k, n]) => `${GEM_NAMES[k]} ×${n}`).join('、');
+      }
     }
     
     // 通關後自動擴充進度解鎖下 2 關
@@ -70,6 +85,31 @@ export const StoryMode = {
     }
   },
 
+  /* 🎯 依 winCondition 型別產生人話版過關條件(選關詳情框用) */
+  describeWinCondition(m) {
+    const w = m.winCondition || {};
+    const gemNames = { r: '紅寶石', u: '藍寶石', g: '翡翠', w: '白鑽', k: '黑曜石' };
+    const sc = w.targetScore ? `達成 ${w.targetScore} 分` : '';
+    switch (w.type) {
+      case 'score_only': return sc;
+      case 'score_and_token_limit': return `${sc},且${gemNames[w.limitTokenColor] || w.limitTokenColor}籌碼全程不超過 ${w.maxTokenAllowed} 顆`;
+      case 'score_and_reserve_buy': return `${sc},且以保留卡牌收購 ${w.minReservedBuys} 張以上`;
+      case 'score_and_color_balance': return `${sc},且五色產業各收 ${w.minCardsPerColor} 張以上`;
+      case 'score_and_max_bag_limit': return `${sc},且隨身籌碼全程不超過 ${w.maxBagSizeEver} 顆`;
+      case 'score_and_exclusive_colors': return `${sc},且名下只允許 ${(w.allowedColors || []).map(c => gemNames[c] || c).join('、')} 產業`;
+      case 'score_and_gold_reserve': return `${sc},且結算時手握 ${w.requiredGoldOnHand} 枚以上黃金`;
+      case 'beat_ai': return `先${sc || '達標'}擊敗對手 AI`;
+      case 'exact_score': return `結算分數「剛好」${w.targetScore} 分(不可超過)`;
+      case 'score_and_free_buys': return `${sc},且免費(零籌碼)收購 ${w.minFreeBuysRequired} 張以上`;
+      case 'nobles_count_only': return `招攬 ${w.targetNoblesCount} 位貴族拜訪(不看分數)`;
+      case 'score_and_combo_trigger': return `${sc},且最後一回合同時觸發卡片得分與貴族拜訪`;
+      case 'high_score_and_tier3_count': return `${sc},且收購 ${w.requiredTier3CardsWithPoints4} 張 4 分以上頂級物業`;
+      case 'score_and_perfect_colors': return `${sc},且五色永久產量各達 ${w.requiredMinBonusAllColors} 以上`;
+      case 'master_final_challenge': return `達成 ${w.targetScore} 分,並獲得 ${w.targetNoblesCount} 位貴族見證`;
+      default: return sc || '特定條件(詳見劇情對話)';
+    }
+  },
+
   openStoryMapModal(tab) {
     this.loadStoryProgress();
     const state = CoreState.get();
@@ -86,13 +126,11 @@ export const StoryMode = {
     let modal = document.getElementById('story-map-modal');
     if (!modal) return;
 
+    // 📋 精簡選關列:只保留關卡名稱;條件與獎勵於點選後在上方詳情框顯示
     let levelsHtml = STORY_MISSIONS.map(cfg => {
       const isUnlocked = cfg.id <= maxUnlocked;
       const isCurrent = cfg.id === state.storyProgress.currentLevel;
       const isCleared = (state.storyProgress.clearedLevels || []).includes(cfg.id);
-      const astCfg = ASSISTANTS_DATABASE[cfg.rewardAssistantId];
-      const turnDisplay = cfg.setup.turnLimit >= 99 ? '無限' : cfg.setup.turnLimit + ' 回';
-      const scoreDisplay = cfg.winCondition.targetScore ? cfg.winCondition.targetScore + ' 分' : '特定條件';
 
       return `
         <button class="story-scroll-row ${isCurrent ? 'is-current' : ''}" ${isUnlocked ? '' : 'disabled'}
@@ -101,22 +139,32 @@ export const StoryMode = {
           <div class="ss-badge">${isCleared ? '✅' : (isUnlocked ? '第 ' + cfg.id + ' 關' : '🔒')}</div>
           <div class="ss-body">
             <div class="ss-name">${cfg.name} ${isCurrent ? '🎯' : ''}</div>
-            <div class="ss-meta">🎯 ${scoreDisplay}　⏳ ${turnDisplay}　🎁 ${astCfg ? astCfg.name : '—'}</div>
           </div>
           <div class="ss-arrow">${isUnlocked ? '›' : ''}</div>
         </button>`;
     }).join('');
 
     const currentMission = STORY_MISSIONS[state.storyProgress.currentLevel - 1] || STORY_MISSIONS[0];
+    const curAst = ASSISTANTS_DATABASE[currentMission.rewardAssistantId];
+    const curTurn = currentMission.setup.turnLimit >= 99 ? '不限回合' : `${currentMission.setup.turnLimit} 回合內`;
+    const gemNames = { r: '紅寶石', u: '藍寶石', g: '翡翠', w: '白鑽', k: '黑曜石' };
+    const curColor = gemNames[['r', 'g', 'k', 'w', 'u'][(currentMission.id - 1) % 5]];
+    const isCurCleared = (state.storyProgress.clearedLevels || []).includes(currentMission.id);
 
     modal.innerHTML = `
       <div class="modal" style="max-width:520px; max-height:calc(var(--stage-h, 716px) - 40px); display:flex; flex-direction:column; overflow:hidden; padding:16px;">
         <h2 class="modal-title">📜 商道戰役・主線章節</h2>
-        <p style="font-size:0.72rem; color:var(--text-muted); margin-bottom:6px;">點選已解鎖章節挑戰或重打。次線「戰線戰役」請由城鎮的「城鎮門口」出城前往。</p>
+        <p style="font-size:0.72rem; color:var(--text-muted); margin-bottom:6px;">點選章節查看詳情與挑戰。次線「戰線戰役」請由城鎮的「城鎮門口」出城前往。</p>
 
         <div style="background:rgba(0,0,0,0.4); padding:10px; border-radius:4px; border:1px solid rgba(212,175,55,0.25); text-align:left; margin-bottom:8px; flex-shrink:0;">
-          <div style="font-size:0.75rem; font-weight:800; color:#d4af37; margin-bottom:2px;">【${currentMission.speaker}】：</div>
+          <div style="font-size:0.75rem; font-weight:800; color:#d4af37; margin-bottom:2px;">第 ${currentMission.id} 關 ${currentMission.name}【${currentMission.speaker}】：</div>
           <div style="font-size:0.7rem; color:#fff; line-height:1.4; margin-bottom:4px;">"${currentMission.dialogue}"</div>
+          <hr style="border:0; border-top:1px dashed rgba(212,175,55,0.2); margin:4px 0;">
+          <div style="font-size:0.66rem; color:#ffe099; line-height:1.6;">
+            🎯 過關條件:${this.describeWinCondition(currentMission)}<br>
+            ⏳ 時限:${curTurn}　🎁 首次通關:解鎖「${curAst ? curAst.name : '—'}」+ ${curColor} ×2${currentMission.id % 5 === 0 ? ' + 黑曜石 ×1' : ''}<br>
+            🔁 重複通關:${curColor} ×1(可反覆刷關累積寶石庫)${isCurCleared ? '　✅ 已通關' : ''}
+          </div>
           <hr style="border:0; border-top:1px dashed rgba(212,175,55,0.2); margin:4px 0;">
           <div style="font-size:0.65rem; color:var(--text-muted);">${currentMission.story}</div>
         </div>
