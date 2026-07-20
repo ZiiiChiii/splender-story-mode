@@ -220,3 +220,104 @@
 @media (prefers-reduced-motion:reduce){
   #tactics-layer .tx-piece img.tx-spr, #tactics-layer .tx-board.shake, #tactics-layer .tx-board.shake-big{ animation:none!important; }
 }
+
+/* ══════════ ⚒️ 整備畫面 2.0:角色卡片 + 立繪 + 動畫 ══════════ */
+#tactics-layer .txp-cards{ display:flex; flex-direction:column; gap:10px; }
+#tactics-layer .txp-card{
+  position:relative; overflow:hidden; border-radius:10px; padding:10px 11px;
+  background:linear-gradient(145deg, #1B2330 0%, #141A24 60%, #101620 100%);
+  border:1px solid rgba(217,164,65,0.28);
+  box-shadow:0 3px 12px rgba(0,0,0,0.35), inset 0 1px 0 rgba(255,255,255,0.04);
+  animation:txpIn .5s cubic-bezier(.18,.9,.32,1.15) backwards;
+  animation-delay:calc(var(--i, 0) * 100ms);
+}
+#tactics-layer .txp-cards.txp-ready .txp-card{ animation:none; }
+@keyframes txpIn{ from{ opacity:0; transform:translateY(16px) scale(.97);} to{ opacity:1; transform:none;} }
+#tactics-layer .txp-card::before{ /* 斜向緞帶光 */
+  content:""; position:absolute; top:0; right:-38px; width:90px; height:200%;
+  background:linear-gradient(115deg, transparent 30%, rgba(217,164,65,0.06) 50%, transparent 70%);
+  transform:rotate(12deg); pointer-events:none;
+}
+#tactics-layer .txp-top{ display:flex; align-items:center; gap:10px; }
+#tactics-layer .txp-portrait-wrap{
+  width:64px; height:72px; flex-shrink:0; border-radius:8px; overflow:hidden;
+  background:radial-gradient(circle at 50% 30%, #2A3547, #171E29 75%);
+  border:1px solid rgba(217,164,65,0.35); display:flex; align-items:flex-end; justify-content:center;
+  box-shadow:inset 0 -10px 14px rgba(0,0,0,0.4);
+}
+#tactics-layer .txp-portrait{
+  width:52px; height:auto; image-rendering:pixelated;
+  animation:txpBob 3.2s ease-in-out infinite;
+  filter:drop-shadow(0 3px 3px rgba(0,0,0,0.5));
+}
+@keyframes txpBob{ 0%,100%{ transform:translateY(1px);} 50%{ transform:translateY(-2px);} }
+#tactics-layer .txp-id{ flex:1; min-width:0; }
+#tactics-layer .txp-name{ font-size:0.82rem; font-weight:900; color:#F0D89A; letter-spacing:0.04em; }
+#tactics-layer .txp-lead{
+  font-size:0.5rem; font-weight:800; color:#0F141B; background:linear-gradient(180deg,#F0D89A,#D9A441);
+  border-radius:4px; padding:1px 5px; vertical-align:2px; margin-left:2px;
+}
+#tactics-layer .txp-cls{ font-size:0.6rem; color:#9AA3AD; margin-top:1px; }
+#tactics-layer .txp-skills{ font-size:0.58rem; color:#8FD3C9; margin-top:3px; }
+/* 數值條 */
+#tactics-layer .txp-stats{ margin-top:8px; }
+#tactics-layer .txp-bar{ display:flex; align-items:center; gap:6px; margin-bottom:4px; }
+#tactics-layer .txp-bar label{ width:44px; font-size:0.58rem; color:#C9CFD8; flex-shrink:0; }
+#tactics-layer .txp-bar b{ width:26px; text-align:right; font-size:0.66rem; color:#EAE4D6; }
+#tactics-layer .txp-track{
+  flex:1; height:8px; border-radius:5px; background:#0C1118; overflow:hidden;
+  border:1px solid rgba(255,255,255,0.06);
+}
+#tactics-layer .txp-fill{ height:100%; border-radius:5px; transition:width .55s cubic-bezier(.25,.9,.35,1); }
+#tactics-layer .txp-hp{ background:linear-gradient(90deg,#7A2A2A,#E0575B 70%,#FF9A8C); }
+#tactics-layer .txp-mp{ background:linear-gradient(90deg,#274B7A,#4FA3E0 70%,#9AD6FF); }
+#tactics-layer .txp-mini{ display:flex; gap:10px; font-size:0.6rem; color:#C9CFD8; margin-top:2px; }
+#tactics-layer .txp-mini b{ color:#F0D89A; }
+/* 晶紋磚 */
+#tactics-layer .txp-forges{ display:grid; grid-template-columns:repeat(5, 1fr); gap:5px; margin-top:9px; }
+#tactics-layer .txp-forge{
+  display:flex; flex-direction:column; align-items:center; gap:2px; padding:6px 2px 5px;
+  background:linear-gradient(180deg,#232D3C,#1A2230); border:1px solid #3A4656; border-radius:8px;
+  color:#EAE4D6; cursor:pointer; font-family:inherit;
+  transition:transform .12s ease, border-color .15s, box-shadow .15s;
+}
+#tactics-layer .txp-forge:not(:disabled):hover{
+  transform:translateY(-2px); border-color:#D9A441; box-shadow:0 4px 10px rgba(217,164,65,0.18);
+}
+#tactics-layer .txp-forge:not(:disabled):active{ transform:scale(.94); }
+#tactics-layer .txp-forge:disabled{ opacity:.42; cursor:default; }
+#tactics-layer .txp-forge.full{ opacity:1; border-color:rgba(217,164,65,0.6); background:linear-gradient(180deg,#2C2A1C,#1F1D14); }
+#tactics-layer .txp-fico{ font-size:0.9rem; line-height:1; }
+#tactics-layer .txp-fname{ font-size:0.55rem; font-weight:700; }
+#tactics-layer .txp-pips{ display:flex; gap:2px; }
+#tactics-layer .txp-pips i{
+  width:6px; height:6px; border-radius:50%; background:#33404F; border:1px solid #46586C;
+  transition:background .3s, box-shadow .3s;
+}
+#tactics-layer .txp-pips i.on{ background:#F0D89A; border-color:#D9A441; box-shadow:0 0 5px rgba(240,216,154,0.8); }
+#tactics-layer .txp-cost{ font-size:0.55rem; min-height:12px; display:flex; gap:1px; align-items:center; }
+#tactics-layer .txp-max{ color:#D9A441; letter-spacing:0.1em; font-size:0.52rem; }
+/* 升級回饋 */
+#tactics-layer .txp-flash{ animation:txpFlash .8s ease; }
+@keyframes txpFlash{
+  0%{ box-shadow:0 0 0 rgba(240,216,154,0); }
+  25%{ box-shadow:0 0 22px rgba(240,216,154,0.55), inset 0 0 18px rgba(240,216,154,0.12); border-color:#F0D89A; }
+  100%{ box-shadow:0 3px 12px rgba(0,0,0,0.35); }
+}
+#tactics-layer .txp-float{
+  position:absolute; right:14px; top:10px; font-size:0.78rem; font-weight:900; color:#F0D89A;
+  text-shadow:0 0 8px rgba(240,216,154,0.7), 0 1px 2px rgba(0,0,0,0.8);
+  animation:txpFloat .9s ease-out forwards; pointer-events:none;
+}
+@keyframes txpFloat{ from{ opacity:0; transform:translateY(6px);} 25%{ opacity:1;} to{ opacity:0; transform:translateY(-18px);} }
+/* 補給卡 */
+#tactics-layer .txp-supply .txp-potion-art{
+  width:64px; height:64px; flex-shrink:0; display:flex; align-items:center; justify-content:center;
+  font-size:1.7rem; border-radius:8px; border:1px solid rgba(143,211,201,0.35);
+  background:radial-gradient(circle at 50% 35%, #1E3A38, #14201F 75%);
+}
+#tactics-layer .txp-buy{ flex-direction:row; gap:6px; padding:8px 12px; flex-shrink:0; }
+@media (prefers-reduced-motion: reduce){
+  #tactics-layer .txp-card, #tactics-layer .txp-portrait, #tactics-layer .txp-flash, #tactics-layer .txp-float{ animation:none !important; }
+  #tactics-layer .txp-fill{ transition:none; }
+}
