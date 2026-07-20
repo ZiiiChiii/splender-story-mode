@@ -184,6 +184,7 @@
     <div class="status-bar">
       <div class="status-pill" id="turn-owner-indicator" style="display:none; border-color:#ffcc00; font-weight:700;">👤 玩家回合</div>
       <button class="music-btn" style="border-color:#d4af37" onclick="playUniformSfx(); openGameOptionsModal()">⚙️ 遊戲選項</button>
+      <button class="music-btn" id="back-to-town-btn" style="display:none; border-color:#d9a441;" onclick="playUniformSfx(); window.returnToTown()">🏘️ 回地圖</button>
       <div class="status-pill">回合 <strong id="turn-txt">0</strong></div>
       <div class="status-pill">威望 <strong id="score-txt" style="color:#e6b464; text-shadow: var(--glow-warm);">0</strong> / <span id="target-txt">15</span></div>
     </div>
