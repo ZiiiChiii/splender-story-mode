@@ -336,6 +336,116 @@
         ],
         canSkip: false
       });
+    },
+
+    /* ══════════ 📖 旅人手記:劇情回顧(地圖道具,可重複開啟) ══════════
+       列出「已完成」的三類劇情,點選即以劇情引擎完整重播:
+       ・城鎮劇情事件(已看過的段落)
+       ・主線章節(已通關關卡的旁白鋪陳+委託人對話)
+       ・戰線戰役(已通關戰役的戰前+戰後完整劇本,含當時因進度未播的回聲台詞) */
+    openRecap() {
+      const flagsNow = flags(), m = mainProg(), t = txCleared();
+      let modal = document.getElementById('story-recap-modal');
+      if (modal) modal.remove();
+      modal = document.createElement('div');
+      modal.id = 'story-recap-modal';
+      modal.style.cssText = 'position:absolute; inset:0; z-index:99990; display:flex; align-items:center; justify-content:center; background:rgba(8,10,14,0.72); backdrop-filter:blur(2px);';
+
+      const row = (title, sub, onclick, idx) =>
+        `<button data-recap="${idx}" style="display:flex; align-items:center; gap:8px; width:100%; text-align:left; padding:7px 10px; margin-bottom:4px; background:rgba(30,39,49,0.85); border:1px solid rgba(217,164,65,0.25); border-radius:6px; color:#EAE4D6; cursor:pointer; font-family:inherit;">
+           <span style="flex:1; min-width:0;"><span style="display:block; font-size:0.72rem; font-weight:700; color:#F0D89A; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;">${title}</span>
+           <span style="display:block; font-size:0.6rem; color:#9AA3AD;">${sub}</span></span><span style="color:#D9A441;">▶</span></button>`;
+      const section = (t2) => `<div style="font-size:0.68rem; font-weight:800; color:#D9A441; margin:8px 0 5px; border-bottom:1px dashed rgba(217,164,65,0.3); padding-bottom:2px;">${t2}</div>`;
+
+      // 蒐集可回顧項目(index → 重播函式)
+      const plays = [];
+      let listHtml = '';
+
+      // 1) 城鎮劇情事件(依事件表順序,只列已看)
+      const seenEvents = EVENTS.filter(ev => flagsNow[ev.id]);
+      if (seenEvents.length) {
+        listHtml += section(`🏘️ 城鎮劇情(${seenEvents.length} 段)`);
+        seenEvents.forEach(ev => {
+          listHtml += row(ev.headline, ev.subline || '微光村', null, plays.length);
+          plays.push(() => window.StoryDialog.play({
+            headline: ev.headline, subline: (ev.subline || '微光村') + '・回顧',
+            script: ev.script(), canSkip: true, onDone: () => this.openRecap()
+          }));
+        });
+      }
+
+      // 2) 主線章節(已通關,依關卡序)
+      const MS = window.STORY_MISSIONS || [];
+      const clearedMain = m.cleared.filter(id => MS[id - 1]).sort((a, b) => a - b);
+      if (clearedMain.length) {
+        listHtml += section(`📜 商道戰役・主線(${clearedMain.length} / 25 關)`);
+        clearedMain.forEach(id => {
+          const ms = MS[id - 1];
+          listHtml += row(`第 ${id} 關 ${ms.name}`, `委託人:${ms.speaker}`, null, plays.length);
+          plays.push(() => window.StoryDialog.play({
+            headline: `第 ${id} 關・${ms.name}`, subline: '寶石交易殿堂・回顧',
+            script: [
+              narr(ms.story),
+              { who: ms.speaker, side: 'ally', img: ms.imgUrl, text: ms.dialogue }
+            ],
+            canSkip: true, onDone: () => this.openRecap()
+          }));
+        });
+      }
+
+      // 3) 戰線戰役(已通關,戰前+戰後完整劇本;回顧時不過濾回聲台詞)
+      const CHS = (window.TacticsMode && window.TacticsMode.chapters) || [];
+      const clearedTx = t.filter(id => CHS[id - 1]).sort((a, b) => a - b);
+      if (clearedTx.length) {
+        listHtml += section(`⚔️ 戰線戰役・次線(${clearedTx.length} / 10 戰)`);
+        clearedTx.forEach(id => {
+          const ch = CHS[id - 1];
+          const dress = (line) => {
+            if (!line.who || line.side === 'n') return { who: '', side: 'n', text: line.text };
+            const p = (window.TacticsMode && window.TacticsMode.portraitOf)
+              ? window.TacticsMode.portraitOf(line.who, line.side) : {};
+            return Object.assign({ who: line.who, side: line.side, text: line.text, mood: line.mood }, p);
+          };
+          listHtml += row(`第 ${id} 戰 ${ch.name}`, ch.intro || '', null, plays.length);
+          plays.push(() => window.StoryDialog.play({
+            headline: `第 ${id} 戰・${ch.name}`, subline: '戰線戰役・回顧',
+            script: [
+              ...(ch.storyBefore || []).map(dress),
+              narr('—— 戰鬥勝利之後 ——'),
+              ...(ch.storyAfter || []).map(dress)
+            ],
+            canSkip: true, onDone: () => this.openRecap()
+          }));
+        });
+      }
+
+      if (!plays.length) {
+        listHtml = `<div style="text-align:center; color:#9AA3AD; font-size:0.7rem; padding:18px 6px;">手記還是空白的。<br>完成劇情章節後,這裡會記下你走過的每一段路。</div>`;
+      }
+
+      modal.innerHTML = `
+        <div style="width:min(440px, 92%); max-height:82%; display:flex; flex-direction:column; background:linear-gradient(180deg,#141A22,#0F141B); border:1px solid rgba(217,164,65,0.45); border-radius:10px; padding:14px; box-shadow:0 10px 40px rgba(0,0,0,0.6);">
+          <div style="display:flex; align-items:center; margin-bottom:4px;">
+            <div style="flex:1; font-size:0.9rem; font-weight:900; color:#F0D89A; letter-spacing:0.06em;">📖 旅人手記・劇情回顧</div>
+            <button id="recap-close" style="background:none; border:1px solid rgba(217,164,65,0.4); color:#D9A441; border-radius:5px; padding:2px 10px; cursor:pointer; font-family:inherit; font-size:0.72rem;">關閉</button>
+          </div>
+          <div style="font-size:0.6rem; color:#9AA3AD; margin-bottom:6px;">點選任一段落,完整重溫劇情。</div>
+          <div style="flex:1; overflow-y:auto; padding-right:2px;">${listHtml}</div>
+        </div>`;
+
+      // 掛到城鎮圖層(若在)或舞台,確保蓋在地圖上、又低於劇情引擎(z 99996)
+      const host = document.getElementById('town-layer') || document.getElementById('stage') || document.body;
+      host.appendChild(modal);
+      modal.querySelector('#recap-close').onclick = () => modal.remove();
+      modal.addEventListener('click', (e) => { if (e.target === modal) modal.remove(); });
+      modal.querySelectorAll('button[data-recap]').forEach(b => {
+        b.onclick = () => {
+          if (!window.StoryDialog) return;
+          const fn = plays[+b.dataset.recap];
+          modal.remove();
+          if (fn) fn();
+        };
+      });
     }
   };
 
