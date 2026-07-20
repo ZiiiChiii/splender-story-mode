@@ -37,9 +37,11 @@ BUILDINGS.forEach(b => {
 const TREES = [[2, 1], [12, 1], [1, 4], [13, 8], [2, 8], [12, 4], [4, 8], [10, 8]];
 TREES.forEach(([x, y]) => { if (MAP[y] && MAP[y][x] === 'G') MAP[y][x] = 'T'; });
 
-/* 🧓 NPC 與互動道具(劇情第三敘事線的地圖元素) */
+/* 🧓 NPC 與互動道具(劇情第三敘事線的地圖元素)
+   長老站位注意:須避開「水池(2-3,9-10)+樹(4,8)+城門(6-8,10)」圍出的口袋區,
+   否則序幕在水池邊甦醒的主角會被卡死出不去 → 站在廣場西側 (5,7) */
 const NPCS = [
-  { id: 'elder', name: '長老 艾德溫', x: 5, y: 9, hint: '與長老交談・接受指引' },
+  { id: 'elder', name: '長老 艾德溫', x: 5, y: 7, hint: '與長老交談・接受指引' },
 ];
 const PROPS = [
   { id: 'board', name: '任務佈告欄', x: 9, y: 5, hint: '查看進度與下一步指引' },
@@ -49,9 +51,18 @@ NPCS.forEach(n => { if (MAP[n.y] && MAP[n.y][n.x] !== undefined) MAP[n.y][n.x] =
 PROPS.forEach(p => { if (MAP[p.y] && MAP[p.y][p.x] !== undefined) MAP[p.y][p.x] = 'B'; });
 
 const WORLD_NODES = [
+  // 第一部・灰鴉篇
   { chIdx: 0, name: '紅岩礦坑', icon: '⛏️', x: 22, y: 38, desc: '灰鴉傭兵佔據的黑曜石礦道' },
   { chIdx: 1, name: '橡木鎮糧倉', icon: '🌾', x: 54, y: 26, desc: '深夜遭夜襲的糧倉' },
-  { chIdx: 2, name: '邊境森林', icon: '🌲', x: 78, y: 58, desc: '灰鴉主力與首領的阻擊戰' },
+  { chIdx: 2, name: '邊境森林', icon: '🌲', x: 76, y: 56, desc: '灰鴉主力與首領的阻擊戰' },
+  // 第二部・影盟篇
+  { chIdx: 3, name: '黑市暗巷', icon: '🏮', x: 40, y: 66, desc: '灰鴉殘黨與影盟現身的巷戰' },
+  { chIdx: 4, name: '火山熔爐', icon: '🔥', x: 14, y: 72, desc: '守護瓦肯鐵匠鋪的爐火' },
+  { chIdx: 5, name: '傀儡工房', icon: '⚙️', x: 58, y: 44, desc: '被咒印駭走的鍊金傀儡' },
+  { chIdx: 6, name: '地底金庫', icon: '🪙', x: 30, y: 20, desc: '索林金庫的重甲衛劫案' },
+  { chIdx: 7, name: '首都下水道', icon: '🕳️', x: 82, y: 26, desc: '運進大會堂地基的神秘貨箱' },
+  { chIdx: 8, name: '王港碼頭', icon: '⚓', x: 64, y: 80, desc: '暴雨夜的新航線保衛戰' },
+  { chIdx: 9, name: '影盟總壇', icon: '🗡️', x: 90, y: 46, desc: '廢棄錢莊地下的最終決戰' },
 ];
 
 const esc = s => String(s).replace(/[&<>"]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
@@ -495,17 +506,15 @@ export const TownMode = {
       </div>
       <div class="town-viewport" id="town-viewport">
         <canvas id="town-canvas"></canvas>
+        <div class="town-stick" id="town-stick"><div class="town-stick-knob" id="town-stick-knob"></div></div>
+        <button class="town-float-act" id="town-act-btn">互動</button>
       </div>
-      <div class="town-hint" id="town-hint"></div>
-      <div class="town-dpad">
-        <button data-dir="up">▲</button>
-        <div class="town-dpad-mid">
-          <button data-dir="left">◀</button>
-          <button class="town-act" id="town-act-btn" data-dir="act">互動</button>
-          <button data-dir="right">▶</button>
-        </div>
-        <button data-dir="down">▼</button>
-      </div>`;
+      <div class="town-hint" id="town-hint"></div>`;
+    // 📱 觸控裝置 → 顯示半透明懸浮搖桿與互動鈕;桌機維持鍵盤操作
+    const isTouch = ('ontouchstart' in window) ||
+      (typeof matchMedia === 'function' && matchMedia('(pointer: coarse)').matches);
+    el.classList.toggle('touch-ui', !!isTouch);
+    this.joy = { x: 0, y: 0 };
     buildTextures();
     this.setupCanvas();
     this.bindControls();
@@ -564,17 +573,32 @@ export const TownMode = {
     this.keyUpHandler = (e) => { if (codeMap[e.code]) this.keys[codeMap[e.code]] = false; };
     window.addEventListener('keydown', this.keyHandler);
     window.addEventListener('keyup', this.keyUpHandler);
-    // 方向鈕:按住持續走(pointer 事件)
-    this.layer.querySelectorAll('.town-dpad button[data-dir]').forEach(b => {
-      const d = b.dataset.dir;
-      if (d === 'act') { b.onclick = () => this.interact(); return; }
-      const down = (e) => { e.preventDefault(); this.keys[d] = true; };
-      const up = (e) => { e.preventDefault(); this.keys[d] = false; };
-      b.addEventListener('pointerdown', down);
-      b.addEventListener('pointerup', up);
-      b.addEventListener('pointerleave', up);
-      b.addEventListener('pointercancel', up);
-    });
+    // 🕹️ 虛擬搖桿(觸控):拖曳搖桿設定類比向量 this.joy,放開歸零
+    const stick = document.getElementById('town-stick');
+    const knob = document.getElementById('town-stick-knob');
+    if (stick && knob) {
+      let sid = null;
+      const R = 42; // 搖桿最大位移半徑(px)
+      const setJoy = (e) => {
+        const rect = stick.getBoundingClientRect();
+        let dx = e.clientX - (rect.left + rect.width / 2);
+        let dy = e.clientY - (rect.top + rect.height / 2);
+        const len = Math.hypot(dx, dy);
+        if (len > R) { dx = dx / len * R; dy = dy / len * R; }
+        knob.style.transform = `translate(${dx}px,${dy}px)`;
+        // 死區 20%,其餘線性
+        const mag = Math.hypot(dx, dy) / R;
+        if (mag < 0.2) { this.joy.x = 0; this.joy.y = 0; }
+        else { this.joy.x = dx / R; this.joy.y = dy / R; }
+      };
+      const reset = () => { sid = null; this.joy.x = 0; this.joy.y = 0; knob.style.transform = ''; };
+      stick.addEventListener('pointerdown', (e) => { e.preventDefault(); sid = e.pointerId; stick.setPointerCapture(sid); setJoy(e); });
+      stick.addEventListener('pointermove', (e) => { if (e.pointerId === sid) { e.preventDefault(); setJoy(e); } });
+      stick.addEventListener('pointerup', (e) => { if (e.pointerId === sid) reset(); });
+      stick.addEventListener('pointercancel', reset);
+    }
+    const actBtn = document.getElementById('town-act-btn');
+    if (actBtn) actBtn.onclick = () => this.interact();
     const optBtn = document.getElementById('town-opt-btn');
     if (optBtn) optBtn.onclick = () => {
       sfx(); this._resumeAfterModal = true;
@@ -620,13 +644,16 @@ export const TownMode = {
     if (this.keys.down) vy += 1;
     if (this.keys.left) vx -= 1;
     if (this.keys.right) vx += 1;
-    const moving = vx !== 0 || vy !== 0;
+    // 🕹️ 疊加虛擬搖桿類比向量(觸控裝置)
+    if (this.joy) { vx += this.joy.x; vy += this.joy.y; }
+    const moving = Math.hypot(vx, vy) > 0.05;
     if (moving) {
       // 面向:以主要分量決定
       if (Math.abs(vx) > Math.abs(vy)) this.facing = vx < 0 ? 'left' : 'right';
       else this.facing = vy < 0 ? 'up' : 'down';
-      // 正規化斜向速度
-      const len = Math.hypot(vx, vy) || 1; vx /= len; vy /= len;
+      // 正規化(類比量 <1 時保留比例,可慢走)
+      const len = Math.hypot(vx, vy);
+      if (len > 1) { vx /= len; vy /= len; }
       const step = SPEED * dt;
       // 分軸移動 + 滑牆
       const nx = this.px + vx * step;
@@ -663,7 +690,9 @@ export const TownMode = {
         if (hintEl) hintEl.innerHTML = `<b>${esc(near.name)}</b>　${esc(near.hint)}　<span class="town-press">⏎ / 互動</span>`;
         if (actBtn) actBtn.classList.add('ready');
       } else {
-        if (hintEl) hintEl.innerHTML = `<span class="town-dim">方向鍵 / WASD 走動,靠近建築門口 ◇ 互動</span>`;
+        if (hintEl) hintEl.innerHTML = this.layer && this.layer.classList.contains('touch-ui')
+          ? `<span class="town-dim">左下搖桿移動,靠近 ◇ 後按右下「互動」</span>`
+          : `<span class="town-dim">方向鍵 / WASD 走動,靠近建築門口 ◇ 按 ⏎ 互動</span>`;
         if (actBtn) actBtn.classList.remove('ready');
       }
     }
