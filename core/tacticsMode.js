@@ -186,6 +186,38 @@ const POTION_COST = { g: 1 }, POTION_HEAL = 12, POTION_MAX = 3;
    各戰役所需的主線通關進度(單調遞增,確保與前章依序解鎖不矛盾):
    戰1←主3、戰2←主6、戰3←主14、戰4←主15 … 戰10←主21(第二部與主線 15-21 嚴格交錯) */
 const CH_MAIN_REQ = [3, 6, 14, 15, 16, 17, 18, 19, 20, 21];
+
+/* ══════════ 🔊 戰場音效(mixkit;可重疊播放、尊重音效靜音設定) ══════════ */
+const SFX_URLS = {
+  forge:   'https://assets.mixkit.co/active_storage/sfx/883/883-preview.mp3',    // 刻印升級
+  atkLead: 'https://assets.mixkit.co/active_storage/sfx/2152/2152-preview.mp3',  // 主將(貞德)普攻
+  atkSkill:'https://assets.mixkit.co/active_storage/sfx/2168/2168-preview.mp3',  // 技能砍擊
+  atkCast: 'https://assets.mixkit.co/active_storage/sfx/2083/2083-preview.mp3',  // 法師/盾兵普攻(含遠程敵)
+  fire:    'https://assets.mixkit.co/active_storage/sfx/1328/1328-preview.mp3',  // 火焰/星術魔法
+  impact:  'https://assets.mixkit.co/active_storage/sfx/2160/2160-preview.mp3',  // 撞擊(盾擊/敵近戰)
+  heal:    'https://assets.mixkit.co/active_storage/sfx/880/880-preview.mp3',    // 補血(藥水/治癒術)
+  hurtMS:  'https://assets.mixkit.co/active_storage/sfx/2197/2197-preview.mp3',  // 男性被技能攻擊
+  hurtM:   'https://assets.mixkit.co/active_storage/sfx/2055/2055-preview.mp3',  // 男性被普攻
+  hurtF:   'https://assets.mixkit.co/active_storage/sfx/2204/2204-preview.mp3',  // 女性被普攻
+  hurtFS:  'https://assets.mixkit.co/active_storage/sfx/2206/2206-preview.mp3',  // 女性被技能攻擊
+};
+const SFX_POOL = {};
+function playFx(key, delay = 0, vol = 0.55) {
+  try {
+    if (typeof Audio === 'undefined' || !SFX_URLS[key]) return;
+    if (window.CoreState && window.CoreState.get().settings.isSfxMuted) return;
+    const fire = () => {
+      const base = SFX_POOL[key] || (SFX_POOL[key] = new Audio(SFX_URLS[key]));
+      const a = base.cloneNode();       // 複本播放 → 連續命中可重疊不打架
+      a.volume = vol;
+      a.play().catch(() => {});
+    };
+    delay ? setTimeout(fire, delay) : fire();
+  } catch (e) { /* 音效失敗不影響遊戲 */ }
+}
+const FEMALE_SPRITES = new Set(['joan', 'luna']);          // 女性角色(受擊音判定)
+const FOE_CASTERS = new Set(['ravenm', 'shadem']);          // 敵方施法者 → 火焰魔法
+const FOE_RANGED = new Set(['ravenx', 'shadex']);           // 敵方弩手 → 遠程擊發
 function mainClearedList() {
   try {
     const d = JSON.parse(localStorage.getItem('splendor_story_progress_2026') || '{}');
@@ -580,12 +612,14 @@ export const TacticsMode = {
     }
     this.chapter = ch;
     this.ensureLayer().classList.add('tx-active');
+    if (window.setBattleBgm) window.setBattleBgm(true);   // 🎵 戰棋對戰背景樂
     this.showStory(this.filterScript(ch.storyBefore), () => this.showPrep());
   },
 
   close() {
     this.B = null;
     if (this.layer) { this.layer.classList.remove('tx-active'); this.layer.innerHTML = ''; }
+    if (window.setBattleBgm) window.setBattleBgm(false);   // 🎵 離開戰場 → 還原模式背景樂
   },
 
   /* 劇情回聲過濾:依主線進度與戰棋通關狀態決定顯示哪些台詞 */
@@ -759,7 +793,7 @@ export const TacticsMode = {
         const f = FORGE.find(x => x.id === fid);
         if (TxSave.forgeCount(uid, fid) >= f.max) return;
         if (!TacticsVault.spend(f.cost)) return;
-        TxSave.addForge(uid, fid); sfx();
+        TxSave.addForge(uid, fid); playFx('forge');   // 🔊 刻印升級
         flashInfo = { uid, text: `${FICO[f.id]} ${STAT_LABEL[f.stat]} +${f.amt}` };
         refresh();
       });
@@ -857,12 +891,15 @@ export const TacticsMode = {
     return out;
   },
 
-  dealDamage(att, def, mult, ignoreDef) {
+  dealDamage(att, def, mult, ignoreDef, skillHit) {
     const terr = this.TERRAIN[this.terrainAt(def.x, def.y)];
     const defense = ignoreDef ? 0 : def.def + terr.defB;
     const dmg = Math.max(1, Math.round(att.atk * mult - defense));
     def.hp = Math.max(0, def.hp - dmg);
     this.log(`${att.name} → ${def.name} 造成 ${dmg} 傷害`, att.side);
+    // 🔊 受擊音:依性別 × 普攻/技能 區分(略延遲,避免與攻擊音糊在一起)
+    const female = FEMALE_SPRITES.has(def.sprite);
+    playFx(female ? (skillHit ? 'hurtFS' : 'hurtF') : (skillHit ? 'hurtMS' : 'hurtM'), 130);
     const killed = def.hp <= 0;
     if (killed) { this.fxGhost(def); this.killUnit(def); }
     this.renderBoard();
@@ -1093,9 +1130,10 @@ export const TacticsMode = {
       }, i * 90);
     }
   },
-  strike(att, def, mult, ignoreDef, after) {
+  strike(att, def, mult, ignoreDef, after, fxKey, skillHit) {
     const pc = this.pieceAt(att.x, att.y);
     const pa = this.cellPos(att.x, att.y), pd = this.cellPos(def.x, def.y);
+    if (fxKey) playFx(fxKey);   // 🔊 出手音(揮擊/施法)
     if (pc && pc.classList && pa && pd) {
       pc.style.setProperty('--lx', ((pd.x - pa.x) * .42) + 'px');
       pc.style.setProperty('--ly', ((pd.y - pa.y) * .42) + 'px');
@@ -1103,7 +1141,7 @@ export const TacticsMode = {
     }
     setTimeout(() => {
       this.fxSlash(def.x, def.y);
-      this.dealDamage(att, def, mult, ignoreDef);
+      this.dealDamage(att, def, mult, ignoreDef, skillHit);
       setTimeout(after, 340);
     }, 150);
   },
@@ -1206,12 +1244,13 @@ export const TacticsMode = {
     this.renderBoard();
     const done = () => { B.busy = false; this.finishAction(); };
     if (spec.kind === 'attack') {
-      this.strike(u, target, 1.0, false, done);
+      this.strike(u, target, 1.0, false, done, u.lead ? 'atkLead' : 'atkCast', false);
     } else if (spec.kind === 'item') {
       B.potions--; TxSave.load(); TxSave.data.potions = B.potions; TxSave.save();
       const amt = Math.min(POTION_HEAL, target.maxHp - target.hp);
       target.hp += amt;
       this.log(`${target.name} 使用藥水回復 ${amt}`, 'ally');
+      playFx('heal');   // 🔊 補血
       this.renderBoard(); this.fxHeal(x, y); this.floatText(x, y, '+' + amt, '#7FE0B0');
       setTimeout(done, 460);
     } else if (spec.kind === 'heal') {
@@ -1219,12 +1258,13 @@ export const TacticsMode = {
       const amt = Math.min(spec.skill.amount, target.maxHp - target.hp);
       target.hp += amt;
       this.log(`${u.name} 施放 ${spec.skill.name},${target.name} 回復 ${amt}`, 'ally');
+      playFx('heal');   // 🔊 補血
       this.renderBoard(); this.fxHeal(x, y); this.floatText(x, y, '+' + amt, '#7FE0B0');
       setTimeout(done, 460);
     } else if (spec.kind === 'skill') {
       u.mp -= spec.skill.mp;
       this.log(`${u.name} 施放 ${spec.skill.name}!`, 'ally');
-      this.strike(u, target, spec.skill.mult, !!spec.skill.ignoreDef, () => {
+      this.strike(u, target, spec.skill.mult, !!spec.skill.ignoreDef, /* onDone */ () => {
         if (spec.skill.stun && target.alive) {
           target.stun = spec.skill.stun + 1;
           this.log(`${target.name} 陷入暈眩`, 'sys');
@@ -1232,10 +1272,11 @@ export const TacticsMode = {
           this.renderBoard();
         }
         done();
-      });
+      }, spec.skill.stun ? 'impact' : 'atkSkill', true);   // 🔊 盾擊系→撞擊 / 斬擊系→技能砍擊
     } else if (spec.kind === 'aoe') {
       u.mp -= spec.skill.mp;
       this.log(`${u.name} 施放 ${spec.skill.name}!`, 'ally');
+      playFx('fire');   // 🔊 火焰/星術施放
       this.fxProjectile(u.x, u.y, x, y, () => {
         this.fxScreenFlash('rgba(255,140,70,.3)');
         this.fxRing(x, y, '#FF9040');
@@ -1245,7 +1286,7 @@ export const TacticsMode = {
         let hit = 0;
         for (const [ax, ay] of area) {
           const t = this.unitAt(ax, ay);
-          if (t && t.side === 'foe') { this.dealDamage(u, t, spec.skill.mult, false); hit++; }
+          if (t && t.side === 'foe') { this.dealDamage(u, t, spec.skill.mult, false, true); hit++; }
         }
         if (!hit) { this.log('星隕落空,無人命中', 'sys'); this.renderBoard(); }
         setTimeout(done, 420);
@@ -1267,7 +1308,7 @@ export const TacticsMode = {
     const B = this.B;
     B.busy = true; B.phase = 'foe'; B.mode = 'idle'; B.sel = null;
     const m = document.getElementById('tx-menu'); if (m) m.innerHTML = '';
-    this.log(`灰鴉團回合 ${B.turn}`, 'foe');
+    this.log(`敵軍回合 ${B.turn}`, 'foe');
     this.fxBanner('敵軍行動', 'var(--tx-foe)');
     this.renderBoard();
     const foes = B.units.filter(u => u.side === 'foe' && u.alive);
@@ -1306,7 +1347,8 @@ export const TacticsMode = {
       const moved = (e.x !== best.mx || e.y !== best.my);
       e.x = best.mx; e.y = best.my;
       if (moved) this.renderBoard();
-      setTimeout(() => this.strike(e, best.p, 1.0, false, done), moved ? 220 : 60);
+      setTimeout(() => this.strike(e, best.p, 1.0, false, done,
+        FOE_CASTERS.has(e.sprite) ? 'fire' : (FOE_RANGED.has(e.sprite) ? 'atkCast' : 'impact'), false), moved ? 220 : 60);
       return;
     }
     let near = players[0], nd = Infinity;
