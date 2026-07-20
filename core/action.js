@@ -617,18 +617,41 @@ export const ActionDispatcher = {
       if (window.StoryMode) window.StoryMode.saveStoryProgress(mission.id);
 
       if (currentLvl < 25) {
-        restartBtn.textContent = `📜 命運推進：挑戰第 ${currentLvl + 1} 關`;
-        restartBtn.className = "btn-primary";
-        restartBtn.onclick = () => {
-          window.playUniformSfx();
-          document.getElementById('win-modal').classList.remove('show');
-          state.storyProgress.currentLevel = currentLvl + 1;
-          if (window.storyModule && window.storyModule.loadStage) {
-            window.storyModule.loadStage(currentLvl + 1, () => ActionDispatcher.dispatch('INIT_GAME'));
-          } else {
-            ActionDispatcher.dispatch('INIT_GAME');
-          }
-        };
+        // 🔗 劇情閘門:下一關若被戰線鎖住,按鈕改為「銜接劇情」——播鎖定對話後回城鎮出征,
+        //    關卡維持鎖定、絕不跳關;戰線打贏後回殿堂即可繼續。
+        const nextId = currentLvl + 1;
+        const nextGate = (window.StoryMode && window.StoryMode.levelGate)
+          ? window.StoryMode.levelGate(nextId) : { ok: true };
+        if (!nextGate.ok) {
+          restartBtn.textContent = `⚔️ 前線告急：銜接劇情(需先打贏戰線第 ${nextGate.needTx} 戰)`;
+          restartBtn.className = "btn-primary";
+          restartBtn.onclick = () => {
+            window.playUniformSfx();
+            document.getElementById('win-modal').classList.remove('show');
+            window.StoryMode.playLevelLockStory(nextId, () => {
+              if (window.TownMode) window.TownMode.enter();   // 對話結束 → 回城鎮,出城參戰
+            });
+          };
+        } else {
+          restartBtn.textContent = `📜 命運推進：挑戰第 ${nextId} 關`;
+          restartBtn.className = "btn-primary";
+          restartBtn.onclick = () => {
+            window.playUniformSfx();
+            // 保險:點擊當下再驗一次閘門(避免視窗停留期間狀態變動)
+            if (window.StoryMode && window.StoryMode.levelGate && !window.StoryMode.levelGate(nextId).ok) {
+              document.getElementById('win-modal').classList.remove('show');
+              window.StoryMode.playLevelLockStory(nextId, () => { if (window.TownMode) window.TownMode.enter(); });
+              return;
+            }
+            document.getElementById('win-modal').classList.remove('show');
+            state.storyProgress.currentLevel = nextId;
+            if (window.storyModule && window.storyModule.loadStage) {
+              window.storyModule.loadStage(nextId, () => ActionDispatcher.dispatch('INIT_GAME'));
+            } else {
+              ActionDispatcher.dispatch('INIT_GAME');
+            }
+          };
+        }
       } else {
         restartBtn.textContent = "🏆 完美通關全戰役！";
         restartBtn.className = "btn-primary";
