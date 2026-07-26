@@ -351,6 +351,8 @@ export const ActionDispatcher = {
     const state = CoreState.get();
     const actorData = actionActor === 'player' ? state.player : state.ai;
     const initialScore = actorData.score;
+    // 🎭 帝國爭霸表情演出:記錄行動前雙方分數,供 AiReaction 判斷情緒(反超/暴衝/落後)
+    const _arBefore = { p: state.player.score | 0, a: state.ai ? (state.ai.score | 0) : 0 };
 
     // 貴族拜訪（第 18 關：玩家貴族分被刺客無效化）
     const skipPlayerNobles = (actionActor === 'player'
@@ -405,6 +407,11 @@ export const ActionDispatcher = {
     // 影刃刺客 ast18：結算時 AI 貴族分無效化
     const aiEffectiveScore = (state.settings.selectedAssistant === 'ast18')
       ? state.ai.score - state.ai.noblePoints : state.ai.score;
+
+    // 🎭 全螢幕角色表情演出(純演出、不阻擋操作;終局改由 deferEnd 於結算前播放)
+    if (window.AiReaction) {
+      window.AiReaction.evaluateTurn(actionActor, _arBefore, meta, aiEffectiveScore);
+    }
 
     // 🌊 簡單對手（翠席兒）：不限回合數，只以 15 分定勝負
     const noTurnLimit = state.mode === 'vsAI'
@@ -680,6 +687,12 @@ export const ActionDispatcher = {
     // 👑 貴族動畫尚未播完 → 延後到動畫全部結束再展示結算
     if (window.deferUntilNobleAnim
         && window.deferUntilNobleAnim(() => this._showEndModal(state, aiEffectiveScore))) {
+      return;
+    }
+    // 🎭 帝國爭霸終局:先播 AI 的勝利宣言／落敗感嘆,演出結束再顯示結算視窗
+    if (window.AiReaction
+        && window.AiReaction.deferEnd(state, aiEffectiveScore,
+             () => this._showEndModal(state, aiEffectiveScore))) {
       return;
     }
     const iconEl = document.getElementById('win-modal-icon');
