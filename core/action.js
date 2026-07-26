@@ -893,6 +893,14 @@ export const ActionDispatcher = {
       document.getElementById('game-options-modal').classList.remove('show');
     }
 
+    // 🎭 帝國爭霸開局:AI 對手的宣戰演出(同時重置本局的表情冷卻與旗標)
+    if (state.mode === 'vsAI' && window.AiReaction) {
+      window.AiReaction.reset();
+      if (!(state.onlineMatch && state.onlineMatch.active)) {
+        setTimeout(() => window.AiReaction.play('battleStart'), 420);
+      }
+    }
+
     import('./assistantData.js').then(m => m.AssistantManager.renderActiveAssistantUI());
   }
 };
