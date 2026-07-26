@@ -21,7 +21,7 @@
 
   const LAYER_ID = 'ai-reaction-layer';
   const SFX_IMPACT = 'https://assets.mixkit.co/active_storage/sfx/2160/2160-preview.mp3';
-  const DURATION = 2100;      // 整段演出長度(ms)
+  const DURATION = 2600;      // 整段演出長度(ms)
   const COOLDOWN_TURNS = 2;
 
   /* 情緒調色與標籤 */
@@ -211,18 +211,28 @@
       this.close();
       const layer = document.createElement('div');
       layer.id = LAYER_ID;
-      layer.className = 'arx' + (slim ? ' arx-slim' : '');
+      layer.className = 'arx arx-e-' + emo + (slim ? ' arx-slim' : '');
       layer.style.setProperty('--c', e.c);
       layer.style.setProperty('--c2', e.c2);
       layer.setAttribute('aria-hidden', 'true');
       layer.innerHTML =
         '<div class="arx-flash"></div>' +
+        '<div class="arx-ring"></div>' +
         '<div class="arx-lines"></div>' +
+        // 流動光線:五道不同速度/位置的橫向光條,持續橫掃
+        '<div class="arx-streaks">' +
+          '<i style="--ty:18%;--dur:1.05s;--dl:.10s;--h:2px"></i>' +
+          '<i style="--ty:33%;--dur:1.35s;--dl:.28s;--h:3px"></i>' +
+          '<i style="--ty:58%;--dur:.92s;--dl:.16s;--h:2px"></i>' +
+          '<i style="--ty:71%;--dur:1.5s;--dl:.42s;--h:4px"></i>' +
+          '<i style="--ty:86%;--dur:1.15s;--dl:.34s;--h:2px"></i>' +
+        '</div>' +
         '<div class="arx-band"></div>' +
         '<div class="arx-band arx-band2"></div>' +
         '<div class="arx-portrait-wrap">' +
           '<div class="arx-glow"></div>' +
           (info.img ? '<img class="arx-portrait" src="' + esc(info.img) + '" alt="">' : '') +
+          '<div class="arx-scan"></div>' +
         '</div>' +
         '<div class="arx-text">' +
           '<div class="arx-emo"><span class="arx-face">' + e.face + '</span>' +
@@ -234,18 +244,23 @@
           '<i style="--sx:14%;--sy:26%;--sd:80ms"></i><i style="--sx:78%;--sy:18%;--sd:150ms"></i>' +
           '<i style="--sx:24%;--sy:74%;--sd:220ms"></i><i style="--sx:86%;--sy:66%;--sd:120ms"></i>' +
           '<i style="--sx:52%;--sy:12%;--sd:280ms"></i><i style="--sx:40%;--sy:88%;--sd:200ms"></i>' +
-        '</div>';
+          '<i style="--sx:66%;--sy:40%;--sd:520ms"></i><i style="--sx:10%;--sy:54%;--sd:640ms"></i>' +
+          '<i style="--sx:92%;--sy:34%;--sd:760ms"></i><i style="--sx:34%;--sy:20%;--sd:880ms"></i>' +
+        '</div>' +
+        '<div class="arx-vignette"></div>';
 
       const host = document.getElementById('stage') || document.body;
       host.appendChild(layer);
       // 觸發動畫(下一幀加 class,確保初始狀態先套用)
-      if (typeof requestAnimationFrame === 'function') {
-        requestAnimationFrame(() => layer.classList.add('arx-run'));
-      } else { layer.classList.add('arx-run'); }
+      // ⚠️ rAF 在背景分頁/部分手機瀏覽器會被節流,故另加 timeout 保險,
+      //    否則圖層會靜止不動 2.6 秒(看起來就像沒有動畫)
+      const start = () => { if (layer.isConnected) layer.classList.add('arx-run'); };
+      if (typeof requestAnimationFrame === 'function') requestAnimationFrame(start);
+      setTimeout(start, 32);
       playImpact();
       this._played++;
 
-      const life = slim ? 1200 : DURATION;
+      const life = slim ? 1500 : DURATION;
       this._timer = setTimeout(() => {
         this.close();
         if (typeof onDone === 'function') onDone();
