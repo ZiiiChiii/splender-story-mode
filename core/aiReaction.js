@@ -39,6 +39,42 @@
   /* 情緒優先序(數字大者可插隊、可打斷冷卻) */
   const PRIORITY = { battleStart: 100, victory: 100, defeat: 100, panic: 60, shock: 45, angry: 40, taunt: 30, confident: 25 };
 
+  /* ══════════ 📐 角色臉部座標表(全部為「佔圖檔的百分比」) ══════════
+     用途:①臉部特寫要推到哪裡 ②偽眨眼的眼睛橫帶在哪
+     怎麼量:用任何看圖軟體開立繪,讀出下列 y 座標,再除以圖高 ×100
+       headTop / headBottom … 頭頂與下巴(特寫取景的上下界)
+       headLeft / headRight … 臉部含髮的左右界(特寫取景的左右界)
+       aspect               … 圖檔寬 ÷ 高
+       lid.x / lid.w        … 眼睛區左緣與寬度(含兩眼與睫毛)
+       lid.y / lid.h        … 眼睛區上緣與高度
+       lid.skin / skin2     … 眼皮的上下膚色(請直接從立繪上取色,才不會突兀)
+       lid.lash             … 睫毛線顏色
+     ⚠️ 眨眼是「畫一片膚色眼皮蓋住眼睛」,不是位移原圖——因為多數立繪
+        眼睛上方是瀏海、下方是嘴巴,位移會把頭髮或嘴巴拉進眼睛區。
+     未設定(null)的角色會自動退回「全身鏡頭、不眨眼」,不會出錯。 */
+  const FACE = {
+    // 實測值:上傳的立繪 1024×1536(眼睛 y 243–288、x 434–593;膚色由圖上取樣)
+    demo: {
+      headTop: 6.0, headBottom: 26.0, headLeft: 31.6, headRight: 71.3, aspect: 0.6667,
+      lid: { x: 42.4, w: 15.5, y: 15.82, h: 2.93,
+             skin: '#F6C9AC', skin2: '#FFE9D1', lash: '#3E2A24' },
+    },
+    tracy: null,   // ← 翠席兒:量好後填入即可啟用特寫與眨眼
+    midou: null,   // ← 米斗
+    defik: null,   // ← 狄菲克
+  };
+
+  /* 哪些情緒推臉部特寫(其餘用全身氣勢鏡頭,兩種交替才有變化) */
+  const CLOSEUP = { taunt: 1, shock: 1, angry: 1, panic: 1 };
+
+  /* 各情緒的眼神演出:blink=眨眼次數,squint=瞇眼程度(0~1),wide=瞪大不眨 */
+  const EYES = {
+    taunt:     { blink: 1, squint: 0.55 },
+    shock:     { blink: 0, wide: true },
+    angry:     { blink: 1, squint: 0.45 },
+    panic:     { blink: 4, squint: 0 },
+  };
+
   /* 各對手專屬台詞 */
   const LINES = {
     tracy: {  // 翠席兒・簡單:親切、鼓勵型
@@ -133,8 +169,13 @@
 
     _oppInfo(state) {
       const o = (state.settings && state.settings.aiOpponent) || {};
-      return { id: o.id || '_default', name: o.name || '對手', img: o.img || '' };
+      const id = o.id || '_default';
+      return { id: id, name: o.name || '對手', img: o.img || '',
+               face: FACE[id] || (this._forceFace || null) };
     },
+
+    /* 除錯用:AiReaction.useDemoFace() → 套用示範臉部座標,可先看效果再去量自己的圖 */
+    useDemoFace(on) { this._forceFace = (on === false) ? null : FACE.demo; },
 
     /* ══════════ 回合結算後評估要不要演出 ══════════ */
     evaluateTurn(actor, before, meta, aiEffectiveScore) {
@@ -208,12 +249,42 @@
       const line = pickLine(info.id, emo);
       const slim = reduceMotion();
 
+      // 🎥 鏡頭:情緒屬於特寫清單且該角色已設定臉部座標 → 推近臉部,否則全身
+      const face = info.face;
+      const closeup = !!(face && CLOSEUP[emo]);
+      // 🎥 立繪座標盒:讓眼皮能用「相對於圖檔」的百分比定位
+      let boxGeo = 'height:100%;top:0;left:50%;transform:translateX(-50%);', lidHtml = '', camGeo = '';
+      if (closeup) {
+        // 取景範圍(佔圖檔的比例)
+        const wf = Math.max(0.04, (face.headRight - face.headLeft) / 100);
+        const hf = Math.max(0.04, (face.headBottom - face.headTop) / 100);
+        // 鏡頭長寬比 = 取景區的實際像素比,鏡頭才不會把臉切掉或壓扁
+        const camAspect = (wf / hf) * (face.aspect || 0.667);
+        camGeo = 'aspect-ratio:' + camAspect.toFixed(4) + ';';
+        // 立繪座標盒:寬高各為鏡頭的 1/取景比例,再平移到取景起點
+        boxGeo = 'width:' + (100 / wf).toFixed(1) + '%;height:' + (100 / hf).toFixed(1) +
+                 '%;left:' + (-face.headLeft / wf).toFixed(1) + '%;top:' + (-face.headTop / hf).toFixed(1) +
+                 '%;transform:none;';
+        // 👁 繪製眼皮:以立繪取樣的膚色畫一片眼皮蓋住眼睛,底緣加睫毛線
+        const L = face.lid;
+        if (L) {
+          const ey = EYES[emo] || {};
+          lidHtml =
+            '<div class="arx-lid" style="left:' + L.x + '%;top:' + L.y + '%;width:' + L.w +
+              '%;height:' + L.h + '%;--skin:' + L.skin + ';--skin2:' + (L.skin2 || L.skin) +
+              ';--lash:' + (L.lash || '#3E2A24') + ';--squint:' + (ey.squint || 0) + ';"></div>';
+        }
+      }
+
       this.close();
       const layer = document.createElement('div');
       layer.id = LAYER_ID;
       layer.className = 'arx arx-e-' + emo + (slim ? ' arx-slim' : '');
       layer.style.setProperty('--c', e.c);
       layer.style.setProperty('--c2', e.c2);
+      const eyeSpec = EYES[emo] || {};
+      layer.style.setProperty('--blinks', String(eyeSpec.blink || 0));
+      if (closeup) layer.classList.add('arx-cam-on');
       layer.setAttribute('aria-hidden', 'true');
       layer.innerHTML =
         '<div class="arx-flash"></div>' +
@@ -229,11 +300,21 @@
         '</div>' +
         '<div class="arx-band"></div>' +
         '<div class="arx-band arx-band2"></div>' +
-        '<div class="arx-portrait-wrap">' +
+        '<div class="arx-vignette"></div>' +
+        '<div class="arx-portrait-wrap' + (closeup ? ' arx-closeup' : '') + '">' +
           '<div class="arx-glow"></div>' +
-          (info.img ? '<img class="arx-portrait" src="' + esc(info.img) + '" alt="">' : '') +
+          '<div class="arx-cam" style="' + camGeo + '">' +
+            '<div class="arx-imgbox" style="' + boxGeo + '">' +
+              '<div class="arx-act">' +      // 角色動作容器(圖片＋眼皮同步位移)
+                (info.img ? '<img class="arx-portrait" src="' + esc(info.img) + '" alt="">' : '') +
+                lidHtml +
+              '</div>' +
+            '</div>' +
+          '</div>' +
           '<div class="arx-scan"></div>' +
         '</div>' +
+        // 🈁 動漫情緒符號(青筋/汗滴/星星/驚愕線),純 CSS 繪製、不需素材
+        '<div class="arx-sym"><i class="s1"></i><i class="s2"></i><i class="s3"></i></div>' +
         '<div class="arx-text">' +
           '<div class="arx-emo"><span class="arx-face">' + e.face + '</span>' +
             '<span class="arx-emo-name">' + esc(e.name) + '</span>' +
@@ -246,8 +327,7 @@
           '<i style="--sx:52%;--sy:12%;--sd:280ms"></i><i style="--sx:40%;--sy:88%;--sd:200ms"></i>' +
           '<i style="--sx:66%;--sy:40%;--sd:520ms"></i><i style="--sx:10%;--sy:54%;--sd:640ms"></i>' +
           '<i style="--sx:92%;--sy:34%;--sd:760ms"></i><i style="--sx:34%;--sy:20%;--sd:880ms"></i>' +
-        '</div>' +
-        '<div class="arx-vignette"></div>';
+        '</div>';
 
       const host = document.getElementById('stage') || document.body;
       host.appendChild(layer);
