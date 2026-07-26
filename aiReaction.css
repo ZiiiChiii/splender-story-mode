@@ -29,8 +29,8 @@
 
 /* ── 集中線:漫畫式放射線,由外向內收束 ── */
 #ai-reaction-layer .arx-lines{
-  position:absolute; left:50%; top:50%; width:240vmax; height:240vmax;
-  margin:-120vmax 0 0 -120vmax; opacity:0;
+  position:absolute; left:50%; top:50%; width:1700px; height:1700px;
+  margin:-850px 0 0 -850px; opacity:0;
   background:repeating-conic-gradient(from 0deg at 50% 50%,
     rgba(0,0,0,.72) 0deg 1.1deg, transparent 1.1deg 3.2deg);
   -webkit-mask-image:radial-gradient(circle, transparent 22%, #000 46%, #000 100%);
@@ -51,7 +51,7 @@
 
 /* ── 斜帶:情緒色寬帶橫掃,墊在立繪後方 ── */
 #ai-reaction-layer .arx-band{
-  position:absolute; left:-30%; right:-30%; top:44%; height:23%;
+  position:absolute; left:-30%; right:-30%; top:47%; height:20%;
   transform:translateX(-120%) skewY(-7deg); opacity:.94;
   background:linear-gradient(90deg, transparent 0%, var(--c2) 10%, var(--c) 34%,
     #fff 50%, var(--c) 66%, var(--c2) 90%, transparent 100%);
@@ -63,7 +63,7 @@
                                                  arxBandFlow 1.15s linear infinite .2s; }
 @keyframes arxBandFlow{ from{ background-position:120% 0 } to{ background-position:-120% 0 } }
 #ai-reaction-layer .arx-band2{
-  top:39.5%; height:4%; opacity:.75; filter:brightness(1.5);
+  top:43.5%; height:4%; opacity:.75; filter:brightness(1.5);
   background:linear-gradient(90deg, transparent, #fff 45%, var(--c) 70%, transparent);
 }
 #ai-reaction-layer.arx-run .arx-band2{ animation:arxBand 2.5s cubic-bezier(.2,.85,.25,1) forwards .13s,
@@ -77,15 +77,18 @@
 
 /* ── 立繪:自右側衝入、過衝回彈,伴隨細微震動 ── */
 #ai-reaction-layer .arx-portrait-wrap{
-  position:absolute; right:-2%; bottom:0; height:76%; display:flex; align-items:flex-end;
+  position:absolute; right:-8%; bottom:0; height:56%; display:flex; align-items:flex-end;
   transform:translateX(115%);
 }
 #ai-reaction-layer.arx-run .arx-portrait-wrap{ animation:arxSlam 2.6s cubic-bezier(.1,.86,.24,1.08) forwards .1s; }
 @keyframes arxSlam{
-  0%{ transform:translateX(115%) scale(1.06) }
-  13%{ transform:translateX(-4%) scale(1.02) }   /* 過衝 */
-  20%{ transform:translateX(2%) scale(1) }       /* 回彈 */
-  82%{ transform:translateX(0) scale(1) }
+  /* ⚠️ opacity 必須在中段明確寫出 1,否則 CSS 會從 0% 一路線性淡到 100% 的 0,
+     角色會整段演出都是半透明(先前的 bug:800ms 就只剩 0.17)。 */
+  0%{ transform:translateX(115%) scale(1.06); opacity:1 }
+  13%{ transform:translateX(-4%) scale(1.02); opacity:1 }   /* 過衝 */
+  20%{ transform:translateX(2%) scale(1); opacity:1 }       /* 回彈 */
+  82%{ transform:translateX(0) scale(1); opacity:1 }
+  90%{ opacity:1 }
   100%{ transform:translateX(88%) scale(1.02); opacity:0 }
 }
 #ai-reaction-layer .arx-portrait{
@@ -94,11 +97,11 @@
          drop-shadow(0 0 26px color-mix(in srgb, var(--c) 65%, transparent));
 }
 /* 🎭 角色動作:以 bottom center 為軸,身體語言隨情緒不同 */
-#ai-reaction-layer .arx-portrait{ transform-origin:bottom center; }
-#ai-reaction-layer.arx-run .arx-portrait{ animation:arxActIdle 2.4s ease-in-out .2s both; }
+#ai-reaction-layer .arx-act{ position:relative; width:100%; height:100%; transform-origin:bottom center; }
+#ai-reaction-layer.arx-run .arx-act{ animation:arxActIdle 2.4s ease-in-out .2s both; }
 
 /* 得意:前傾逼近 + 悠然晃動,像在炫耀 */
-#ai-reaction-layer.arx-e-taunt.arx-run .arx-portrait{ animation:arxActTaunt 2.4s ease-in-out .2s both; }
+#ai-reaction-layer.arx-e-taunt.arx-run .arx-act{ animation:arxActTaunt 2.4s ease-in-out .2s both; }
 @keyframes arxActTaunt{
   0%{ transform:rotate(6deg) scale(.96) translateY(6px) }
   18%{ transform:rotate(-4deg) scale(1.05) translateY(-4px) }
@@ -108,7 +111,7 @@
   100%{ transform:rotate(0) scale(1.01) translateY(-1px) }
 }
 /* 驚愕:向後彈退 + 高頻抖動 */
-#ai-reaction-layer.arx-e-shock.arx-run .arx-portrait{ animation:arxActShock 2.4s cubic-bezier(.2,1.1,.3,1) .2s both; }
+#ai-reaction-layer.arx-e-shock.arx-run .arx-act{ animation:arxActShock 2.4s cubic-bezier(.2,1.1,.3,1) .2s both; }
 @keyframes arxActShock{
   0%{ transform:translateX(0) rotate(0) scale(1.04) }
   10%{ transform:translateX(16px) rotate(7deg) scale(.94) }
@@ -120,7 +123,7 @@
   100%{ transform:translateX(5px) rotate(0) scale(1) }
 }
 /* 慍怒:猛烈前撞 + 沉重震動 */
-#ai-reaction-layer.arx-e-angry.arx-run .arx-portrait{ animation:arxActAngry 2.4s cubic-bezier(.15,1.2,.3,1) .2s both; }
+#ai-reaction-layer.arx-e-angry.arx-run .arx-act{ animation:arxActAngry 2.4s cubic-bezier(.15,1.2,.3,1) .2s both; }
 @keyframes arxActAngry{
   0%{ transform:translateX(24px) rotate(-8deg) scale(.95) }
   12%{ transform:translateX(-14px) rotate(5deg) scale(1.09) }
@@ -133,7 +136,7 @@
   100%{ transform:translateX(-7px) rotate(0) scale(1.03) }
 }
 /* 慌張:左右急晃 + 縮身後退 */
-#ai-reaction-layer.arx-e-panic.arx-run .arx-portrait{ animation:arxActPanic 2.4s ease-in-out .2s both; }
+#ai-reaction-layer.arx-e-panic.arx-run .arx-act{ animation:arxActPanic 2.4s ease-in-out .2s both; }
 @keyframes arxActPanic{
   0%{ transform:translate(0,0) rotate(0) scale(1.02) }
   8%{ transform:translate(-10px,4px) rotate(-6deg) scale(.96) }
@@ -147,7 +150,7 @@
   100%{ transform:translate(0,9px) rotate(0) scale(.93) }
 }
 /* 自信:緩緩上浮 + 從容微轉 */
-#ai-reaction-layer.arx-e-confident.arx-run .arx-portrait{ animation:arxActConf 2.4s ease-out .2s both; }
+#ai-reaction-layer.arx-e-confident.arx-run .arx-act{ animation:arxActConf 2.4s ease-out .2s both; }
 @keyframes arxActConf{
   0%{ transform:translateY(14px) rotate(-3deg) scale(.97) }
   40%{ transform:translateY(-6px) rotate(1deg) scale(1.03) }
@@ -155,7 +158,7 @@
   100%{ transform:translateY(-11px) rotate(1deg) scale(1.05) }
 }
 /* 宣戰:大步踏入 + 抬身定格 */
-#ai-reaction-layer.arx-e-battleStart.arx-run .arx-portrait{ animation:arxActEntry 2.4s cubic-bezier(.16,1.1,.3,1) .2s both; }
+#ai-reaction-layer.arx-e-battleStart.arx-run .arx-act{ animation:arxActEntry 2.4s cubic-bezier(.16,1.1,.3,1) .2s both; }
 @keyframes arxActEntry{
   0%{ transform:translate(30px,10px) rotate(-9deg) scale(.9) }
   14%{ transform:translate(-10px,-6px) rotate(4deg) scale(1.08) }
@@ -165,7 +168,7 @@
   100%{ transform:translate(-2px,-7px) rotate(0) scale(1.06) }
 }
 /* 勝利:昂然升起 + 放大 */
-#ai-reaction-layer.arx-e-victory.arx-run .arx-portrait{ animation:arxActWin 2.4s cubic-bezier(.2,1.05,.3,1) .2s both; }
+#ai-reaction-layer.arx-e-victory.arx-run .arx-act{ animation:arxActWin 2.4s cubic-bezier(.2,1.05,.3,1) .2s both; }
 @keyframes arxActWin{
   0%{ transform:translateY(20px) rotate(-4deg) scale(.94) }
   20%{ transform:translateY(-10px) rotate(3deg) scale(1.1) }
@@ -174,7 +177,7 @@
   100%{ transform:translateY(-18px) rotate(0) scale(1.1) }
 }
 /* 落敗:垂身下沉 + 前傾低頭 */
-#ai-reaction-layer.arx-e-defeat.arx-run .arx-portrait{ animation:arxActLose 2.4s ease-in .2s both; }
+#ai-reaction-layer.arx-e-defeat.arx-run .arx-act{ animation:arxActLose 2.4s ease-in .2s both; }
 @keyframes arxActLose{
   0%{ transform:translateY(-6px) rotate(0) scale(1.02) }
   22%{ transform:translateY(4px) rotate(-4deg) scale(1) }
@@ -189,7 +192,7 @@
 }
 /* 立繪背後的情緒光暈 */
 #ai-reaction-layer .arx-glow{
-  position:absolute; right:6%; bottom:6%; width:76vmin; height:76vmin; opacity:0;
+  position:absolute; right:6%; bottom:6%; width:330px; height:330px; opacity:0;
   background:radial-gradient(circle, color-mix(in srgb, var(--c) 60%, transparent) 0%, transparent 66%);
 }
 #ai-reaction-layer.arx-run .arx-glow{ animation:arxGlow 2.5s ease-out forwards .18s; }
@@ -205,7 +208,7 @@
 
 /* ── 文字:情緒徽章 + 台詞,帶打擊感彈入 ── */
 #ai-reaction-layer .arx-text{
-  position:absolute; left:5%; right:38%; top:41%;
+  position:absolute; left:4%; right:26%; top:21%;
   display:flex; flex-direction:column; gap:8px; align-items:flex-start;
 }
 #ai-reaction-layer .arx-emo{
@@ -226,7 +229,7 @@
 }
 #ai-reaction-layer .arx-line{
   opacity:0; transform:translateX(-56px) scale(1.14);
-  font-size:clamp(1.35rem, 5.2vw, 2.5rem); font-weight:900; line-height:1.24;
+  font-size:28px; font-weight:900; line-height:1.24;
   color:#fff; letter-spacing:.02em; text-align:left;
   text-shadow:
     -2px 0 0 #0a0d12, 2px 0 0 #0a0d12, 0 -2px 0 #0a0d12, 0 2px 0 #0a0d12,
@@ -271,7 +274,7 @@
 
 /* ── 💥 衝擊環:開場由中心炸開的環形波 ── */
 #ai-reaction-layer .arx-ring{
-  position:absolute; left:50%; top:46%; width:26vmin; height:26vmin; margin:-13vmin 0 0 -13vmin;
+  position:absolute; left:50%; top:46%; width:120px; height:120px; margin:-60px 0 0 -60px;
   border-radius:50%; opacity:0;
   border:4px solid var(--c);
   box-shadow:0 0 26px color-mix(in srgb, var(--c) 70%, transparent),
@@ -336,15 +339,8 @@
   100%{ opacity:0 }
 }
 
-/* ── 手機:改為「上文字／下立繪」的直式構圖,兩者不重疊 ──
-   台詞區底緣須落在立繪頂緣之上(立繪高 56% → 頂緣約 44%) */
-@media (max-width:560px){
-  #ai-reaction-layer .arx-text{ left:4%; right:26%; top:21% }
-  #ai-reaction-layer .arx-portrait-wrap{ height:56%; right:-8% }
-  #ai-reaction-layer .arx-band{ top:47%; height:20% }
-  #ai-reaction-layer .arx-band2{ top:43.5% }
-  #ai-reaction-layer .arx-line{ font-size:clamp(1.3rem, 7.4vw, 1.9rem) }
-}
+/* (版面已統一為舞台固定尺寸,無需視窗 media query) */
+
 
 /* ── 降低動態偏好:保留資訊、去除衝擊動畫 ── */
 #ai-reaction-layer.arx-slim .arx-lines,
@@ -371,4 +367,154 @@
   #ai-reaction-layer .arx-streaks,
   #ai-reaction-layer .arx-ring,
   #ai-reaction-layer .arx-scan{ display:none }
+}
+
+/* ═══════════════════════════════════════════════════════════════
+   🎥 臉部特寫鏡頭 + 偽眨眼 + 動漫情緒符號
+   ‧ 全身立繪的眼睛在畫面上僅約 13px,推近臉部後約 52px 才看得見表情
+   ‧ 偽眨眼原理:同一張圖的複本只露出眼睛橫帶,往下推 --eyeH,
+     眼睛就被「上方皮膚」蓋住 → 讀起來是閉眼(無需任何新素材)
+   ═══════════════════════════════════════════════════════════════ */
+
+/* 攝影機:特寫時作為裁切視窗 */
+#ai-reaction-layer .arx-cam{ position:relative; height:100%; }
+/* 特寫:改為「框住臉的插入視窗」——寬度由版面決定,高度依臉部比例自動 */
+#ai-reaction-layer .arx-portrait-wrap.arx-closeup{
+  height:auto; width:86%; right:2%; bottom:4%;
+}
+#ai-reaction-layer .arx-portrait-wrap.arx-closeup .arx-cam{
+  width:100%; height:auto; overflow:hidden; border-radius:14px;
+  border:2px solid color-mix(in srgb, var(--c) 78%, #fff 22%);
+  box-shadow:0 10px 30px rgba(0,0,0,.6), 0 0 26px color-mix(in srgb, var(--c) 45%, transparent),
+             inset 0 0 30px rgba(0,0,0,.35);
+}
+/* 特寫的取景幾何由 JS 寫入 .arx-imgbox(依角色臉部座標算出) */
+/* 特寫鏡頭本身的緩慢推近,增加壓迫感 */
+#ai-reaction-layer.arx-run .arx-closeup .arx-cam{ animation:arxPush 2.6s ease-out both; }
+@keyframes arxPush{
+  0%{ transform:scale(1.14) } 20%{ transform:scale(1.03) } 100%{ transform:scale(1) }
+}
+
+/* ── 👁 繪製眼皮(眨眼) ──
+   多數立繪眼睛上方是瀏海、下方是嘴巴,位移原圖會把頭髮/嘴巴拉進眼睛區,
+   因此改為「用立繪取樣的膚色畫一片眼皮蓋下來」,底緣加睫毛線。 */
+#ai-reaction-layer .arx-imgbox{ position:absolute; }
+#ai-reaction-layer .arx-act .arx-portrait{
+  width:100%; height:100%; display:block; max-width:none;
+}
+#ai-reaction-layer .arx-lid{
+  position:absolute; pointer-events:none; transform-origin:top center;
+  border-radius:6% 6% 46% 46% / 8% 8% 90% 90%;
+  background:linear-gradient(180deg, var(--skin) 0%, var(--skin) 46%, var(--skin2) 100%);
+  box-shadow:inset 0 -6% 8% -2% rgba(120,80,60,.35);
+  transform:scaleY(var(--squint, 0));      /* 常態:瞇眼程度 */
+}
+/* 睫毛線:眼皮底緣的深色細線 */
+#ai-reaction-layer .arx-lid::after{
+  content:""; position:absolute; left:2%; right:2%; bottom:0; height:16%;
+  border-radius:0 0 46% 46% / 0 0 100% 100%;
+  background:linear-gradient(180deg, transparent, var(--lash) 62%);
+  opacity:.92;
+}
+/* 眨眼:眼皮由上而下蓋滿再收回(閉合僅約 90ms,才像真的眨眼) */
+#ai-reaction-layer.arx-run .arx-lid{ animation:arxBlink1 2.6s linear both; }
+#ai-reaction-layer.arx-e-panic.arx-run .arx-lid{ animation:arxBlink4 2.6s linear both; }
+#ai-reaction-layer.arx-e-shock.arx-run .arx-lid{ animation:none; }   /* 驚愕:瞪大不眨 */
+@keyframes arxBlink1{
+  0%,32%{ transform:scaleY(var(--squint)) }
+  35%,38%{ transform:scaleY(1) }
+  42%,100%{ transform:scaleY(var(--squint)) }
+}
+@keyframes arxBlink4{
+  0%,10%{ transform:scaleY(0) }
+  12%,15%{ transform:scaleY(1) }
+  17%,27%{ transform:scaleY(0) }
+  29%,32%{ transform:scaleY(1) }
+  34%,48%{ transform:scaleY(0) }
+  50%,53%{ transform:scaleY(1) }
+  55%,70%{ transform:scaleY(0) }
+  72%,75%{ transform:scaleY(1) }
+  77%,100%{ transform:scaleY(0) }
+}
+
+/* ── 🈁 動漫情緒符號(純 CSS 圖形) ── */
+#ai-reaction-layer .arx-sym{ position:absolute; inset:0; pointer-events:none; }
+#ai-reaction-layer .arx-sym i{ position:absolute; opacity:0; }
+
+/* 慍怒:太陽穴青筋十字 */
+#ai-reaction-layer.arx-e-angry .arx-sym i{
+  width:44px; height:44px; right:26%; top:16%;
+  background:
+    linear-gradient(90deg, transparent 44%, #7ED9C4 44% 56%, transparent 56%),
+    linear-gradient(180deg, transparent 44%, #7ED9C4 44% 56%, transparent 56%);
+  filter:drop-shadow(0 0 5px rgba(126,217,196,.9));
+  clip-path:polygon(50% 0,100% 50%,50% 100%,0 50%);
+}
+#ai-reaction-layer.arx-e-angry .arx-sym i.s2{ right:34%; top:12%; width:30px; height:30px }
+#ai-reaction-layer.arx-e-angry .arx-sym i.s3{ display:none }
+#ai-reaction-layer.arx-e-angry.arx-run .arx-sym i{ animation:arxVein .55s ease-out 3 .4s }
+@keyframes arxVein{
+  0%{ opacity:0; transform:scale(.5) rotate(0) }
+  30%{ opacity:1; transform:scale(1.15) rotate(8deg) }
+  100%{ opacity:0; transform:scale(1) rotate(-4deg) }
+}
+
+/* 慌張:汗滴滑落 */
+#ai-reaction-layer.arx-e-panic .arx-sym i{
+  width:20px; height:28px; right:28%; top:15%;
+  background:radial-gradient(circle at 38% 32%, #EAF6FF, #9BD0F0 60%, #6FA9D8);
+  border-radius:50% 50% 50% 50% / 62% 62% 38% 38%;
+  clip-path:polygon(50% 0, 88% 62%, 74% 96%, 26% 96%, 12% 62%);
+  box-shadow:0 0 8px rgba(155,208,240,.8);
+}
+#ai-reaction-layer.arx-e-panic .arx-sym i.s2{ right:22%; top:22%; width:14px; height:20px }
+#ai-reaction-layer.arx-e-panic .arx-sym i.s3{ right:36%; top:26%; width:11px; height:16px }
+#ai-reaction-layer.arx-e-panic.arx-run .arx-sym i.s1{ animation:arxSweat 1.15s ease-in 2 .45s }
+#ai-reaction-layer.arx-e-panic.arx-run .arx-sym i.s2{ animation:arxSweat 1.3s ease-in 2 .85s }
+#ai-reaction-layer.arx-e-panic.arx-run .arx-sym i.s3{ animation:arxSweat 1.2s ease-in 2 1.25s }
+@keyframes arxSweat{
+  0%{ opacity:0; transform:translateY(-6px) scale(.6) }
+  18%{ opacity:1; transform:translateY(0) scale(1) }
+  100%{ opacity:0; transform:translateY(46px) scale(.9) }
+}
+
+/* 得意:閃光星星 */
+#ai-reaction-layer.arx-e-taunt .arx-sym i{
+  width:26px; height:26px; right:24%; top:14%;
+  background:conic-gradient(from 0deg, transparent 0 8%, #FFF3C4 12%, transparent 16% 33%,
+    #FFF3C4 37%, transparent 41% 58%, #FFF3C4 62%, transparent 66% 83%, #FFF3C4 87%, transparent 91%);
+  filter:drop-shadow(0 0 7px rgba(255,224,150,.95));
+}
+#ai-reaction-layer.arx-e-taunt .arx-sym i.s2{ right:16%; top:24%; width:18px; height:18px }
+#ai-reaction-layer.arx-e-taunt .arx-sym i.s3{ right:33%; top:9%; width:13px; height:13px }
+#ai-reaction-layer.arx-e-taunt.arx-run .arx-sym i.s1{ animation:arxStar .95s ease-out 2 .35s }
+#ai-reaction-layer.arx-e-taunt.arx-run .arx-sym i.s2{ animation:arxStar 1.1s ease-out 2 .6s }
+#ai-reaction-layer.arx-e-taunt.arx-run .arx-sym i.s3{ animation:arxStar .85s ease-out 2 .9s }
+@keyframes arxStar{
+  0%{ opacity:0; transform:scale(.2) rotate(0) }
+  35%{ opacity:1; transform:scale(1.25) rotate(90deg) }
+  100%{ opacity:0; transform:scale(.5) rotate(200deg) }
+}
+
+/* 驚愕:頭頂垂直頓悟線 */
+#ai-reaction-layer.arx-e-shock .arx-sym i{
+  width:5px; height:52px; right:30%; top:6%;
+  background:linear-gradient(180deg, #EAF6FF, rgba(234,246,255,0));
+  filter:drop-shadow(0 0 6px rgba(200,235,255,.9));
+}
+#ai-reaction-layer.arx-e-shock .arx-sym i.s2{ right:24%; top:8%; height:38px }
+#ai-reaction-layer.arx-e-shock .arx-sym i.s3{ right:36%; top:9%; height:32px }
+#ai-reaction-layer.arx-e-shock.arx-run .arx-sym i{ animation:arxShockLine .7s ease-out 2 .3s }
+@keyframes arxShockLine{
+  0%{ opacity:0; transform:translateY(-14px) scaleY(.4) }
+  30%{ opacity:1; transform:translateY(0) scaleY(1) }
+  100%{ opacity:0; transform:translateY(6px) scaleY(.8) }
+}
+
+/* 降低動態:符號與眨眼一併停用 */
+#ai-reaction-layer.arx-slim .arx-sym,
+#ai-reaction-layer.arx-slim .arx-lid{ display:none }
+#ai-reaction-layer.arx-slim.arx-run .arx-closeup .arx-cam{ animation:none }
+@media (prefers-reduced-motion: reduce){
+  #ai-reaction-layer .arx-sym{ display:none }
 }
